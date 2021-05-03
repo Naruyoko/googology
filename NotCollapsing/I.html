@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>NotCollapsing - I</title>
+  <script src="./I.js"></script>
+</head>
+<body>
+  <h1>NotCollapsing - I</h1>
+  <form name=form>
+    <textarea id="input" style="width:calc(100% - 8px);height:80px;text-align:left;white-space:nowrap;margin:0;border:1px solid black;resize:both;font-family:monospace;font-size:13.5px;padding:4px;" contentEditable>expand ψ(Ω) 2&#13;&#10;expand ψ(Ω_2+Ω_2) 2&#13;&#10;expand ψ(I+ψ_ψ_I(I+1)(I)) 2&#13;&#10;expand ψ(ψ_ψ_I(ω)(0)) 2&#13;&#10;expand ψ(ψ_ψ_I(Ω_2)(0)) 2&#13;&#10;< Ω ψ_Ω_2(1)&#13;&#10;isStandard ψ(I+ψ_ψ_I(I+ω+1)(I+ψ_I(I+ω)+ψ_I(I+ω))) 3</textarea>
+    <ul>
+      <li>Abbreviate: <input id="abbreviate" type="checkbox" checked></li>
+      <li>Details: <input id="detail" type="checkbox"></li>
+    </ul>
+    <input type="button" value="Compute" onclick="compute()">
+  </form>
+  <textarea id="output" style="width:calc(100% - 8px);height:400px;text-align:left;white-space:pre;margin:0;border:1px solid black;resize:both;font-family:monospace;font-size:13.5px;padding:4px;" readonly></textarea>
+  <input type="text" id="copyarea" style="display:none"><br>
+  <div>
+    Abbreviations:<br>
+    <ul>
+      <li>1 - p(0)</li>
+      <li>n - 1+1+...+1 (with n 1s)</li>
+      <li>W or Ω - p_I(0)</li>
+      <li>W_n or Ω_n - p_I(1+1+...+1) (with n-1 1s)</li>
+      <li>p(#) or ψ(#) - p_W(#)</li>
+      <li>w or ω - p(1)</li>
+    </ul>
+  </div>
+  <div>
+    お気持ち表明<br>
+    <p>
+      UN0CFのψ<sub>I</sub>の動きの再現に失敗しました。(T,&lt;,dom,[])型は初めて作ったかもしれないです。ついでに崩壊しないI関数数を定義しました。予想はRathjenのψ関数と急増加関数でf<sub>ψ_Ω(Φ_0(ω))+1</sub>(10<sup>100</sup>)です。<br>
+      p進大好きbot氏の<a href="https://googology.wikia.org/ja/wiki/%E3%83%A6%E3%83%BC%E3%82%B6%E3%83%BC%E3%83%96%E3%83%AD%E3%82%B0:P%E9%80%B2%E5%A4%A7%E5%A5%BD%E3%81%8Dbot/%E6%8B%A1%E5%BC%B5Buchholz_OCF%E3%81%AB%E4%BC%B4%E3%81%86%E9%A0%86%E5%BA%8F%E6%95%B0%E8%A1%A8%E8%A8%98">拡張Buchholz OCFに伴う順序数表記</a>を参考にしました。<br>
+    </p>
+  </div>
+</body>
+</html>
