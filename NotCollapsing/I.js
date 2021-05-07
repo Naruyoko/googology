@@ -5,7 +5,6 @@ window.onload=function (){
   dg('input').onkeydown=handlekey;
   dg('input').onfocus=handlekey;
   dg('input').onmousedown=handlekey;
-  compute();
 }
 function dg(s){
   return document.getElementById(s);
@@ -125,7 +124,7 @@ Term.build=function (s){
     }
     if (/(?<!\+)<[a-j]+>(\+<[a-j]+>)+(?!\+)/.test(s)){ //#+#+...+#->#
       manipulated=true;
-      s=s.replace(/<[a-j]+>(\+<[a-j]+>)+(?!×)/g,function (s){return newSubterm(SumTerm.build(s.split("+").map(getSubterm)));});
+      s=s.replace(/(?<!\+)<[a-j]+>(\+<[a-j]+>)+(?!\+)/g,function (s){return newSubterm(SumTerm.build(s.split("+").map(getSubterm)));});
     }
     if (/^<[a-j]+>$/.test(s)) break;
     if (!manipulated) throw Error("Error parsing expression: "+strin);
@@ -561,9 +560,9 @@ function FGH(X,n){
   else if (equal(dom(X),"1")){
     var r=n;
     var X0=fund(X,"0");
-    for (var i=0;i<n;i++) r=functionF(X0,r);
+    for (var i=0;i<n;i++) r=FGH(X0,r);
     return r;
-  }else return functionF(fund(X,n),n);
+  }else return FGH(fund(X,n),n);
 }
 function largeFunction(n){
   if (typeof n!="number") throw Error("Invalid argument");

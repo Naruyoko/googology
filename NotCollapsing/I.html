@@ -5,18 +5,20 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>NotCollapsing - I</title>
   <script src="./I.js"></script>
+  <link rel="stylesheet" type="text/css" href="./style.css">
 </head>
 <body>
   <h1>NotCollapsing - I</h1>
+  <div><a href="../index.html">Back</a></div>
   <form name=form>
-    <textarea id="input" style="width:calc(100% - 8px);height:80px;text-align:left;white-space:nowrap;margin:0;border:1px solid black;resize:both;font-family:monospace;font-size:13.5px;padding:4px;" contentEditable>expand ψ(Ω) 2&#13;&#10;expand ψ(Ω_2+Ω_2) 2&#13;&#10;expand ψ(I+ψ_ψ_I(I+1)(I)) 2&#13;&#10;expand ψ(ψ_ψ_I(ω)(0)) 2&#13;&#10;expand ψ(ψ_ψ_I(Ω_2)(0)) 2&#13;&#10;< Ω ψ_Ω_2(1)&#13;&#10;isStandard ψ(I+ψ_ψ_I(I+ω+1)(I+ψ_I(I+ω)+ψ_I(I+ω))) 3</textarea>
+    <textarea id="input" class="inputbox" contentEditable>expand ψ(Ω) 2&#13;&#10;expand ψ(Ω_2+Ω_2) 2&#13;&#10;expand ψ(I+ψ_ψ_I(I+1)(I)) 2&#13;&#10;expand ψ(ψ_ψ_I(ω)(0)) 2&#13;&#10;expand ψ(ψ_ψ_I(Ω_2)(0)) 2&#13;&#10;< Ω ψ_Ω_2(1)&#13;&#10;isStandard ψ(I+ψ_ψ_I(I+ω+1)(I+ψ_I(I+ω)+ψ_I(I+ω))) 3</textarea>
     <ul>
       <li>Abbreviate: <input id="abbreviate" type="checkbox" checked></li>
       <li>Details: <input id="detail" type="checkbox"></li>
     </ul>
     <input type="button" value="Compute" onclick="compute()">
   </form>
-  <textarea id="output" style="width:calc(100% - 8px);height:400px;text-align:left;white-space:pre;margin:0;border:1px solid black;resize:both;font-family:monospace;font-size:13.5px;padding:4px;" readonly></textarea>
+  <textarea id="output" class="outputbox" readonly>...</textarea>
   <input type="text" id="copyarea" style="display:none"><br>
   <div>
     Abbreviations:<br>
