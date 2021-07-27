@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>0-Y Sequence Implementation</title>
+  <script src="./implementation.js"></script>
+</head>
+<body>
+  <h1>0-Y Sequence Implementation</h1>
+  <form name=form>
+    <textarea id="input" style="width:calc(100% - 8px);height:calc(100% - 28px);text-align:left;white-space:nowrap;margin:0;border:1px solid black;resize:both;font-family:monospace;font-size:13.5px;padding:4px;" oninput="requestAnimationFrame(handlekey)" contentEditable>1,4,6,3,7,9,7</textarea>
+    N <input id="inputn" type="text" oninput="requestAnimationFrame(handlekey)" value="3">
+    Remove limit to N<input id="noLimitToN" type="checkbox" oninput="requestAnimationFrame(handlekey)">
+    Use intended <input id="useIntended" type="checkbox" checked oninput="requestAnimationFrame(handlekey)">
+    Auto <input id="automaticallyExpandOnChange" type="checkbox" checked oninput="requestAnimationFrame(handlekey)">
+    <input type="button" value="Expand" onclick="expandall(false)">
+  </form>
+  <textarea id="output" style="width:calc(100% - 8px);height:calc(100% - 28px);text-align:left;white-space:pre;margin:0;border:1px solid black;resize:both;font-family:monospace;font-size:13.5px;padding:4px;" readonly></textarea>
+  <div><a href="https://googology.wikia.org/ja/wiki/%E3%83%A6%E3%83%BC%E3%82%B6%E3%83%BC%E3%83%96%E3%83%AD%E3%82%B0:Koteitan/0-Y%E6%95%B0%E5%88%97%E3%81%AE%E5%AE%9A%E7%BE%A9%E3%81%A8%E3%83%90%E3%82%B7%E3%82%AF%E8%A1%8C%E5%88%97">Definition</a> by Koteitan</div>
+  <div>Version 1</div>
+</body>
+</html>
