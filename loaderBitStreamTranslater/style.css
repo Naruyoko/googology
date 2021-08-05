@@ -1,0 +1,18 @@
+.inputbox {
+  width:calc(100% - 8px);
+  height:80px;
+  text-align:left;
+  white-space:nowrap;
+  margin:0;
+  border:1px solid black;
+  resize:both;
+  font-family:monospace;
+  font-size:13.5px;
+  padding:4px;
+}
+.outputbox {
+  margin:0;
+  padding:4px;
+}
+/*div.proofcontainer {
+}*/

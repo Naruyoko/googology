@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>loader.c Bit Stream to Proof Translater</title>
+  <script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
+  <script src="https://peterolson.github.io/BigInteger.js/BigInteger.min.js"></script>
+  <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+  <script src="./script.js"></script>
+  <link rel="stylesheet" type="text/css" href="./style.css">
+</head>
+<body>
+  <h1>loader.c Bit Stream to Proof Translater</h1>
+  <form name=form>
+    <textarea id="input" class="inputbox" oninput="requestAnimationFrame(handlekey)" contentEditable>11011001</textarea>
+    Auto <input id="auto" type="checkbox" checked oninput="requestAnimationFrame(handlekey)">
+    <input type="button" value="Compute" onclick="compute()">
+  </form>
+  <div id="output" class="outputbox" readonly>...</div>
+  <input type="text" id="copyarea" style="display:none"><br>
+  <div>
+    How to use:
+    <ul>
+      <li>From the bit stream, writes out the corresponding proof.</li>
+      <li>Each line is considered a separate bit stream.</li>
+      <li>Write "start" and "end" to write bit stream over multiple lines.</li>
+      <li>Write "define alias bitstream" to define a macro be included in later streams. Write "undef alias" to remove a macro. Aliases must not start with a number.</li>
+      <li>"start" and "end" can't be defined or undefined as a macro.</li>
+      <li>In bit streams, characters other than "0" and "1" are ignored, unless they make a keyword or a defined alias.</li>
+    </ul>
+  </div>
+  <div>
+    Resources:
+    <ul>
+      <li><a href="https://googology.wikia.org/wiki/User_blog:Upquark11111/An_Explanation_of_Loader%27s_Number">An Explanation of Loader's Number</a> by Upquark11111</li>
+      <li><a href="https://github.com/rcls/busy">The uncompressed program of loader.c</a></li>
+    </ul>
+  </div>
+</body>
+</html>
