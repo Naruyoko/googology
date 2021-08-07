@@ -791,9 +791,10 @@ function printOut(){
     "div.proofcontainer.text{margin:16px 4px 0px 4px;font-family:monospace;font-size:12px;word-break:break-word;}"+
     "</style></head><body><div style=\"margin:0;padding:4px\">"+dg("output").innerHTML+"</div></body></html>";
   w.document.write(html);
-  w.window.print();
   w.document.close();
-  w.window.close();
+  w.window.print();
+  if (window.chrome) setTimeout(function(){w.window.close();},100);
+  else w.window.close();
 }
 
 var proofCache=new Map();
