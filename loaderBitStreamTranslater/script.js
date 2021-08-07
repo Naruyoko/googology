@@ -380,6 +380,17 @@ function DeriveDetail(xx,proofs){
   return [theorem,proofs,xx,formattedBitStream,isProofEmpty];
 }
 
+function writeContext(context){
+  if (!(context instanceof Tree)) context=new Tree(context);
+  var contextText="";
+  while (!context.isNull()){
+    contextText=Left(context).writeLatex()+contextText;
+    context=Right(context);
+    if (!context.isNull()) contextText=","+contextText;
+  }
+  return contextText;
+}
+
 function formatProofWithLatex(input){
   if (typeof input=="number"||input instanceof BitStream) input=DeriveDetail(input);
   if (!(input instanceof Array)) throw Error("Something went wrong...");
@@ -401,13 +412,7 @@ function formatProofWithLatex(input){
       var term=Left(line[0]);
       var type=Left(Right(line[0]));
       var context=Right(Right(Right(line[0])));
-      var contextText="";
-      while (!context.isNull()){
-        contextText=Left(context).writeLatex()+contextText;
-        context=Right(context);
-        if (!context.isNull()) contextText=","+contextText;
-      }
-      proofBody+=contextText+"&\\vdash "+term.writeLatex()+":"+type.writeLatex()+"&\\quad &\\text{"+line[1]+"} \\\\";
+      proofBody+=writeContext(context)+"&\\vdash "+term.writeLatex()+":"+type.writeLatex()+"&\\quad &\\text{"+line[1]+"} \\\\";
       if (isLastLineOfLemma) proofBody+="\n\\\\";
     }
   }
