@@ -428,10 +428,10 @@ function Subst(vv,yy,context,term){
                  Subst(vv,yy,context,Right(xx)));
   }else{
     if (aux.toNumber()>2){
-      if (aux.equal(vv)) return yy.clone();
+      if (aux.equal(vv)) return yy;
       else{
         if (aux.toNumber()>vv) return new Tree(term.toNumber()-context);
-        else return term.clone();
+        else return term;
       } 
     }else
       return Pair(aux,Pair(Subst(vv,yy,context,Left(xx)),
@@ -447,6 +447,7 @@ function Apply(yy,xx){
   if (Left(yy).equal(Tree.ONE)) return Subst(4,xx,4,Right(/*lastRight*/Right(yy)));
   else return Pair(Tree.TWO,Pair(yy,xx));
 }
+var deriveCache=new Map();
 // Returns [theorem,proofs,xx,formatted consumed bit stream,is proof empty]
 // A proof is an array of lines, each line being [theorem,comment]
 function DeriveDetail(xx,proofs){
@@ -454,6 +455,8 @@ function DeriveDetail(xx,proofs){
   var isTheMainTheorem=typeof proofs=="undefined";
   if (isTheMainTheorem) proofs=[];
   if (!(proofs instanceof Array)) throw Error("Something went wrong... A non-Array was passed to proofs");
+  var bitStreamIn=xx.stream;
+  if (isTheMainTheorem&&deriveCache.has(bitStreamIn)) return deriveCache.get(bitStreamIn);
   var proof=[];
   var auxType;
   var auxTerm;
@@ -526,7 +529,9 @@ function DeriveDetail(xx,proofs){
     }
   }
   if (isTheMainTheorem||!isProofEmpty) proofs.push(proof);
-  return [theorem,proofs,xx,formattedBitStream,isProofEmpty];
+  var r=[theorem,proofs,xx,formattedBitStream,isProofEmpty];
+  if (isTheMainTheorem) deriveCache.set(bitStreamIn,r);
+  return r;
 }
 
 function writeContext(context){
