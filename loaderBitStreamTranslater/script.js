@@ -150,6 +150,26 @@ Tree.prototype.write=function (){
     else return this.writeRaw();
   }
 }
+Tree.prototype.writeText=function (){
+  if (this.isNull()) return "∅";
+  else if (this.left().isNull()){
+    if (!this.right().isNull()) return "(Π"+this.right().left().writeText()+"."+this.right().right().writeText()+")";
+    else return this.writeRaw("∅");
+  }else if (this.left().equal(Tree.ONE)){
+    if (!this.right().isNull()) return "(λ"+this.right().left().writeText()+"."+this.right().right().writeText()+")";
+    else return this.writeRaw("∅");
+  }else if (this.left().equal(Tree.TWO)){
+    if (!this.right().isNull()) return "("+this.right().left().writeText()+" "+this.right().right().writeText()+")";
+    else return this.writeRaw("∅");
+  }else if (this.left().equal(Tree.THREE)){
+    if (this.right().isNull()) return "*";
+    else if (this.right().equal(Tree.ONE)) return "□";
+    else return this.writeRaw("∅");
+  }else{
+    if (this.right().isNull()) return this.left().toNumber()/2-2+"";
+    else return this.writeRaw("∅");
+  }
+}
 Tree.prototype.writeLatex=function (){
   if (this.isNull()) return "\\emptyset ";
   else if (this.left().isNull()){
@@ -501,7 +521,7 @@ function DeriveDetail(xx,proofs,proofsAsBitStreams){
       formattedBitStream="["+subResult[5]+"]"+formattedBitStream;
       commentAppend=" (axiom)";
     }else{
-      formattedBitStream="["+subResult[5]+"]_{("+lemmaCount+")}"+formattedBitStream;
+      formattedBitStream="["+subResult[5]+"]_("+lemmaCount+")"+formattedBitStream;
       commentAppend=" ("+lemmaCount+")";
     }
     if (context.equal(/*lastRight*/Right(Right(Right(lemma))))){
@@ -545,7 +565,71 @@ function DeriveDetail(xx,proofs,proofsAsBitStreams){
   return r;
 }
 
-function writeContext(context){
+function writeContextWithText(context){
+  if (!(context instanceof Tree)) context=new Tree(context);
+  var contextText="";
+  while (!context.isNull()){
+    contextText=Left(context).writeText()+contextText;
+    context=Right(context);
+    if (!context.isNull()) contextText=","+contextText;
+  }
+  return contextText;
+}
+
+function formatProofWithText(input,contractSameProofs){
+  var bitStreamIn=null;
+  if (typeof input=="number"||input instanceof BitStream){
+    if (!(input instanceof BitStream)) input=new BitStream(input);
+    bitStreamIn=input.stream;
+    input=DeriveDetail(input);
+  }
+  if (!(input instanceof Array)) throw Error("Something went wrong...");
+  if (typeof contractSameProofs=="undefined") contractSameProofs=false;
+  var theorem=input[0];
+  var proofs=input[1];
+  var proofsAsBitStreams=input[2];
+  var xx=input[3];
+  var consumedBitStream=input[4];
+  var formattedBitStream=input[5];
+  var isProofEmpty=input[6];
+  var theoremNumMap=[];
+  if (contractSameProofs){
+    var theoremMap=new Map();
+    for (var i=0;i<proofs.length;i++){
+      var theoremNum;
+      if (theoremMap.has(proofsAsBitStreams[i])) theoremNum=theoremMap.get(proofsAsBitStreams[i]);
+      else theoremMap.set(proofsAsBitStreams[i],theoremNum=theoremMap.size);
+      theoremNumMap.push(theoremNum);
+    }
+  }else{
+    for (var i=0;i<proofs.length;i++) theoremNumMap.push(i);
+  }
+  if (bitStreamIn===null) bitStreamIn=xx.stream+formattedBitStream.replace(/_\((\d+)\)|\[|\]/g,"");
+  var inputBigInt=(typeof BigInt=="function"?BigInt("0b"+(bitStreamIn||"0")):bigInt(bitStreamIn||"0",2));
+  var r=(xx.isZero()?"":"Unused "+xx.toString()+"\n")
+    +formattedBitStream.replace(/_\((\d+)\)/g,function (s,num){return "_("+(theoremNumMap[num-1]+1)+")";})+"\n"
+    +inputBigInt.toString()+"\n"
+    +"0x"+inputBigInt.toString(16)+"\n";
+  var theoremsPrinted=0;
+  for (var proofi=0;proofi<proofs.length;proofi++){
+    if (theoremNumMap[proofi]<theoremsPrinted) continue;
+    var proof=proofs[proofi];
+    for (var linei=0;linei<proof.length;linei++){
+      var line=proof[linei];
+      r+="\n";
+      var term=Left(line[0]);
+      var type=Left(Right(line[0]));
+      var context=Right(Right(Right(line[0])));
+      r+=writeContextWithText(context)+"⊢"+term.writeText()+":"+type.writeText()+" "+line[1].replace(/^\w+/,"($&)").replace(/\((\d+)\)/,function (s,num){return "("+(theoremNumMap[num-1]+1)+")";});
+      var isLastLineOfLemma=linei==proof.length-1&&proofi<proofs.length-1;
+      if (isLastLineOfLemma) r+=" ...("+(theoremNumMap[proofi]+1)+")\n";
+    }
+    theoremsPrinted++;
+  }
+  return r;
+}
+
+function writeContextWithLatex(context){
   if (!(context instanceof Tree)) context=new Tree(context);
   var contextText="";
   while (!context.isNull()){
@@ -579,7 +663,7 @@ function formatProofWithLatex(input,contractSameProofs){
   }else{
     for (var i=0;i<proofs.length;i++) theoremNumMap.push(i);
   }
-  var bitStreamInfo=(xx.isZero()?"":"{\\color{lightgray}"+xx.toString()+"}")+formattedBitStream.replace(/\((\d+)\)/g,function (s,num){return "("+(theoremNumMap[num-1]+1)+")";});
+  var bitStreamInfo=(xx.isZero()?"":"{\\color{lightgray}"+xx.toString()+"}")+formattedBitStream.replace(/_\((\d+)\)/g,function (s,num){return "_{("+(theoremNumMap[num-1]+1)+")}";});
   var proofBody="\\begin{align}";
   var theoremsPrinted=0;
   for (var proofi=0;proofi<proofs.length;proofi++){
@@ -594,7 +678,7 @@ function formatProofWithLatex(input,contractSameProofs){
       var term=Left(line[0]);
       var type=Left(Right(line[0]));
       var context=Right(Right(Right(line[0])));
-      proofBody+=writeContext(context)+"&\\vdash "+term.writeLatex()+":"+type.writeLatex()+"&\\quad &\\text{"+line[1].replace(/\((\d+)\)/,function (s,num){return "("+(theoremNumMap[num-1]+1)+")";})+"} \\\\";
+      proofBody+=writeContextWithLatex(context)+"&\\vdash "+term.writeLatex()+":"+type.writeLatex()+"&\\quad &\\text{"+line[1].replace(/\((\d+)\)/,function (s,num){return "("+(theoremNumMap[num-1]+1)+")";})+"} \\\\";
       if (isLastLineOfLemma) proofBody+="\n\\\\";
     }
     theoremsPrinted++;
@@ -700,15 +784,28 @@ function compileInput(s){
   if (!bitStreams[bitStreams.length-1]) bitStreams.pop();
   return bitStreams.map(BitStream);
 }
+
+function printOut(){
+  var w=window.open();
+  var html="<!DOCTYPE HTML><html><head><style>"+
+    "div.proofcontainer.text{margin:16px 4px 0px 4px;font-family:monospace;font-size:12px;word-break:break-word;}"+
+    "</style></head><body><div style=\"margin:0;padding:4px\">"+dg("output").innerHTML+"</div></body></html>";
+  w.document.write(html);
+  w.window.print();
+  w.document.close();
+  w.window.close();
+}
+
 var proofCache=new Map();
 var outDOMCacheSize=100;
 var outDOMCache=new Array(outDOMCacheSize);
 var outDOMCacheAccesses=0;
 var input="";
 var contractSameProofs=true;
+var textMode=false;
 var lastBitStreams="";
 function compute(){
-  if (input==dg("input").value&&contractSameProofs==dg("contractSameProofs").checked) return;
+  if (input==dg("input").value&&contractSameProofs==dg("contractSameProofs").checked&&textMode==dg("textMode").checked) return;
   input=dg("input").value;
   var bitStreams;
   try{
@@ -719,15 +816,18 @@ function compute(){
     console.error(e);
     return;
   }
-  if (lastBitStreams==bitStreams.map(function (e){return e.stream+";";}).join("")&&contractSameProofs==dg("contractSameProofs").checked) return;
+  var bitStreamsCombined=bitStreams.map(function (e){return e.stream+";";}).join("");
+  if (lastBitStreams==bitStreamsCombined&&contractSameProofs==dg("contractSameProofs").checked&&textMode==dg("textMode").checked) return;
   contractSameProofs=dg("contractSameProofs").checked;
-  lastBitStreams=bitStreams.map(function (e){return e.stream+";";}).join("");
+  textMode=dg("textMode").checked;
+  lastBitStreams=bitStreamsCombined;
+  dg("textModeOnly").style.display=textMode?"":"none";
   dg("output").innerHTML="";
   var newNodes=[];
   for (var i=0;bitStreams&&i<bitStreams.length;i++){
     var exceptionThrown=null;
     var bitStreamIn=bitStreams[i].stream;
-    var bitStreamWithOptionID=bitStreamIn+contractSameProofs
+    var bitStreamWithOptionID=bitStreamIn+contractSameProofs+textMode;
     try{
       var formattedProof=null;
       var insertIndex=0;
@@ -741,32 +841,47 @@ function compute(){
         }
       }
       if (!formattedProof){
-        if (proofCache.has(bitStreamWithOptionID)) formattedProof=proofCache.get(bitStreamIn);
-        else proofCache.set(bitStreamWithOptionID,formattedProof=formatProofWithLatex(DeriveDetail(bitStreams[i]),contractSameProofs));
+        if (proofCache.has(bitStreamWithOptionID)) formattedProof=proofCache.get(bitStreamWithOptionID);
+        else proofCache.set(bitStreamWithOptionID,formattedProof=(textMode?formatProofWithText:formatProofWithLatex)(DeriveDetail(bitStreams[i]),contractSameProofs));
       }
     }catch(e){
       exceptionThrown=e;
       var node=document.createElement("div");
       node.classList.add("proofcontainer");
+      node.classList.add("text");
       node.innerHTML="Error processing "+bitStreams[i].stream+"<br>&darr;HERE<br>"+bitStreamIn.substring(bitStreams[i].stream.length)+"<br>"+(e.stack?e.stack:e).replace(lineBreakRegex,"<br>");
       dg("output").appendChild(node);
       console.error(e);
     }finally{
       if (!exceptionThrown){
         var node;
-        if (formattedProof instanceof Node){
-          node=formattedProof;
-        }else if (formattedProof instanceof Array){
-          var nodeInnerHTML="";
-          for (var j=0;j<formattedProof.length;j++){
-            nodeInnerHTML+="\\("+formattedProof[j]+"\\)<br>";
-          }
-          node=document.createElement("div");
-          node.classList.add("proofcontainer");
-          node.innerHTML=nodeInnerHTML;
-          newNodes.push(node);
-          outDOMCache.splice(insertIndex,1,[outDOMCacheAccesses,bitStreamWithOptionID,node]);
-        }else throw Error("Something went wrong...");
+        if (textMode){
+          if (typeof formattedProof=="string"){
+            node=document.createElement("div");
+            node.classList.add("proofcontainer");
+            node.classList.add("text");
+            node.innerHTML=formattedProof
+              .replace(/\n/g,"<br>")
+              .replace(/⊢/g,"&vdash;");
+          }else if (formattedProof instanceof Node){
+            node=formattedProof;
+          }else throw Error("Something went wrong...");
+        }else{
+          if (formattedProof instanceof Node){
+            node=formattedProof;
+          }else if (formattedProof instanceof Array){
+            var nodeInnerHTML="";
+            for (var j=0;j<formattedProof.length;j++){
+              nodeInnerHTML+="\\("+formattedProof[j]+"\\)<br>";
+            }
+            node=document.createElement("div");
+            node.classList.add("proofcontainer");
+            node.classList.add("latex");
+            node.innerHTML=nodeInnerHTML;
+            newNodes.push(node);
+            outDOMCache.splice(insertIndex,1,[outDOMCacheAccesses,bitStreamWithOptionID,node]);
+          }else throw Error("Something went wrong...");
+        }
         dg("output").appendChild(node);
       }
       outDOMCacheAccesses++;

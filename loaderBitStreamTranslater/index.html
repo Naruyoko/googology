@@ -14,9 +14,15 @@
   <h1>loader.c Bit Stream to Proof Translater</h1>
   <form name=form>
     <textarea id="input" class="inputbox" oninput="requestAnimationFrame(handlekey)" contentEditable>11011001</textarea>
-    Auto <input id="auto" type="checkbox" checked oninput="requestAnimationFrame(handlekey)">
-    Contract the same proofs <input id="contractSameProofs" type="checkbox" checked oninput="requestAnimationFrame(handlekey)">
-    <input type="button" value="Compute" onclick="compute()">
+    <div>
+      Auto <input id="auto" type="checkbox" checked oninput="requestAnimationFrame(handlekey)">
+      Contract the same proofs <input id="contractSameProofs" type="checkbox" checked oninput="requestAnimationFrame(handlekey)">
+      Text mode <input id="textMode" type="checkbox" oninput="requestAnimationFrame(handlekey)">
+      <input type="button" value="Compute" onclick="compute()">
+    </div>
+    <div id="textModeOnly" style="display:none">
+      <button onclick="printOut();return false;">Print</button>
+    </div>
   </form>
   <div id="output" class="outputbox" readonly>...</div>
   <input type="text" id="copyarea" style="display:none"><br>
