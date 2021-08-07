@@ -513,38 +513,81 @@ function compileInput(s){
   }
   return bitStreams.map(BitStream);
 }
+var proofCache=new Map();
+var outDOMCacheSize=100;
+var outDOMCache=new Array(outDOMCacheSize);
+var outDOMCacheAccesses=0;
 var input="";
+var lastBitStreams="";
 function compute(){
   if (input==dg("input").value) return;
   input=dg("input").value;
-  var output="";
   var bitStreams;
   try{
     bitStreams=compileInput(input);
   }catch(e){
-    output+=(e.stack?e.stack:e).replace(lineBreakRegex,"<br>");
+    lastBitStreams="";
+    dg("output").innerHTML=(e.stack?e.stack:e).replace(lineBreakRegex,"<br>");
+    console.error(e);
+    return;
   }
+  if (lastBitStreams==bitStreams.map(function (e){return e.stream+";";}).join("")) return;
+  lastBitStreams=bitStreams.map(function (e){return e.stream+";";}).join("");
+  dg("output").innerHTML="";
+  var newNodes=[];
   for (var i=0;bitStreams&&i<bitStreams.length;i++){
     var exceptionThrown=null;
+    var bitStreamIn=bitStreams[i].stream;
     try{
-      var formattedProof=formatProofWithLatex(DeriveDetail(bitStreams[i]));
+      var formattedProof=null;
+      var insertIndex=0;
+      for (var j=0;j<outDOMCacheSize;j++){
+        if (outDOMCache[j]&&outDOMCache[j][1]==bitStreamIn){
+          formattedProof=outDOMCache[j][2];
+          outDOMCache[j][0]=outDOMCacheAccesses;
+          break;
+        }else if (outDOMCache[insertIndex]&&(!outDOMCache[j]||outDOMCache[j][0]<outDOMCache[insertIndex][0])){
+          insertIndex=j;
+        }
+      }
+      if (!formattedProof){
+        if (proofCache.has(bitStreamIn)) formattedProof=proofCache.get(bitStreamIn);
+        else proofCache.set(bitStreamIn,formattedProof=formatProofWithLatex(DeriveDetail(bitStreams[i])));
+      }
     }catch(e){
       exceptionThrown=e;
-      output+="<div class=\"proofcontainer\">"+(e.stack?e.stack:e).replace(lineBreakRegex,"<br>")+"</div>";
+      var node=document.createElement("div");
+      node.classList.add("proofcontainer");
+      node.innerHTML="Error processing "+bitStreams[i].stream+"<br>&darr;HERE<br>"+bitStreamIn.substring(bitStreams[i].stream.length)+"<br>"+(e.stack?e.stack:e).replace(lineBreakRegex,"<br>");
+      dg("output").appendChild(node);
+      console.error(e);
     }finally{
       if (!exceptionThrown){
-        output+="<div class=\"proofcontainer\">";
-        for (var j=0;j<formattedProof.length;j++){
-          output+="\\("+formattedProof[j]+"\\)<br>";
-        }
-        output+="</div>";
+        var node;
+        if (formattedProof instanceof Node){
+          node=formattedProof;
+        }else if (formattedProof instanceof Array){
+          var nodeInnerHTML="";
+          for (var j=0;j<formattedProof.length;j++){
+            nodeInnerHTML+="\\("+formattedProof[j]+"\\)<br>";
+          }
+          node=document.createElement("div");
+          node.classList.add("proofcontainer");
+          node.innerHTML=nodeInnerHTML;
+          newNodes.push(node);
+          outDOMCache.splice(insertIndex,1,[outDOMCacheAccesses,bitStreamIn,node]);
+        }else throw Error("Something went wrong...");
+        dg("output").appendChild(node);
       }
+      outDOMCacheAccesses++;
     }
   }
-  dg("output").innerHTML=output;
+  /*var debugDiv=document.createElement("div");
+  debugDiv.innerHTML=outDOMCache.map(e=>e?e[0]+" "+e[1]:"empty").join("<br>");
+  dg("output").appendChild(debugDiv);*/
   // Modified a sample from https://docs.mathjax.org/en/latest/web/typeset.html
-  MathJax.startup.promise = MathJax.startup.promise
-    .then(function() {return MathJax.typesetPromise([dg("output")]);})
+  if (newNodes.length) MathJax.startup.promise = MathJax.startup.promise
+    .then(function() {return MathJax.typesetPromise(newNodes);})
     .catch(function(err) {console.log('Typeset failed: ' + err.message);});
 }
 window.onpopstate=function (e){
