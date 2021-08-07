@@ -4,6 +4,7 @@ window.onload=function (){
   dg('input').onkeydown=handlekey;
   dg('input').onfocus=handlekey;
   dg('input').onmousedown=handlekey;
+  compute();
 }
 function dg(s){
   return document.getElementById(s);
@@ -448,13 +449,16 @@ function Apply(yy,xx){
   else return Pair(Tree.TWO,Pair(yy,xx));
 }
 var deriveCache=new Map();
-// Returns [theorem,proofs,xx,formatted consumed bit stream,is proof empty]
+// Returns [theorem,proofs,proofs as bit streams,xx,consumed bit stream,formatted consumed bit stream,is proof empty]
 // A proof is an array of lines, each line being [theorem,comment]
-function DeriveDetail(xx,proofs){
+function DeriveDetail(xx,proofs,proofsAsBitStreams){
   if (!(xx instanceof BitStream)) xx=new BitStream(xx);
   var isTheMainTheorem=typeof proofs=="undefined";
-  if (isTheMainTheorem) proofs=[];
-  if (!(proofs instanceof Array)) throw Error("Something went wrong... A non-Array was passed to proofs");
+  if (isTheMainTheorem){
+    proofs=[];
+    proofsAsBitStreams=[];
+  }
+  if (!(proofs instanceof Array)||!(proofsAsBitStreams instanceof Array)) throw Error("Something went wrong... A non-Array was passed to proofs");
   var bitStreamIn=xx.stream;
   if (isTheMainTheorem&&deriveCache.has(bitStreamIn)) return deriveCache.get(bitStreamIn);
   var proof=[];
@@ -463,11 +467,13 @@ function DeriveDetail(xx,proofs){
   var context=Tree.ZERO;
   var term=Tree.STAR; //7
   var type=Tree.BOX; //14
+  var consumedBitStream="";
   var formattedBitStream="";
   var isProofEmpty=true;
   var theorem=Tree.ZERO;
   function nextBit(){
     var bit=xx.next();
+    consumedBitStream=+bit+consumedBitStream;
     formattedBitStream=+bit+formattedBitStream;
     return bit;
   }
@@ -478,22 +484,24 @@ function DeriveDetail(xx,proofs){
   pushLine("axiom");
   isProofEmpty=true;
   while (nextBit()){
-    var subResult=DeriveDetail(xx,proofs);
+    var subResult=DeriveDetail(xx,proofs,proofsAsBitStreams);
     var lemma=subResult[0];
     auxTerm=Left(lemma);
     auxType=Left(/*lastRight*/Right(lemma));
     //Since the same bit stream object is passed, there's no need to recover this
     //xx=Left(/*lastRight*/Right(Right(lemma)));
-    //xx=subResult[2];
+    //xx=subResult[3];
     //Same for proofs
     //proofs=subResult[1];
+    //proofsAsBitStreams=subResult[2];
     var lemmaCount=proofs.length;
     var commentAppend;
-    if (subResult[4]){
-      formattedBitStream="["+subResult[3]+"]"+formattedBitStream;
+    consumedBitStream=subResult[4]+consumedBitStream;
+    if (subResult[6]){
+      formattedBitStream="["+subResult[5]+"]"+formattedBitStream;
       commentAppend=" (axiom)";
     }else{
-      formattedBitStream="["+subResult[3]+"]_{("+lemmaCount+")}"+formattedBitStream;
+      formattedBitStream="["+subResult[5]+"]_{("+lemmaCount+")}"+formattedBitStream;
       commentAppend=" ("+lemmaCount+")";
     }
     if (context.equal(/*lastRight*/Right(Right(Right(lemma))))){
@@ -528,8 +536,11 @@ function DeriveDetail(xx,proofs){
       pushLine("variable");
     }
   }
-  if (isTheMainTheorem||!isProofEmpty) proofs.push(proof);
-  var r=[theorem,proofs,xx,formattedBitStream,isProofEmpty];
+  if (isTheMainTheorem||!isProofEmpty){
+    proofs.push(proof);
+    proofsAsBitStreams.push(consumedBitStream);
+  }
+  var r=[theorem,proofs,proofsAsBitStreams,xx,consumedBitStream,formattedBitStream,isProofEmpty];
   if (isTheMainTheorem) deriveCache.set(bitStreamIn,r);
   return r;
 }
@@ -545,35 +556,52 @@ function writeContext(context){
   return contextText;
 }
 
-function formatProofWithLatex(input){
+function formatProofWithLatex(input,contractSameProofs){
   if (typeof input=="number"||input instanceof BitStream) input=DeriveDetail(input);
   if (!(input instanceof Array)) throw Error("Something went wrong...");
+  if (typeof contractSameProofs=="undefined") contractSameProofs=false;
   var theorem=input[0];
   var proofs=input[1];
-  var xx=input[2];
-  var formattedBitStream=input[3];
-  var isProofEmpty=input[4];
-  var bitStreamInfo=(xx.isZero()?"":"{\\color{lightgray}"+xx.toString()+"}")+formattedBitStream;
+  var proofsAsBitStreams=input[2];
+  var xx=input[3];
+  var consumedBitStream=input[4];
+  var formattedBitStream=input[5];
+  var isProofEmpty=input[6];
+  var theoremNumMap=[];
+  if (contractSameProofs){
+    var theoremMap=new Map();
+    for (var i=0;i<proofs.length;i++){
+      var theoremNum;
+      if (theoremMap.has(proofsAsBitStreams[i])) theoremNum=theoremMap.get(proofsAsBitStreams[i]);
+      else theoremMap.set(proofsAsBitStreams[i],theoremNum=theoremMap.size);
+      theoremNumMap.push(theoremNum);
+    }
+  }else{
+    for (var i=0;i<proofs.length;i++) theoremNumMap.push(i);
+  }
+  var bitStreamInfo=(xx.isZero()?"":"{\\color{lightgray}"+xx.toString()+"}")+formattedBitStream.replace(/\((\d+)\)/g,function (s,num){return "("+(theoremNumMap[num-1]+1)+")";});
   var proofBody="\\begin{align}";
+  var theoremsPrinted=0;
   for (var proofi=0;proofi<proofs.length;proofi++){
+    if (theoremNumMap[proofi]<theoremsPrinted) continue;
     var proof=proofs[proofi];
     for (var linei=0;linei<proof.length;linei++){
       var line=proof[linei];
       proofBody+="\n";
       var isLastLineOfLemma=linei==proof.length-1&&proofi<proofs.length-1;
-      if (isLastLineOfLemma) proofBody+="("+(proofi+1)+") ";
+      if (isLastLineOfLemma) proofBody+="("+(theoremNumMap[proofi]+1)+") ";
       proofBody+="&\\quad &";
       var term=Left(line[0]);
       var type=Left(Right(line[0]));
       var context=Right(Right(Right(line[0])));
-      proofBody+=writeContext(context)+"&\\vdash "+term.writeLatex()+":"+type.writeLatex()+"&\\quad &\\text{"+line[1]+"} \\\\";
+      proofBody+=writeContext(context)+"&\\vdash "+term.writeLatex()+":"+type.writeLatex()+"&\\quad &\\text{"+line[1].replace(/\((\d+)\)/,function (s,num){return "("+(theoremNumMap[num-1]+1)+")";})+"} \\\\";
       if (isLastLineOfLemma) proofBody+="\n\\\\";
     }
+    theoremsPrinted++;
   }
   proofBody+="\n\\end{align}";
   return [bitStreamInfo,proofBody];
 }
-
 
 function compileInput(s){
   var wordRegex=/[^\t \(\)]+|[\(\)]/g;
@@ -609,7 +637,6 @@ function compileInput(s){
   var blocks=[];
   var bitStreams=[""];
   var wordIndex=0;
-  var theorems
   while (wordIndex<wordStream.length){
     var word=wordStream[wordIndex];
     if (word.type=="word"&&word.content=="define"){
@@ -678,9 +705,10 @@ var outDOMCacheSize=100;
 var outDOMCache=new Array(outDOMCacheSize);
 var outDOMCacheAccesses=0;
 var input="";
+var contractSameProofs=true;
 var lastBitStreams="";
 function compute(){
-  if (input==dg("input").value) return;
+  if (input==dg("input").value&&contractSameProofs==dg("contractSameProofs").checked) return;
   input=dg("input").value;
   var bitStreams;
   try{
@@ -691,18 +719,20 @@ function compute(){
     console.error(e);
     return;
   }
-  if (lastBitStreams==bitStreams.map(function (e){return e.stream+";";}).join("")) return;
+  if (lastBitStreams==bitStreams.map(function (e){return e.stream+";";}).join("")&&contractSameProofs==dg("contractSameProofs").checked) return;
+  contractSameProofs=dg("contractSameProofs").checked;
   lastBitStreams=bitStreams.map(function (e){return e.stream+";";}).join("");
   dg("output").innerHTML="";
   var newNodes=[];
   for (var i=0;bitStreams&&i<bitStreams.length;i++){
     var exceptionThrown=null;
     var bitStreamIn=bitStreams[i].stream;
+    var bitStreamWithOptionID=bitStreamIn+contractSameProofs
     try{
       var formattedProof=null;
       var insertIndex=0;
       for (var j=0;j<outDOMCacheSize;j++){
-        if (outDOMCache[j]&&outDOMCache[j][1]==bitStreamIn){
+        if (outDOMCache[j]&&outDOMCache[j][1]==bitStreamWithOptionID){
           formattedProof=outDOMCache[j][2];
           outDOMCache[j][0]=outDOMCacheAccesses;
           break;
@@ -711,8 +741,8 @@ function compute(){
         }
       }
       if (!formattedProof){
-        if (proofCache.has(bitStreamIn)) formattedProof=proofCache.get(bitStreamIn);
-        else proofCache.set(bitStreamIn,formattedProof=formatProofWithLatex(DeriveDetail(bitStreams[i])));
+        if (proofCache.has(bitStreamWithOptionID)) formattedProof=proofCache.get(bitStreamIn);
+        else proofCache.set(bitStreamWithOptionID,formattedProof=formatProofWithLatex(DeriveDetail(bitStreams[i]),contractSameProofs));
       }
     }catch(e){
       exceptionThrown=e;
@@ -735,7 +765,7 @@ function compute(){
           node.classList.add("proofcontainer");
           node.innerHTML=nodeInnerHTML;
           newNodes.push(node);
-          outDOMCache.splice(insertIndex,1,[outDOMCacheAccesses,bitStreamIn,node]);
+          outDOMCache.splice(insertIndex,1,[outDOMCacheAccesses,bitStreamWithOptionID,node]);
         }else throw Error("Something went wrong...");
         dg("output").appendChild(node);
       }
