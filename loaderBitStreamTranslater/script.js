@@ -295,8 +295,8 @@ function Lift(xx){
 function Apply(yy,xx){
   if (!(yy instanceof Tree)) yy=new Tree(yy);
   if (!(xx instanceof Tree)) xx=new Tree(xx);
-  if (Left(yy).equal(Tree.ONE)) return Pair(2,xx);
-  else return Subst(4,xx,4,Right(/*lastRight*/Right(yy)));
+  if (Left(yy).equal(Tree.ONE)) return Subst(4,xx,4,Right(/*lastRight*/Right(yy)));
+  else return Pair(Tree.TWO,Pair(yy,xx));
 }
 // Returns [theorem,proofs,xx,formatted consumed bit stream,is proof empty]
 // A proof is an array of lines, each line being [theorem,comment]
@@ -313,7 +313,6 @@ function DeriveDetail(xx,proofs){
   var type=Tree.BOX; //14
   var formattedBitStream="";
   var isProofEmpty=true;
-  var usingLemma=0;
   var theorem=Tree.ZERO;
   function nextBit(){
     var bit=xx.next();
@@ -321,10 +320,6 @@ function DeriveDetail(xx,proofs){
     return bit;
   }
   function pushLine(comment){
-    if (usingLemma){
-      comment+=" ("+usingLemma+")";
-      usingLemma=0;
-    }
     proof.push([theorem=Pair(term,Pair(type,Pair(/*xx*/Tree.ZERO,context))),comment]);
     isProofEmpty=false;
   }
@@ -341,23 +336,25 @@ function DeriveDetail(xx,proofs){
     //Same for proofs
     //proofs=subResult[1];
     var lemmaCount=proofs.length;
+    var commentAppend;
     if (subResult[4]){
       formattedBitStream="["+subResult[3]+"]"+formattedBitStream;
+      commentAppend=" (axiom)";
     }else{
       formattedBitStream="["+subResult[3]+"]_{("+lemmaCount+")}"+formattedBitStream;
-      usingLemma=lemmaCount;
+      commentAppend=" ("+lemmaCount+")";
     }
     if (context.equal(/*lastRight*/Right(Right(Right(lemma))))){
-      if (!Left(type)&&Left(/*lastRight*/Right(type)).equal(auxType)&&nextBit()){
+      if (Left(type).isNull()&&Left(/*lastRight*/Right(type)).equal(auxType)&&nextBit()){
         type=Subst(4,auxTerm,4,/*lastRight*/Right(Right(type)));
         term=Apply(term,auxTerm);
-        pushLine("application");
+        pushLine("application"+commentAppend);
       }
       if (nextBit()&&(auxType.equal(Tree.STAR)||auxType.equal(Tree.BOX))){
         context=Pair(auxTerm,context);
         term=Lift(term);
         type=Lift(type);
-        pushLine("weakening");
+        pushLine("weakening"+commentAppend);
       }
     }
     if (!context.isNull()&&nextBit()){
