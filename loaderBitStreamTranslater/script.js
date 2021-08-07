@@ -11,7 +11,7 @@ function dg(s){
 
 function BitStream(s){
   if (!(this instanceof BitStream)) return new BitStream(s);
-  if (typeof s=="undefined"){
+  if (typeof s=="undefined"||s===null){
     this.stream="";
   }else if (typeof s=="number"){
     this.stream=s===0?"":Math.floor(s).toString(2);
@@ -45,126 +45,72 @@ BitStream.prototype.next=function (){
   this.stream=this.stream.substring(0,this.stream.length-1);
   return bit;
 }
+BitStream.prototype.peek=function (){
+  return this.stream[this.stream.length-1]==1;
+}
 Object.defineProperty(BitStream.prototype,"constructor",{
   value:BitStream,
   enumerable:false,
   writable:true
 });
 
-function Tree(s){
+function Tree(s,t){
   if (!(this instanceof Tree)) return new Tree(s);
-  if (typeof s=="undefined"||s===null){
-    this.left=null;
-    this.right=null;
+  if (typeof t!="undefined"&&t!==null){
+    return new TreeFromPair(s,t);
+  }else if (typeof s=="undefined"||s===null){
+    this.leftCache=null;
+    this.rightCache=null;
+    this.cached=false;
   }else if (typeof s=="number"){
-    if (s==0){
-      this.left=null;
-      this.right=null;
-    }else{
-      var left=s;
-      var right=0;
-      while ((left&1)==0){
-        left>>=1;
-        right++;
-      }
-      this.left=new Tree(left>>1);
-      this.right=new Tree(right);
-    }
-  }else if (s instanceof Array){
-    this.left=new Tree(s[0]);
-    this.right=new Tree(s[1]);
+    return new TreeFromNumber(s);
   }else if (s instanceof BitStream){
-    if (s.isZero()){
-      this.left=null;
-      this.right=null;
-    }else{
-      var left=s.clone();
-      var right=0;
-      while (left.next()==0) right++;
-      this.left=new Tree(s.toNumber());
-      this.right=new Tree(right);
-    }
-  }else if (s instanceof Tree){
-    if (s.isNull()){
-      this.left=null;
-      this.right=null;
-    }else{
-      this.left=s.left.clone();
-      this.right=s.right.clone();
-    }
+    return new TreeFromBitStream(s);
   }else if (s instanceof Object){
-    this.left=new Tree(s.left);
-    this.right=new Tree(s.right);
+    return new TreeFromPair(s,t);
   }else{
     throw Error("Invalid input");
   }
 }
+Tree.copyCache=function (target,source){
+  if (!(target instanceof Tree)||!(source instanceof Tree)) throw Error("Expected Trees");
+  target.leftCache=source.leftCache;
+  target.rightCache=source.rightCache;
+  target.cached=source.cached;
+}
 Tree.prototype.clone=function (){
-  return new Tree(this);
+  throw Error("Not implemented");
 }
 Tree.clone=function (x){
   if (!(x instanceof Tree)) x=new Tree(x);
   return x.clone();
 }
+Tree.prototype.left=function (){
+  if (!this.cached) this.calculateLR();
+  return this.leftCache;
+}
+Tree.prototype.right=function (){
+  if (!this.cached) this.calculateLR();
+  return this.rightCache;
+}
+Tree.prototype.calculateLR=function (){
+  throw Error("Not implemented");
+}
 Tree.prototype.isNull=function (){
-  return this.left===null;
+  return this.left()===null;
 }
 Tree.prototype.toNumber=function (){
   if (this.isNull()) return 0;
-  else return (2*this.left.toNumber()+1)<<this.right.toNumber();
+  else return (2*this.left().toNumber()+1)<<this.right().toNumber();
 }
 Tree.prototype.valueOf=function (){
   return this.toNumber();
-}
-Tree.prototype.writeRaw=function (){
-  if (this.isNull()) return "0";
-  else return "Pair("+this.left.writeRaw()+","+this.right.writeRaw()+")";
-}
-Tree.prototype.write=function (){
-  if (this.isNull()) return "0";
-  else if (this.left.isNull()){
-    if (!this.right.isNull()) return "PI("+this.right.left.write()+","+this.right.right.write()+")";
-    else return this.writeRaw();
-  }else if (this.left.equal(Tree.ONE)){
-    if (!this.right.isNull()) return "LAMBDA("+this.right.left.write()+","+this.right.right.write()+")";
-    else return this.writeRaw();
-  }else if (this.left.equal(Tree.TWO)){
-    if (!this.right.isNull()) return "APPLY("+this.right.left.write()+","+this.right.right.write()+")";
-    else return this.writeRaw();
-  }else if (this.left.equal(Tree.THREE)){
-    if (this.right.isNull()) return "STAR";
-    else if (this.right.equal(Tree.ONE)) return "BOX";
-    else return this.writeRaw();
-  }else{
-    if (this.right.isNull()) return "VAR "+(this.left.toNumber()/2-2);
-    else return this.writeRaw();
-  }
-}
-Tree.prototype.writeLatex=function (){
-  if (this.isNull()) return "0";
-  else if (this.left.isNull()){
-    if (!this.right.isNull()) return "(\\Pi "+this.right.left.writeLatex()+"."+this.right.right.writeLatex()+")";
-    else return this.writeRaw();
-  }else if (this.left.equal(Tree.ONE)){
-    if (!this.right.isNull()) return "(\\lambda "+this.right.left.writeLatex()+"."+this.right.right.writeLatex()+")";
-    else return this.writeRaw();
-  }else if (this.left.equal(Tree.TWO)){
-    if (!this.right.isNull()) return "("+this.right.left.writeLatex()+"\\ "+this.right.right.writeLatex()+")";
-    else return this.writeRaw();
-  }else if (this.left.equal(Tree.THREE)){
-    if (this.right.isNull()) return "\\ast ";
-    else if (this.right.equal(Tree.ONE)) return "\\square ";
-    else return this.writeRaw();
-  }else{
-    if (this.right.isNull()) return this.left.toNumber()/2-2+"";
-    else return this.writeRaw();
-  }
 }
 Tree.prototype.equal=function (other){
   if (!(other instanceof Tree)) other=new Tree(other);
   if (this.isNull()) return other.isNull();
   else if (other.isNull()) return false;
-  else return this.left.equal(other.left)&&this.right.equal(other.right);
+  else return this.left().equal(other.left())&&this.right().equal(other.right());
 }
 Tree.equal=function (x,y){
   if (!(x instanceof Tree)) x=new Tree(x);
@@ -179,65 +125,101 @@ Tree.notEqual=function (x,y){
   if (!(y instanceof Tree)) y=new Tree(y);
   return x.notEqual(y);
 }
-Tree.ZERO=new Tree(0);
-Tree.ONE=new Tree(1);
-Tree.TWO=new Tree(2);
-Tree.THREE=new Tree(3);
-Tree.STAR=new Tree(7);
-Tree.BOX=new Tree(14);
-Tree.VAR0=new Tree(9);
-Tree.VAR1=new Tree(13);
+Tree.prototype.writeRaw=function (nullText){
+  if (this.isNull()) return typeof nullText=="undefined"?"0":nullText;
+  else return "Pair("+this.left().writeRaw(nullText)+","+this.right().writeRaw(nullText)+")";
+}
+Tree.prototype.write=function (){
+  if (this.isNull()) return "0";
+  else if (this.left().isNull()){
+    if (!this.right().isNull()) return "PI("+this.right().left().write()+","+this.right().right().write()+")";
+    else return this.writeRaw();
+  }else if (this.left().equal(Tree.ONE)){
+    if (!this.right().isNull()) return "LAMBDA("+this.right().left().write()+","+this.right().right().write()+")";
+    else return this.writeRaw();
+  }else if (this.left().equal(Tree.TWO)){
+    if (!this.right().isNull()) return "APPLY("+this.right().left().write()+","+this.right().right().write()+")";
+    else return this.writeRaw();
+  }else if (this.left().equal(Tree.THREE)){
+    if (this.right().isNull()) return "STAR";
+    else if (this.right().equal(Tree.ONE)) return "BOX";
+    else return this.writeRaw();
+  }else{
+    if (this.right().isNull()) return "VAR "+(this.left().toNumber()/2-2);
+    else return this.writeRaw();
+  }
+}
+Tree.prototype.writeLatex=function (){
+  if (this.isNull()) return "\\emptyset ";
+  else if (this.left().isNull()){
+    if (!this.right().isNull()) return "(\\Pi "+this.right().left().writeLatex()+"."+this.right().right().writeLatex()+")";
+    else return this.writeRaw("\\emptyset ");
+  }else if (this.left().equal(Tree.ONE)){
+    if (!this.right().isNull()) return "(\\lambda "+this.right().left().writeLatex()+"."+this.right().right().writeLatex()+")";
+    else return this.writeRaw("\\emptyset ");
+  }else if (this.left().equal(Tree.TWO)){
+    if (!this.right().isNull()) return "("+this.right().left().writeLatex()+"\\ "+this.right().right().writeLatex()+")";
+    else return this.writeRaw("\\emptyset ");
+  }else if (this.left().equal(Tree.THREE)){
+    if (this.right().isNull()) return "\\ast ";
+    else if (this.right().equal(Tree.ONE)) return "\\square ";
+    else return this.writeRaw("\\emptyset ");
+  }else{
+    if (this.right().isNull()) return this.left().toNumber()/2-2+"";
+    else return this.writeRaw("\\emptyset ");
+  }
+}
 Tree.prototype.plusOne=function (){
-  if (this.isNull()) return Tree.ONE.clone();
-  else if (!this.right.isNull()) return Pair(Pair(this.left,this.right.minusOne()),Tree.ZERO);
-  else return this.left.plusOne().double();
+  if (this.isNull()) return Tree.ONE;
+  else if (!this.right().isNull()) return Pair(Pair(this.left(),this.right().minusOne()),Tree.ZERO);
+  else return this.left().plusOne().double();
 }
 Tree.prototype.minusOne=function (){
-  var r=this.left.double();
-  for (var n=+this.right;n>=0;n--) r=Pair(r,Tree.ZERO);
+  var r=this.left().double();
+  for (var n=this.right().toNumber();n>=0;n--) r=Pair(r,Tree.ZERO);
   return r;
 }
 Tree.prototype.double=function (){
-  if (this.isNull()) return this.clone();
-  else return Pair(this.left,this.right.plusOne());
+  if (this.isNull()) return this;
+  else return Pair(this.left(),this.right().plusOne());
 }
 Tree.prototype.half=function (){
-  if (this.isNull()) return this.clone();
-  else if (this.right.isNull()) return this.right.clone();
-  else return Pair(this.left,this.right.minusOne());
+  if (this.isNull()) return this;
+  else if (this.right().isNull()) return this.right();
+  else return Pair(this.left(),this.right().minusOne());
 }
 Tree.prototype.add=function (other){
-  if (typeof other=="number") return new Tree(this.toNumber()+other);
+  if (typeof other=="number") return new TreeFromNumber(this.toNumber()+other);
   if (!(other instanceof Tree)) other=new Tree(other);
-  return new Tree(this.toNumber()+other.toNumber());
+  return new TreeFromNumber(this.toNumber()+other.toNumber());
 }
 Tree.add=function (x,y){
   if (typeof x=="number"){
-    if (typeof y=="number") return new Tree(x+y);
+    if (typeof y=="number") return new TreeFromNumber(x+y);
     if (!(y instanceof Tree)) y=new Tree(y);
-    return new Tree(x+y.toNumber());
+    return new TreeFromNumber(x+y.toNumber());
   }else{
     if (!(x instanceof Tree)) x=new Tree(x);
-    if (typeof y=="number") return new Tree(x.toNumber()+y);
+    if (typeof y=="number") return new TreeFromNumber(x.toNumber()+y);
     if (!(y instanceof Tree)) y=new Tree(y);
-    return new Tree(x.toNumber()+y.toNumber());
+    return new TreeFromNumber(x.toNumber()+y.toNumber());
   }
 }
 Tree.prototype.sub=function (other){
-  if (typeof other=="number") return new Tree(this.toNumber()-other);
+  if (typeof other=="number") return new TreeFromNumber(this.toNumber()-other);
   if (!(other instanceof Tree)) other=new Tree(other);
-  return new Tree(this.toNumber()-other.toNumber());
+  return new TreeFromNumber(this.toNumber()-other.toNumber());
 }
 Tree.sub=function (x,y){
   if (typeof x=="number"){
-    if (typeof y=="number") return new Tree(x-y);
+    if (typeof y=="number") return new TreeFromNumber(x-y);
     if (!(y instanceof Tree)) y=new Tree(y);
-    return new Tree(x-y.toNumber());
+    return new TreeFromNumber(x-y.toNumber());
   }else{
     if (!(x instanceof Tree)) x=new Tree(x);
-    if (typeof y=="number") return new Tree(x.toNumber()-y);
+    if (typeof y=="number") return new TreeFromNumber(x.toNumber()-y);
     if (!(y instanceof Tree)) y=new Tree(y);
-    return new Tree(x.toNumber()-y.toNumber());
+    return new TreeFromNumber(x.toNumber()-y.toNumber());
   }
 }
 Tree.prototype.shiftLeft=function (other){
@@ -253,20 +235,187 @@ Object.defineProperty(Tree.prototype,"constructor",{
   writable:true
 });
 
+function TreeFromNumber(s){
+  if (!(this instanceof TreeFromNumber)) return new TreeFromNumber(s);
+  Tree.call(this);
+  if (typeof s=="undefined"||s===null){
+    this.numberValue=0;
+  }else if (typeof s=="number"){
+    this.numberValue=s;
+  }else if (s instanceof TreeFromNumber){
+    Tree.copyCache(this,s);
+    this.numberValue=s.numberValue;
+  }else{
+    throw Error("Invalid input");
+  }
+}
+Object.assign(TreeFromNumber,Tree);
+TreeFromNumber.prototype=Object.create(Tree.prototype);
+TreeFromNumber.prototype.clone=function (){
+  return new TreeFromNumber(this);
+}
+TreeFromNumber.prototype.calculateLR=function (){
+  if (this.numberValue===0){
+    this.leftCache=null;
+    this.rightCache=null;
+  }else{
+    var left=this.numberValue;
+    var right=0;
+    while ((left&1)==0){
+      left>>=1;
+      right++;
+    }
+    this.leftCache=new TreeFromNumber(left>>1);
+    this.rightCache=new TreeFromNumber(right);
+  }
+  this.cached=true;
+}
+TreeFromNumber.prototype.isNull=function (){
+  return this.numberValue===0;
+}
+TreeFromNumber.prototype.toNumber=function (){
+  return this.numberValue;
+}
+TreeFromNumber.prototype.equal=function (other){
+  if (typeof other=="number") return this.numberValue==other;
+  if (other instanceof TreeFromNumber) return this.numberValue==other.numberValue;
+  return Tree.prototype.equal.call(this,other);
+}
+Object.defineProperty(TreeFromNumber.prototype,"constructor",{
+  value:TreeFromNumber,
+  enumerable:false,
+  writable:true
+});
+
+function TreeFromBitStream(s){
+  if (!(this instanceof TreeFromBitStream)) return new TreeFromBitStream(s);
+  Tree.call(this);
+  if (typeof s=="undefined"||s===null){
+    this.bitstreamValue=new BitStream();
+  }else if (s instanceof BitStream){
+    this.bitstreamValue=s.clone();
+  }else if (s instanceof TreeFromBitStream){
+    Tree.copyCache(this,s);
+    this.bitstreamValue=s.bitstreamValue;
+  }else{
+    throw Error("Invalid input");
+  }
+}
+Object.assign(TreeFromBitStream,Tree);
+TreeFromBitStream.prototype=Object.create(Tree.prototype);
+TreeFromBitStream.prototype.clone=function (){
+  return new TreeFromBitStream(this);
+}
+TreeFromBitStream.prototype.calculateLR=function (){
+  if (this.bitstreamValue.isZero()){
+    this.leftCache=null;
+    this.rightCache=null;
+  }else{
+    var left=this.bitstreamValue.clone();
+    var right=0;
+    while (left.next()==0) right++;
+    this.left=new TreeFromBitStream(left);
+    this.right=new TreeFromNumber(right);
+  }
+  this.cached=true;
+}
+TreeFromBitStream.prototype.isNull=function (){
+  return this.bitstreamValue.isZero();
+}
+TreeFromBitStream.prototype.toNumber=function (){
+  return this.bitstreamValue.toNumber();
+}
+TreeFromBitStream.prototype.equal=function (other){
+  if (typeof other=="number") return this.bitstreamValue.equal(other);
+  if (other instanceof TreeFromBitStream) return this.bitstreamValue.equal(other.bitstreamValue);
+  return Tree.prototype.equal.call(this,other);
+}
+Object.defineProperty(TreeFromBitStream.prototype,"constructor",{
+  value:TreeFromBitStream,
+  enumerable:false,
+  writable:true
+});
+
+function TreeFromPair(s,t){
+  if (!(this instanceof TreeFromPair)) return new TreeFromPair(s,t);
+  Tree.call(this);
+  if (typeof t=="undefined"||t===null){
+    if (typeof s=="undefined"||s===null){
+      this.leftInput=null;
+      this.rightInput=null;
+      this.wasInputNull=true;
+    }else if (s instanceof Array){
+      this.leftInput=s[0];
+      this.rightInput=s[1];
+      this.wasInputNull=false;
+    }else if (s instanceof TreeFromPair){
+      this.leftInput=s.leftInput;
+      this.rightInput=s.rightInput;
+      Tree.copyCache(this,s);
+      this.wasInputNull=false;
+    }else if (s instanceof Tree){
+      this.leftInput=s.left();
+      this.rightInput=s.right();
+      Tree.copyCache(this,s);
+      this.wasInputNull=false;
+    }else if (s instanceof Object){
+      this.leftInput=s.left;
+      this.rightInput=s.right;
+      this.wasInputNull=false;
+    }else{
+      throw Error("Invalid input");
+    }
+  }else{
+    if (s===null&&t!==null||s!==null&&t===null) throw Error("Invalid input");
+    this.leftInput=s;
+    this.rightInput=t;
+    this.wasInputNull=false;
+  }
+}
+Object.assign(TreeFromPair,Tree);
+TreeFromPair.prototype=Object.create(Tree.prototype);
+TreeFromPair.prototype.clone=function (){
+  return new TreeFromPair(this);
+}
+TreeFromPair.prototype.calculateLR=function (){
+  if (this.wsInputNull){
+    this.leftCache=null;
+    this.rightCache=null;
+  }else{
+    this.leftCache=new Tree(this.leftInput);
+    this.rightCache=new Tree(this.rightInput);
+  }
+  this.cached=true;
+}
+Object.defineProperty(TreeFromPair.prototype,"constructor",{
+  value:TreeFromPair,
+  enumerable:false,
+  writable:true
+});
+
+Tree.ZERO=new Tree(0);
+Tree.ONE=new Tree(1);
+Tree.TWO=new Tree(2);
+Tree.THREE=new Tree(3);
+Tree.STAR=new Tree(7);
+Tree.BOX=new Tree(14);
+Tree.VAR0=new Tree(9);
+Tree.VAR1=new Tree(13);
+
 function Pair(x,y){
-  return new Tree([x,y]);
+  return new TreeFromPair(x,y);
 }
 function Left(x){
   if (!(x instanceof Tree)) x=new Tree(x);
   if (x.isNull()){
     return Tree.ZERO;
   }else{
-    return x.left;
+    return x.left();
   }
 }
 function Right(x){
   if (!(x instanceof Tree)) x=new Tree(x);
-  return x.isNull()?Tree.ZERO:x.right;
+  return x.isNull()?Tree.ZERO:x.right();
 }
 
 function Subst(vv,yy,context,term){
