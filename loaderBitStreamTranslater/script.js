@@ -607,8 +607,9 @@ function compileInput(s){
   }
   var scopes=[{macros:{}}];
   var blocks=[];
-  var bitStreams=[];
+  var bitStreams=[""];
   var wordIndex=0;
+  var theorems
   while (wordIndex<wordStream.length){
     var word=wordStream[wordIndex];
     if (word.type=="word"&&word.content=="define"){
@@ -629,12 +630,13 @@ function compileInput(s){
       scopes.unshift({macros:{}});
       wordIndex++;
     }else if (word.type=="word"&&word.content=="end"){
-      bitStreams.push(blocks.shift());
+      if (bitStreams[bitStreams.length-1]) bitStreams.push("");
+      bitStreams[bitStreams.length-1]+=blocks.shift();
       scopes.shift();
       wordIndex++;
     }else if (word.type=="word"){
       var expanding=[word];
-      for (var i=0;console.log(expanding),i<expanding.length;i++){
+      for (var i=0;i<expanding.length;i++){
         for (var scopeDepth=0;scopeDepth<scopes.length;scopeDepth++){
           if (typeof scopes[scopeDepth].macros[expanding[i].content]!="undefined"){
             expanding.splice(i,1,...scopes[scopeDepth].macros[expanding[i].content]);
@@ -659,12 +661,16 @@ function compileInput(s){
         }
       }
       if (blocks.length) blocks[0]+=processed;
-      else bitStreams.push(processed);
+      else bitStreams[bitStreams.length-1]+=processed;
+      wordIndex++;
+    }else if (word.type=="newLine"){
+      if (bitStreams[bitStreams.length-1]) bitStreams.push("");
       wordIndex++;
     }else{
       wordIndex++;
     }
   }
+  if (!bitStreams[bitStreams.length-1]) bitStreams.pop();
   return bitStreams.map(BitStream);
 }
 var proofCache=new Map();
