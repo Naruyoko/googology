@@ -35,6 +35,8 @@
       <li>Write "define alias bitstream" to define a macro be included in later streams. Write "undef alias" to remove a macro. Aliases must not start with a number.</li>
       <li>"start" and "end" can't be defined or undefined as a macro.</li>
       <li>In bit streams, characters other than "0" and "1" are ignored, unless they make a keyword or a defined alias.</li>
+      <li>When a single "#", enclosed by spaces or line endings, is written, anything after the "#" is ignored for that line.</li>
+      <li>Anything between a "#{" and "#}" will be ignored, even when placed accross multiple lines. The must be enclosed by blanks.</li>
     </ul>
   </div>
   <div>

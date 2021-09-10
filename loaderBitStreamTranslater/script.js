@@ -745,6 +745,11 @@ function compileInput(s){
       bitStreams[bitStreams.length-1]+=blocks.shift();
       scopes.shift();
       wordIndex++;
+    }else if (word.type=="word"&&word.content=="#"){
+      while (wordStream[++wordIndex]&&wordStream[wordIndex].type!="newLine") continue;
+    }else if (word.type=="word"&&word.content=="#{"){
+      while (wordStream[++wordIndex]&&!(wordStream[wordIndex].type=="word"&&wordStream[wordIndex].content=="#}")) continue;
+      wordIndex++;
     }else if (word.type=="word"){
       var expanding=[word];
       for (var i=0;i<expanding.length;i++){
