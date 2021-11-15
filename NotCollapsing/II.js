@@ -69,6 +69,7 @@ Object.defineProperty(Scanner.prototype,"constructor",{
 function Term(s){
   if (s instanceof Term) return s.clone();
   else if (typeof s!="undefined"&&typeof s!="string") throw Error("Invalid expression: "+s);
+  if (!(this instanceof Term)) return new Term(s);
   if (s) return Term.build(s);
   else return this;
 }
@@ -129,7 +130,7 @@ Term.build=function (s,context){
       if (state!=START&&state!=PLUS) throw Error("Unexpected character "+next+" at position "+scanpos+" in expression "+scanner.s);
       if (next=="I") scanner.move(1);
       var nextnext=scanner.next();
-      if (nextnext!="[") throw Error("Unexpected opening [ at position "+scanner.pos+", instead got "+nextnext+" in expression "+scanner.s);
+      if (nextnext!="[") throw Error("Expected opening [ at position "+scanner.pos+", instead got "+nextnext+" in expression "+scanner.s);
       var innerterm=Term.build(scanner,IITERMINER);
       var nextnext=scanner.next();
       if (nextnext!="]") throw Error("Expected closing ) at position "+(scanner.pos-1)+", instead got "+nextnext+" in expression "+scanner.s);
@@ -482,14 +483,16 @@ SumTerm.prototype.getLeft=function (){
   return Term(this.terms[0]);
 }
 SumTerm.prototype.getNotLeft=function (){
-  if (this.terms.length<=2) return Term(this.terms[1]);
+  if (this.terms.length<2) return ZeroTerm.build();
+  else if (this.terms.length<=2) return Term(this.terms[1]);
   else return SumTerm.build(this.terms.slice(1));
 }
 SumTerm.prototype.getRight=function (){
   return Term(this.terms[this.terms.length-1]);
 }
 SumTerm.prototype.getNotRight=function (){
-  if (this.terms.length<=2) return Term(this.terms[0]);
+  if (this.terms.length<2) return ZeroTerm.build();
+  else if (this.terms.length<=2) return Term(this.terms[0]);
   else return SumTerm.build(this.terms.slice(0,-1));
 }
 SumTerm.prototype.slice=function (start,end){

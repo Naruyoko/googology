@@ -441,14 +441,16 @@ SumTerm.prototype.getLeft=function (){
   return Term(this.terms[0]);
 }
 SumTerm.prototype.getNotLeft=function (){
-  if (this.terms.length<=2) return Term(this.terms[1]);
+  if (this.terms.length<2) return ZeroTerm.build();
+  else if (this.terms.length<=2) return Term(this.terms[1]);
   else return SumTerm.build(this.terms.slice(1));
 }
 SumTerm.prototype.getRight=function (){
   return Term(this.terms[this.terms.length-1]);
 }
 SumTerm.prototype.getNotRight=function (){
-  if (this.terms.length<=2) return Term(this.terms[0]);
+  if (this.terms.length<2) return ZeroTerm.build();
+  else if (this.terms.length<=2) return Term(this.terms[0]);
   else return SumTerm.build(this.terms.slice(0,-1));
 }
 SumTerm.prototype.slice=function (start,end){
