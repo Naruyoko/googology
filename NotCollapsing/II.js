@@ -11,27 +11,6 @@ function dg(s){
   return document.getElementById(s);
 }
 
-function occurrences(string, subString, allowOverlapping) {
-  string+="";
-  subString+="";
-  if (subString.length<=0)return string.length+1;
-  var n=0,
-  pos=0,
-  step=allowOverlapping?1:subString.length;
-  while (true){
-    pos=string.indexOf(subString,pos);
-    if (pos>=0){
-      ++n;
-      pos+=step;
-    }else break;
-  }
-  return n;
-}
-function isMatchingParens(s){
-  return occurrences(s,"{")==occurrences(s,"}")
-    &&occurrences(s,"[")==occurrences(s,"]")
-    &&occurrences(s,"(")==occurrences(s,")");
-}
 function normalizeAbbreviations(s){
   return Term(s)+"";
 }
@@ -39,13 +18,61 @@ function abbreviate(s){
   return Term(s).toString(true);
 }
 
+function Scanner(s){
+  if (s instanceof Scanner) return s.clone();
+  if (typeof s!="string") throw Error("Invalid expression: "+s);
+  if (!(this instanceof Scanner)) return new Scanner(s);
+  this.s=s;
+  this.pos=0;
+  this.length=s.length;
+  return this;
+}
+Scanner.prototype.clone=function (){
+  return new Scanner(this.s);
+}
+Scanner.prototype.next=function (){
+  if (this.pos>=this.length) return null;
+  var c=this.s.charAt(this.pos);
+  ++this.pos;
+  return c;
+}
+Scanner.prototype.nextNumber=function (){
+  var s=this.s.substring(this.pos);
+  var m=s.match(/^[0-9]+/);
+  if (m) {
+    this.pos+=m[0].length;
+    return Number(m[0]);
+  }
+  return null;
+}
+Scanner.prototype.peek=function (length,offset){
+  if (typeof length=="undefined") length=1;
+  if (typeof offset=="undefined") offset=0;
+  if (this.pos+offset>this.length) return null;
+  return this.s.substring(this.pos+offset,this.pos+offset+length);
+}
+Scanner.prototype.move=function (n){
+  this.pos+=n;
+}
+Scanner.prototype.hasNext=function (){
+  return this.pos<this.length;
+}
+Scanner.prototype.finished=function (){
+  return this.pos>=this.length;
+}
+Object.defineProperty(Scanner.prototype,"constructor",{
+  value:Scanner,
+  enumerable:false,
+  writable:true
+});
+
 function Term(s){
   if (s instanceof Term) return s.clone();
   else if (typeof s!="undefined"&&typeof s!="string") throw Error("Invalid expression: "+s);
   if (s) return Term.build(s);
   else return this;
 }
-Term.build=function (s){
+/*Term.build=function (s){
   if (s instanceof Term) return s.clone();
   if (!isMatchingParens(s)) throw Error("Invalid expression: "+s);
   var strin=s;
@@ -145,6 +172,177 @@ Term.build=function (s){
     if (!manipulated) throw Error("Error parsing expression: "+strin);
   }
   return getSubterm(s);
+}*/
+Term.build=function (s,context){
+  if (s instanceof Term) return s.clone();
+  function appendToRSum(term){
+    if (state==START) r=term;
+    else if (state==PLUS){
+      if (term instanceof ZeroTerm);
+      else if (r instanceof ZeroTerm) r=term;
+      else r=SumTerm.buildNoClone([r,term]);
+    }else throw Error("Wrong state when attempting to append as sum");
+    state=CLOSEDTERM;
+  }
+  var nums="0123456789";
+  var scanner;
+  if (typeof s=="string") scanner=new Scanner(s);
+  else if (s instanceof Scanner) scanner=s;
+  else throw Error("Invalid expression: "+s);
+  var r=null;
+  var startpos=scanner.pos;
+  var TOP=0;
+  var PSITERMSUPERSCRIPT=1;
+  var PSITERMSUBSCRIPT=2;
+  var PSITERMINNER=3;
+  var IITERMINER=4;
+  var BRACES=5;
+  var contextNames=["TOP","PSITERMSUPERSCRIPT","PSITERMSUBSCRIPT","PSITERMINNER","IITERMINER","BRACES"];
+  if (typeof context=="undefined") context=TOP;
+  var START=0;
+  var PLUS=1;
+  var CLOSEDTERM=2;
+  var EXIT=3;
+  var stateNames=["START","PLUS","CLOSEDTERM","EXIT"];
+  var state=START;
+  while (scanner.hasNext()&&state!=EXIT){
+    var scanpos=scanner.pos;
+    var next=scanner.next();
+    if (nums.indexOf(next)!=-1){
+      if (state!=START&&state!=PLUS) throw Error("Unexpected character "+next+" at position "+scanpos+" in expression "+scanner.s);
+      scanner.move(-1);
+      var num=scanner.nextNumber();
+      if (num==0){
+        appendToRSum(ZeroTerm.build());
+      }else if (num==1){
+        appendToRSum(Term.ONE.clone());
+      }else{
+        var decomposed;
+        if (state==START) decomposed=[];
+        else if (state==PLUS) decomposed=[r];
+        for (var i=0;i<num;i++){
+          decomposed.push(Term.ONE.clone());
+        }
+        r=SumTerm.buildNoClone(decomposed);
+        state=CLOSEDTERM;
+      }
+    }else if (next=="ℐ"||next=="I"&&scanner.peek()=="I"){
+      if (state!=START&&state!=PLUS) throw Error("Unexpected character "+next+" at position "+scanpos+" in expression "+scanner.s);
+      if (next=="I") scanner.move(1);
+      var nextnext=scanner.next();
+      if (nextnext!="[") throw Error("Unexpected opening [ at position "+scanner.pos+", instead got "+nextnext+" in expression "+scanner.s);
+      var innerterm=Term.build(scanner,IITERMINER);
+      var nextnext=scanner.next();
+      if (nextnext!="]") throw Error("Expected closing ) at position "+(scanner.pos-1)+", instead got "+nextnext+" in expression "+scanner.s);
+      appendToRSum(IITerm.build(innerterm));
+    }else if (next=="ω"||next=="w"){
+      if (state!=START&&state!=PLUS) throw Error("Unexpected character "+next+" at position "+scanpos+" in expression "+scanner.s);
+      appendToRSum(Term.SMALLOMEGA.clone());
+    }else if (next=="Ω"||next=="W"){
+      if (state!=START&&state!=PLUS) throw Error("Unexpected character "+next+" at position "+scanpos+" in expression "+scanner.s);
+      if (scanner.hasNext()&&scanner.peek()=="_"&&nums.indexOf(scanner.peek(1,1))!=-1){
+        scanner.move(1);
+        var num=scanner.nextNumber();
+        if (num==0){
+          throw Error("Invalid expression "+scanner.scanner.s.substring(scanpos,scanner.pos)+" at position "+scanpos+" in expression "+scanner.s);
+        }else if (num==1){
+          appendToRSum(Term.LARGEOMEGA.clone());
+        }else{
+          var decomposed=[];
+          for (var i=0;i<num-1;i++){
+            decomposed.push(Term.ONE.clone());
+          }
+          appendToRSum(PsiTerm.buildNoClone(Term.ONE.clone(),Term.I.clone(),SumTerm.buildNoClone(decomposed)));
+        }
+      }else{
+        appendToRSum(Term.LARGEOMEGA.clone());
+      }
+    }else if (next=="I"){
+      if (state!=START&&state!=PLUS) throw Error("Unexpected character "+next+" at position "+scanpos+" in expression "+scanner.s);
+      if (scanner.hasNext()&&scanner.peek()=="_"&&nums.indexOf(scanner.peek(1,1))!=-1){
+        scanner.move(1);
+        var num=scanner.nextNumber();
+        if (num==0){
+          throw Error("Invalid expression "+scanner.scanner.s.substring(scanpos,scanner.pos)+" at position "+scanpos+" in expression "+scanner.s);
+        }else if (num==1){
+          appendToRSum(Term.I.clone());
+        }else{
+          var decomposed=[];
+          for (var i=0;i<num-1;i++){
+            decomposed.push(Term.ONE.clone());
+          }
+          appendToRSum(PsiTerm.buildNoClone(SumTerm.buildNoClone([Term.ONE.clone(),Term.ONE.clone()]),IITerm.buildNoClone(SumTerm.buildNoClone([Term.ONE.clone(),Term.ONE.clone()])),SumTerm.buildNoClone(decomposed)));
+        }
+      }else{
+        appendToRSum(Term.I.clone());
+      }
+    }else if (next=="+"){
+      if (state==CLOSEDTERM){
+        state=PLUS;
+      }else throw Error("Unexpected character + at position "+scanpos+" in expression "+scanner.s);
+    }else if (next=="ψ"||next=="p"){
+      if (state!=START&&state!=PLUS) throw Error("Unexpected character "+next+" at position "+scanpos+" in expression "+scanner.s);
+      var nextnext=scanner.next();
+      if (nextnext=="^"){
+        var superscriptterm=Term.build(scanner,PSITERMSUPERSCRIPT);
+        var nextnext=scanner.next();
+        if (nextnext!="_") throw Error("Expected _ at position "+(scanner.pos-1)+", instead got "+nextnext+" in expression "+scanner.s);
+        var subscriptterm=Term.build(scanner,PSITERMSUBSCRIPT);
+        var nextnext=scanner.next();
+        if (nextnext!="(") throw Error("Expected opening ( at position "+(scanner.pos-1)+", instead got "+nextnext+" in expression "+scanner.s);
+        var innerterm=Term.build(scanner,PSITERMINNER);
+        var nextnext=scanner.next();
+        if (nextnext!=")") throw Error("Expected closing ) at position "+(scanner.pos-1)+", instead got "+nextnext+" in expression "+scanner.s);
+        appendToRSum(PsiTerm.buildNoClone(superscriptterm,subscriptterm,innerterm));
+      }else if (nextnext=="("){
+        var innerterm=Term.build(scanner,PSITERMINNER);
+        var nextnext=scanner.next();
+        if (nextnext!=")") throw Error("Expected closing ) at position "+(scanner.pos-1)+", instead got "+nextnext+" in expression "+scanner.s);
+        appendToRSum(PsiTerm.buildNoClone(ZeroTerm.build(),Term.LARGEOMEGA.clone(),innerterm));
+      }else throw Error("Expected ^ or ( at position "+(scanner.pos-1)+", instead got "+nextnext+" in expression "+scanner.s);
+    }else if (next=="{"){
+      if (state!=START&&state!=PLUS) throw Error("Unexpected character { at position "+scanpos+" in expression "+scanner.s);
+      var subterm=Term.build(scanner,BRACES);
+      var nextnext=scanner.next();
+      if (nextnext!="}") throw Error("Expected closing } at position "+(scanner.pos-1)+", instead got "+nextnext+" in expression "+scanner.s);
+      if (state==START){
+        r=subterm;
+        state=CLOSEDTERM;
+      }else if (state==PLUS){
+        r=SubTerm.buildNoClone([r,subterm]);
+        state=CLOSEDTERM;
+      }
+    }else{
+      throw Error("Unexpected character "+next+" at position "+scanpos+" in expression "+scanner.s);
+    }
+    var peek=scanner.peek();
+    if (peek=="}"&&context==BRACES){
+      state=EXIT;
+    }else if (peek=="_"&&context==PSITERMSUPERSCRIPT){
+      state=EXIT;
+    }else if (peek=="("&&context==PSITERMSUBSCRIPT){
+      state=EXIT;
+    }else if (peek==")"&&context==PSITERMINNER){
+      state=EXIT;
+    }else if (peek=="]"&&context==IITERMINER){
+      state=EXIT;
+    }
+  }
+  if (context==TOP){
+    if (scanner.hasNext()) throw Error("Something went wrong");
+    if (state==START) r=ZeroTerm.build();
+    else if (state==PLUS) throw Error("Unexpected end of input");
+    else if (state==CLOSEDTERM);
+  }else{
+    if (!scanner.hasNext()) throw Error("Unexpected end of input");
+    if (state==START) r=ZeroTerm.build();
+    else if (state==PLUS) throw Error("Something went wrong");
+    else if (state==CLOSEDTERM);
+  }
+  return r;
+}
+Term.buildNoClone=function (){
+  throw Error("Not implemented");
 }
 Term.prototype.clone=function (){
   throw Error("Cloning undefined for this term type.");
@@ -184,6 +382,10 @@ NullTerm.build=function (){
   var r=NullTerm();
   return r;
 }
+NullTerm.buildNoClone=function (){
+  var r=NullTerm();
+  return r;
+}
 NullTerm.prototype=Object.create(Term.prototype);
 NullTerm.prototype.clone=function (){
   return NullTerm.build();
@@ -214,6 +416,10 @@ ZeroTerm.build=function (){
   var r=ZeroTerm();
   return r;
 }
+ZeroTerm.buildNoClone=function (){
+  var r=ZeroTerm();
+  return r;
+}
 ZeroTerm.prototype=Object.create(Term.prototype);
 ZeroTerm.prototype.clone=function (){
   return ZeroTerm.build();
@@ -241,6 +447,11 @@ function IITerm(s){
 }
 Object.assign(IITerm,Term);
 IITerm.build=function (inner){
+  var r=IITerm();
+  r.inner=Term(inner);
+  return r;
+}
+IITerm.buildNoClone=function (inner){
   var r=IITerm();
   r.inner=inner;
   return r;
@@ -278,6 +489,13 @@ PsiTerm.build=function (level,sub,inner){
   r.level=Term(level);
   r.sub=Term(sub);
   r.inner=Term(inner);
+  return r;
+}
+PsiTerm.buildNoClone=function (level,sub,inner){
+  var r=PsiTerm();
+  r.level=level;
+  r.sub=sub;
+  r.inner=inner;
   return r;
 }
 PsiTerm.prototype=Object.create(Term.prototype);
@@ -319,6 +537,18 @@ SumTerm.build=function (terms){
       r.terms=r.terms.concat(Term(terms[i]).terms);
     }else{
       r.terms.push(Term(terms[i]));
+    }
+  }
+  return r;
+}
+SumTerm.buildNoClone=function (terms){
+  var r=SumTerm();
+  r.terms=[];
+  for (var i=0;i<terms.length;i++){
+    if (terms[i] instanceof SumTerm){
+      r.terms=r.terms.concat(terms[i].terms);
+    }else{
+      r.terms.push(terms[i]);
     }
   }
   return r;
@@ -376,6 +606,12 @@ Object.defineProperty(SumTerm.prototype,"constructor",{
   enumerable:false,
   writable:true
 });
+
+Term.ZERO=Term("0");
+Term.LARGEOMEGA=Term("ℐ[0]");
+Term.ONE=Term("ψ^0_Ω(0)");
+Term.SMALLOMEGA=Term("ψ^0_Ω(1)");
+Term.I=Term("ℐ[1]");
 
 function isSumAndTermsSatisfy(t,f){
   return t instanceof SumTerm&&t.terms.every(f);

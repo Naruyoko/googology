@@ -10,27 +10,6 @@ function dg(s){
   return document.getElementById(s);
 }
 
-function occurrences(string, subString, allowOverlapping) {
-  string+="";
-  subString+="";
-  if (subString.length<=0)return string.length+1;
-  var n=0,
-  pos=0,
-  step=allowOverlapping?1:subString.length;
-  while (true){
-    pos=string.indexOf(subString,pos);
-    if (pos>=0){
-      ++n;
-      pos+=step;
-    }else break;
-  }
-  return n;
-}
-function isMatchingParens(s){
-  return occurrences(s,"{")==occurrences(s,"}")
-    &&occurrences(s,"[")==occurrences(s,"]")
-    &&occurrences(s,"(")==occurrences(s,")");
-}
 function normalizeAbbreviations(s){
   return Term(s)+"";
 }
@@ -38,98 +17,196 @@ function abbreviate(s){
   return Term(s).toString(true);
 }
 
+function Scanner(s){
+  if (s instanceof Scanner) return s.clone();
+  if (typeof s!="string") throw Error("Invalid expression: "+s);
+  if (!(this instanceof Scanner)) return new Scanner(s);
+  this.s=s;
+  this.pos=0;
+  this.length=s.length;
+  return this;
+}
+Scanner.prototype.clone=function (){
+  return new Scanner(this.s);
+}
+Scanner.prototype.next=function (){
+  if (this.pos>=this.length) return null;
+  var c=this.s.charAt(this.pos);
+  ++this.pos;
+  return c;
+}
+Scanner.prototype.nextNumber=function (){
+  var s=this.s.substring(this.pos);
+  var m=s.match(/^[0-9]+/);
+  if (m) {
+    this.pos+=m[0].length;
+    return Number(m[0]);
+  }
+  return null;
+}
+Scanner.prototype.peek=function (length,offset){
+  if (typeof length=="undefined") length=1;
+  if (typeof offset=="undefined") offset=0;
+  if (this.pos+offset>this.length) return null;
+  return this.s.substring(this.pos+offset,this.pos+offset+length);
+}
+Scanner.prototype.move=function (n){
+  this.pos+=n;
+}
+Scanner.prototype.hasNext=function (){
+  return this.pos<this.length;
+}
+Scanner.prototype.finished=function (){
+  return this.pos>=this.length;
+}
+Object.defineProperty(Scanner.prototype,"constructor",{
+  value:Scanner,
+  enumerable:false,
+  writable:true
+});
+
 function Term(s){
   if (s instanceof Term) return s.clone();
   else if (typeof s!="undefined"&&typeof s!="string") throw Error("Invalid expression: "+s);
   if (s) return Term.build(s);
   else return this;
 }
-Term.build=function (s){
+Term.build=function (s,context){
   if (s instanceof Term) return s.clone();
-  if (!isMatchingParens(s)) throw Error("Invalid expression: "+s);
-  var strin=s;
-  if (s=="") return NullTerm.build();
-  if (s=="0") return ZeroTerm.build();
-  s=s.replaceAll("p","ψ").replaceAll("w","ω").replaceAll("W","Ω");
-  if (!/^[ψ_ωΩI0-9\(\){}\+]+$/.test(s)) throw Error("Invalid expression: "+strin);
+  function appendToRSum(term){
+    if (state==START) r=term;
+    else if (state==PLUS){
+      if (term instanceof ZeroTerm);
+      else if (r instanceof ZeroTerm) r=term;
+      else r=SumTerm.buildNoClone([r,term]);
+    }else throw Error("Wrong state when attempting to append as sum");
+    state=CLOSEDTERM;
+  }
   var nums="0123456789";
-  var alphas="abcdefghij";
-  function numToAlpha(n){
-    n=n+"";
-    for (var i=0;i<10;i++){
-      n=n.replaceAll(nums[i],alphas[i]);
-    }
-    return "<"+n+">";
-  }
-  function alphaToNum(s){
-    if (s[0]!="<"||s[s.length-1]!=">") throw Error("F");
-    s=s.slice(1,-1);
-    for (var i=0;i<10;i++){
-      s=s.replaceAll(alphas[i],nums[i]);
-    }
-    return +s;
-  }
-  var subterms=[];
-  function newSubterm(t){
-    subterms.push(t);
-    return numToAlpha(subterms.length-1);
-  }
-  function getSubterm(n){
-    return subterms[alphaToNum(n)];
-  }
-  s=s.replace(/Ω_[0-9]+/g,function (s){
-    var n=+s.slice(2);
-    if (n==1){
-      return "ψ_I(0)";
-    }else if (n>=2){
-      return "ψ_I("+(n-1)+")";
+  var scanner;
+  if (typeof s=="string") scanner=new Scanner(s);
+  else if (s instanceof Scanner) scanner=s;
+  else throw Error("Invalid expression: "+s);
+  var r=null;
+  var startpos=scanner.pos;
+  var TOP=0;
+  var PSITERMSUBSCRIPT=1;
+  var PSITERMINNER=2;
+  var BRACES=3;
+  var contextNames=["TOP","PSITERMSUBSCRIPT","PSITERMINNER","BRACES"];
+  if (typeof context=="undefined") context=TOP;
+  var START=0;
+  var PLUS=1;
+  var CLOSEDTERM=2;
+  var EXIT=3;
+  var stateNames=["START","PLUS","CLOSEDTERM","EXIT"];
+  var state=START;
+  while (scanner.hasNext()&&state!=EXIT){
+    var scanpos=scanner.pos;
+    var next=scanner.next();
+    if (nums.indexOf(next)!=-1){
+      if (state!=START&&state!=PLUS) throw Error("Unexpected character "+next+" at position "+scanpos+" in expression "+scanner.s);
+      scanner.move(-1);
+      var num=scanner.nextNumber();
+      if (num==0){
+        appendToRSum(ZeroTerm.build());
+      }else if (num==1){
+        appendToRSum(Term.ONE.clone());
+      }else{
+        var decomposed;
+        if (state==START) decomposed=[];
+        else if (state==PLUS) decomposed=[r];
+        for (var i=0;i<num;i++){
+          decomposed.push(Term.ONE.clone());
+        }
+        r=SumTerm.buildNoClone(decomposed);
+        state=CLOSEDTERM;
+      }
+    }else if (next=="I"){
+      if (state!=START&&state!=PLUS) throw Error("Unexpected character "+next+" at position "+scanpos+" in expression "+scanner.s);
+      appendToRSum(ITerm.build());
+    }else if (next=="ω"||next=="w"){
+      if (state!=START&&state!=PLUS) throw Error("Unexpected character "+next+" at position "+scanpos+" in expression "+scanner.s);
+      appendToRSum(Term.SMALLOMEGA.clone());
+    }else if (next=="Ω"||next=="W"){
+      if (state!=START&&state!=PLUS) throw Error("Unexpected character "+next+" at position "+scanpos+" in expression "+scanner.s);
+      if (scanner.hasNext()&&scanner.peek()=="_"&&nums.indexOf(scanner.peek(1,1))!=-1){
+        scanner.move(1);
+        var num=scanner.nextNumber();
+        if (num==0){
+          throw Error("Invalid expression "+scanner.scanner.s.substring(scanpos,scanner.pos)+" at position "+scanpos+" in expression "+scanner.s);
+        }else if (num==1){
+          appendToRSum(Term.LARGEOMEGA.clone());
+        }else{
+          var decomposed=[];
+          for (var i=0;i<num-1;i++){
+            decomposed.push(Term.ONE.clone());
+          }
+          appendToRSum(PsiTerm.buildNoClone(Term.I.clone(),SumTerm.buildNoClone(decomposed)));
+        }
+      }else{
+        appendToRSum(Term.LARGEOMEGA.clone());
+      }
+    }else if (next=="+"){
+      if (state==CLOSEDTERM){
+        state=PLUS;
+      }else throw Error("Unexpected character + at position "+scanpos+" in expression "+scanner.s);
+    }else if (next=="ψ"||next=="p"){
+      if (state!=START&&state!=PLUS) throw Error("Unexpected character "+next+" at position "+scanpos+" in expression "+scanner.s);
+      var nextnext=scanner.next();
+      if (nextnext=="_"){
+        var subscriptterm=Term.build(scanner,PSITERMSUBSCRIPT);
+        var nextnext=scanner.next();
+        if (nextnext!="(") throw Error("Expected opening ( at position "+(scanner.pos-1)+", instead got "+nextnext+" in expression "+scanner.s);
+        var innerterm=Term.build(scanner,PSITERMINNER);
+        var nextnext=scanner.next();
+        if (nextnext!=")") throw Error("Expected closing ) at position "+(scanner.pos-1)+", instead got "+nextnext+" in expression "+scanner.s);
+        appendToRSum(PsiTerm.buildNoClone(subscriptterm,innerterm));
+      }else if (nextnext=="("){
+        var innerterm=Term.build(scanner,PSITERMINNER);
+        var nextnext=scanner.next();
+        if (nextnext!=")") throw Error("Expected closing ) at position "+(scanner.pos-1)+", instead got "+nextnext+" in expression "+scanner.s);
+        appendToRSum(PsiTerm.buildNoClone(Term.LARGEOMEGA.clone(),innerterm));
+      }else throw Error("Expected _ or ( at position "+(scanner.pos-1)+", instead got "+nextnext+" in expression "+scanner.s);
+    }else if (next=="{"){
+      if (state!=START&&state!=PLUS) throw Error("Unexpected character { at position "+scanpos+" in expression "+scanner.s);
+      var subterm=Term.build(scanner,BRACES);
+      var nextnext=scanner.next();
+      if (nextnext!="}") throw Error("Expected closing } at position "+(scanner.pos-1)+", instead got "+nextnext+" in expression "+scanner.s);
+      if (state==START){
+        r=subterm;
+        state=CLOSEDTERM;
+      }else if (state==PLUS){
+        r=SubTerm.buildNoClone([r,subterm]);
+        state=CLOSEDTERM;
+      }
     }else{
-      return s;
+      throw Error("Unexpected character "+next+" at position "+scanpos+" in expression "+scanner.s);
     }
-  });
-  s=s.replace(/[0-9]+/g,function (n){return +n<2?n:"{1"+"+1".repeat(+n-1)+"}";});
-  while (true){
-    var manipulated=false;
-    if (s.indexOf("ω")!=-1){ //ω
-      manipulated=true;
-      s=s.replaceAll("ω",newSubterm(Term("ψ_Ω(1)")));
+    var peek=scanner.peek();
+    if (peek=="}"&&context==BRACES){
+      state=EXIT;
+    }else if (peek=="("&&context==PSITERMSUBSCRIPT){
+      state=EXIT;
+    }else if (peek==")"&&context==PSITERMINNER){
+      state=EXIT;
     }
-    if (s.indexOf("Ω")!=-1){ //Ω
-      manipulated=true;
-      s=s.replaceAll("Ω",newSubterm(Term("ψ_I(0)")));
-    }
-    if (s.indexOf("0")!=-1){ //0
-      manipulated=true;
-      s=s.replaceAll("0",newSubterm(ZeroTerm.build()));
-    }
-    if (s.indexOf("1")!=-1){ //1
-      manipulated=true;
-      s=s.replaceAll("1",newSubterm(Term("ψ_Ω(0)")));
-    }
-    if (s.indexOf("I")!=-1){ //I
-      manipulated=true;
-      s=s.replaceAll("I",newSubterm(ITerm.build()));
-    }
-    while (/{<[a-j]+>}/.test(s)){ //{#}->#
-      manipulated=true;
-      s=s.replace(/{<[a-j]+>}/g,function (s){return s.slice(1,-1);});
-    }
-    if (/ψ\(<[a-j]+>\)/.test(s)){ //ψ(#)->ψ_Ω(#)
-      manipulated=true;
-      s=s.replace(/ψ\(<[a-j]+>\)/g,function (s){return "ψ_Ω"+s.slice(1);});
-    }
-    if (/ψ_<[a-j]+>\(<[a-j]+>\)/.test(s)){ //ψ_#(#)->#
-      manipulated=true;
-      s=s.replace(/ψ_<[a-j]+>\(<[a-j]+>\)/g,function (s){return newSubterm(PsiTerm.build(getSubterm(s.slice(2,s.indexOf("("))),getSubterm(s.slice(s.indexOf("(")+1,-1))));});
-    }
-    if (/(?<!\+)<[a-j]+>(\+<[a-j]+>)+(?!\+)/.test(s)){ //#+#+...+#->#
-      manipulated=true;
-      s=s.replace(/(?<!\+)<[a-j]+>(\+<[a-j]+>)+(?!\+)/g,function (s){return newSubterm(SumTerm.build(s.split("+").map(getSubterm)));});
-    }
-    if (/^<[a-j]+>$/.test(s)) break;
-    if (!manipulated) throw Error("Error parsing expression: "+strin);
   }
-  return getSubterm(s);
+  if (context==TOP){
+    if (scanner.hasNext()) throw Error("Something went wrong");
+    if (state==START) r=ZeroTerm.build();
+    else if (state==PLUS) throw Error("Unexpected end of input");
+    else if (state==CLOSEDTERM);
+  }else{
+    if (!scanner.hasNext()) throw Error("Unexpected end of input");
+    if (state==START) r=ZeroTerm.build();
+    else if (state==PLUS) throw Error("Something went wrong");
+    else if (state==CLOSEDTERM);
+  }
+  return r;
+}
+Term.buildNoClone=function (){
+  throw Error("Not implemented");
 }
 Term.prototype.clone=function (){
   throw Error("Cloning undefined for this term type.");
@@ -169,6 +246,10 @@ NullTerm.build=function (){
   var r=NullTerm();
   return r;
 }
+NullTerm.buildNoClone=function (){
+  var r=NullTerm();
+  return r;
+}
 NullTerm.prototype=Object.create(Term.prototype);
 NullTerm.prototype.clone=function (){
   return NullTerm.build();
@@ -199,6 +280,10 @@ ZeroTerm.build=function (){
   var r=ZeroTerm();
   return r;
 }
+ZeroTerm.buildNoClone=function (){
+  var r=ZeroTerm();
+  return r;
+}
 ZeroTerm.prototype=Object.create(Term.prototype);
 ZeroTerm.prototype.clone=function (){
   return ZeroTerm.build();
@@ -226,6 +311,10 @@ function ITerm(s){
 }
 Object.assign(ITerm,Term);
 ITerm.build=function (){
+  var r=ITerm();
+  return r;
+}
+ITerm.buildNoClone=function (){
   var r=ITerm();
   return r;
 }
@@ -261,16 +350,22 @@ PsiTerm.build=function (sub,inner){
   r.inner=Term(inner);
   return r;
 }
+PsiTerm.buildNoClone=function (sub,inner){
+  var r=PsiTerm();
+  r.sub=sub;
+  r.inner=inner;
+  return r;
+}
 PsiTerm.prototype=Object.create(Term.prototype);
 PsiTerm.prototype.clone=function (){
   return PsiTerm.build(this.sub,this.inner);
 }
 PsiTerm.prototype.toString=function (abbreviate){
-  if (abbreviate&&this.equal("1")) return "1";
-  else if (abbreviate&&this.equal("ω")) return "ω";
-  else if (abbreviate&&this.equal("Ω")) return "Ω";
-  else if (abbreviate&&this.sub.equal("Ω")) return "ψ("+this.inner.toString(abbreviate)+")";
-  else if (abbreviate&&this.sub.equal("I")&&isNat(this.inner)) return "Ω_"+(toNat(this.inner)+1);
+  if (abbreviate&&this.equal(Term.ONE)) return "1";
+  else if (abbreviate&&this.equal(Term.SMALLOMEGA)) return "ω";
+  else if (abbreviate&&this.equal(Term.LARGEOMEGA)) return "Ω";
+  else if (abbreviate&&this.sub.equal(Term.LARGEOMEGA)) return "ψ("+this.inner.toString(abbreviate)+")";
+  else if (abbreviate&&this.sub.equal(Term.I)&&isNat(this.inner)) return "Ω_"+(toNat(this.inner)+1);
   else return "ψ_"+this.sub.toStringWithImplicitBrace(abbreviate)+"("+this.inner.toString(abbreviate)+")";
 }
 PsiTerm.prototype.equal=function (other){
@@ -300,6 +395,18 @@ SumTerm.build=function (terms){
       r.terms=r.terms.concat(Term(terms[i]).terms);
     }else{
       r.terms.push(Term(terms[i]));
+    }
+  }
+  return r;
+}
+SumTerm.buildNoClone=function (terms){
+  var r=SumTerm();
+  r.terms=[];
+  for (var i=0;i<terms.length;i++){
+    if (terms[i] instanceof SumTerm){
+      r.terms=r.terms.concat(terms[i].terms);
+    }else{
+      r.terms.push(terms[i]);
     }
   }
   return r;
@@ -357,6 +464,12 @@ Object.defineProperty(SumTerm.prototype,"constructor",{
   enumerable:false,
   writable:true
 });
+
+Term.ZERO=new Term("0");
+Term.I=new Term("I");
+Term.LARGEOMEGA=new Term("ψ_I(0)");
+Term.ONE=new Term("ψ_Ω(0)");
+Term.SMALLOMEGA=new Term("ψ_Ω(1)");
 
 function isSumAndTermsSatisfy(t,f){
   return t instanceof SumTerm&&t.terms.every(f);
