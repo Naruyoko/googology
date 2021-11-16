@@ -432,6 +432,26 @@ function inPT(t){
   if (t instanceof PsiTerm) return inT(t.sub)&&inT(t.inner);
   return false;
 }
+function inRT(t){
+  try{
+    t=Term(t);
+  }catch(e){
+    return false;
+  }
+  if (t instanceof ZeroTerm) return true;
+  if (t instanceof PsiTerm) return isNat(t.sub)&&inT(t.sub)&&inT(t.inner);
+  if (t instanceof SumTerm) return t.terms.every(inPT);
+  return false;
+}
+function inRPT(t){
+  try{
+    t=Term(t);
+  }catch(e){
+    return false;
+  }
+  if (t instanceof PsiTerm) return isNat(t.sub)&&inT(t.sub)&&inT(t.inner);
+  return false;
+}
 function isSumAndTermsSatisfy(t,f){
   return t instanceof SumTerm&&t.terms.every(f);
 }
@@ -441,7 +461,15 @@ function isNat(t){
   }catch(e){
     return false;
   }
-  return t.equal("1")||isSumAndTermsSatisfy(t,equal("1"));
+  return t.equal("0")||t.equal("1")||isSumAndTermsSatisfy(t,equal("1"));
+}
+function toNat(X){
+  X=Term(X);
+  if (!isNat(X)) throw Error("Invalid argument: "+X);
+  if (X instanceof ZeroTerm) return 0;
+  if (X instanceof PsiTerm) return 1;
+  if (X instanceof SumTerm) return X.terms.length;
+  throw Error("This should be unreachable");
 }
 function equal(X,Y){
   if (arguments.length==1) return function(t){return equal(t,X);};
@@ -453,122 +481,153 @@ function notEqual(X,Y){
   if (arguments.length==1) return function(t){return notEqual(t,X);};
   return !equal(X,Y);
 }
-function lessThan(X,Y){
-  X=Term(X);
-  Y=Term(Y);
-  if (Y instanceof ZeroTerm) return false; //1
-  if (X instanceof ZeroTerm) return true; //2
-  if (X instanceof SumTerm){ //3
-    if (Y instanceof SumTerm) //3.1
-      return lessThan(X.getLeft(),Y.getLeft()) //3.1.1
-        ||equal(X.getLeft(),Y.getLeft())&&lessThan(X.getNotLeft(),Y.getNotLeft()); //3.1.2
-    if (Y instanceof PsiTerm) return lessThan(X.getLeft(),Y); //3.2
-  }
-  if (X instanceof PsiTerm){ //4
-    if (Y instanceof SumTerm) return lessThanOrEqual(X,Y.getLeft()) //4.1
-    if (Y instanceof PsiTerm) //4.2
-      return lessThan(X.sub,Y.sub) //4.2.1
-        ||equal(X.sub,Y.sub)&&lessThan(X.inner,Y.inner); //4.2.2
-  }
-  throw Error("No rule to compare "+X+" and "+Y);
-}
-function lessThanOrEqual(X,Y){
-  X=Term(X);
-  Y=Term(Y);
-  return equal(X,Y)||lessThan(X,Y);
-}
-function code(X){
-  X=Term(X);
-  if (!inT(X)) throw Error("Invalid argument: "+X);
-  if (X instanceof ZeroTerm) return 0;
-  if (X instanceof PsiTerm) return equal(X,"1")?1:0;
-  if (X instanceof SumTerm){
-    var r=0;
-    var i=X.terms.length-1;
-    while (i>=0&&equal(X.terms[i],"1")){
-      r++;
-      i--;
+function ascend(S,del,br,pr){
+  S=Term(S);
+  if (!inRT(S)||typeof del!="number"||del===0||typeof br!="number"||(pr!==0&&pr!==1)) throw Error("Invalid argument: "+S+","+del+","+br+","+pr);
+  if (S instanceof ZeroTerm) return "0"; //1
+  if (S instanceof SumTerm) return S.terms.map(function (t){return ascend(t,del,br,pr);}).join("+"); //2
+  if (S instanceof PsiTerm&&inRT(S)){ //3
+    var a=toNat(S.sub);
+    var b=S.inner;
+    if (br<a) return "ψ_{"+normalizeAbbreviations(a+del)+"}("+ascend(b,del,br,pr)+")"; //3.1
+    else{ //3.2
+      if (pr==0) return "ψ_{"+normalizeAbbreviations(a+del)+"}("+ascend(b,del,br,1)+")"; //3.2.1
+      else return S+"";
     }
-    return r;
   }
+  throw Error("No rule to compute delta("+S+","+del+","+br+","+pr+")");
 }
-function ascend(X,Y,Z){
-  X=Term(X);
-  if (!inT(X)||typeof Y!="number"||Y===0||typeof Z!="number") throw Error("Invalid argument: "+X+","+Y+","+Z);
-  if (X instanceof ZeroTerm) return "0"; //1
-  if (X instanceof SumTerm) return X.terms.map(function (t){return ascend(t,Y,Z);}).join("+"); //2
-  if (X instanceof PsiTerm){ //3
-    if (Z<code(X.sub)) return "ψ_{"+X.sub+"+"+Y+"}("+ascend(X.inner,Y,Z)+")"; //3.1
-    else return X+""; //3.2
+function cp(S){
+  S=Term(S);
+  if (!inRT(S)) throw Error("Invalid argument: "+S);
+  var cache=new Map();
+  function cachedCalc(s){
+    if (cache.has(s)) return cache.get(s);
+    else{
+      var r=eval(s);
+      cache.set(s,r);
+      return r;
+    }
   }
-  throw Error("No rule to compute delta("+X+","+Y+","+Z+")");
-}
-function dom(X){
-  X=Term(X);
-  if (!inT(X)) throw Error("Invalid argument: "+X);
-  var temp={};
-  function calcTemp(s){
-    temp[s]=eval(s);
-  }
-  if (X instanceof ZeroTerm) return "0"; //1
-  if (X instanceof SumTerm) return dom(X.getRight()); //2
-  if (X instanceof PsiTerm){ //3
-    calcTemp("dom(X.inner)");
-    if (equal(temp["dom(X.inner)"],"0")){ //3.1
-      calcTemp("dom(X.sub)");
-      if (equal(temp["dom(X.sub)"],"0")||equal(temp["dom(X.sub)"],"1")) return X+""; //3.1.1
-      else return temp["dom(X.sub)"]; //3.1.2
-    }else if (equal(temp["dom(X.inner)"],"1")||equal(temp["dom(X.inner)"],"ω")) return normalizeAbbreviations("ω"); //3.2
+  if (S instanceof ZeroTerm) return "0"; //1
+  if (S instanceof SumTerm) return cp(S.getRight()); //2
+  if (S instanceof PsiTerm){ //3
+    var a=toNat(S.sub);
+    var b=S.inner;
+    if (equal(cachedCalc("cp(b)"),"0")) return S+""; //3.1
+    else if (equal(cachedCalc("cp(b)"),"1")||equal(cachedCalc("cp(b)"),"ω")) return normalizeAbbreviations("ω"); //3.2
     else{ //3.3
-      if (lessThan(temp["dom(X.inner)"],X)) return temp["dom(X.inner)"]; //3.3.1
-      else return normalizeAbbreviations("ω"); //3.3.2
+      var c=toNat(cachedCalc("Term(cachedCalc('dom(b)'))").sub);
+      var d=cachedCalc("Term(cachedCalc('dom(b)'))").inner;
+      if (equal(d,"0")){ //3.3.1
+        if (a<c) return S+""; //3.3.1.1
+        else return cp(b); //3.3.1.2
+      }else return cp(b); //3.3.2
     }
   }
-  throw Error("No rule to compute dom of "+X);
+  throw Error("No rule to compute cp("+S+")");
 }
-function fund(X,Y){
-  X=Term(X);
-  if (typeof Y=="number") Y=String(Y);
-  Y=Term(Y);
-  if (!inT(X)||!inT(Y)) throw Error("Invalid argument: "+X+","+Y);
-  var temp={};
-  function calcTemp(s){
-    temp[s]=eval(s);
-  }
-  if (X instanceof ZeroTerm) return "0"; //1
-  if (X instanceof SumTerm){ //2
-    var bp=fund(X.getRight(),Y);
-    if (equal(bp,"0")) return X.getNotRight()+""; //2.1
-    else return X.getNotRight()+"+"+bp; //2.2
-  }
-  if (X instanceof PsiTerm){ //3
-    calcTemp("dom(X.inner)");
-    if (equal(temp["dom(X.inner)"],"0")){ //3.1
-      calcTemp("dom(X.sub)");
-      if (equal(temp["dom(X.sub)"],"0")||equal(temp["dom(X.sub)"],"1")) return Y+""; //3.1.1
-      else return "ψ_"+fund(X.sub,Y)+"("+X.inner+")"; //3.1.2
-    }else if (equal(temp["dom(X.inner)"],"1")){ //3.2
-      calcTemp('fund(Y,"0")');
-      if (equal(Y,temp['fund(Y,"0")']+"+1")) return fund(X,temp['fund(Y,"0")'])+"+"+fund(X,"1"); //3.2.1
-      else return "ψ_"+X.sub+"("+fund(X.inner,"0")+")"; //3.2.2
-    }else if (equal(temp["dom(X.inner)"],"ω")) return "ψ_"+X.sub+"("+fund(X.inner,Y)+")"; //3.3
-    else{ //3.4
-      if (lessThan(temp["dom(X.inner)"],X)) return "ψ_"+X.sub+"("+fund(X.inner,Y)+")"; //3.4.1
-      var c=Term(temp["dom(X.inner)"]).sub; //3.4.2
-      var ap=code(X.sub);
-      var cp=code(c);
-      var del=cp-ap-1;
-      if (del>0){ //3.4.3
-        if (isNat(Y)&&(calcTemp('Term(fund(X,fund(Y,"0")))'),equal(temp['Term(fund(X,fund(Y,"0")))'].sub,X.sub))) return "ψ_"+X.sub+"("+fund(X.inner,"ψ_"+fund(c,"0")+"("+ascend(temp['Term(fund(X,fund(Y,"0")))'].inner,del,ap)+")")+")"; //3.4.3.1
-        else return "ψ_"+X.sub+"("+fund(X.inner,"ψ_"+fund(c,"0")+"(0)")+")"; //3.4.3.2
-      }
-      if (del<=0){ //3.4.4
-        if (isNat(Y)&&(calcTemp('Term(fund(X,fund(Y,"0")))'),equal(temp['Term(fund(X,fund(Y,"0")))'].sub,X.sub))) return "ψ_"+X.sub+"("+fund(X.inner,"ψ_"+fund(c,"0")+"("+temp['Term(fund(X,fund(Y,"0")))'].inner+")")+")"; //3.4.4.1
-        else return "ψ_"+X.sub+"("+fund(X.inner,"ψ_"+fund(c,"0")+"(0)")+")"; //3.4.4.2
-      }
+function dom(S){
+  S=Term(S);
+  if (!inRT(S)) throw Error("Invalid argument: "+S);
+  var cache=new Map();
+  function cachedCalc(s){
+    if (cache.has(s)) return cache.get(s);
+    else{
+      var r=eval(s);
+      cache.set(s,r);
+      return r;
     }
   }
-  throw Error("No rule to compute fund of "+X+","+Y);
+  if (S instanceof ZeroTerm) return "0"; //1
+  if (S instanceof SumTerm) return dom(S.getRight()); //2
+  if (S instanceof PsiTerm){ //3
+    var a=toNat(S.sub);
+    var b=S.inner;
+    if (equal(cachedCalc("dom(b)"),"0")) return S+"" //3.1
+    else if (equal(cachedCalc("dom(b)"),"1")||equal(cachedCalc("dom(b)"),"ω")) return normalizeAbbreviations("ω"); //3.2
+    else{ //3.3
+      var c=toNat(cachedCalc("Term(cachedCalc('dom(b)'))").sub);
+      var d=cachedCalc("Term(cachedCalc('dom(b)'))").inner;
+      if (a<c){ //3.3.1
+        var del0=c-a-1;
+        if (equal(cachedCalc("dom(d)"),"0")){ //3.3.1.1
+          if (del0<1) return normalizeAbbreviations("ω"); //3.3.1.1.1
+          else return S+""; //3.3.1.1.2
+        }else{ //3.3.1.2
+          var e=toNat(cachedCalc("Term(cp(b))").sub);
+          var f=cachedCalc("Term(cp(b))").inner;
+          var g=toNat(Term(cp(f)).sub);
+          var del1=g-e-1;
+          if (del0<del1) return normalizeAbbreviations("ω"); //3.3.1.2.1
+          else return S+""; //3.3.1.2.2
+        }
+      }else return cachedCalc("dom(b)"); //3.3.2
+    }
+  }
+  throw Error("No rule to compute dom of "+S);
+}
+function fund(S,T){
+  S=Term(S);
+  if (typeof T=="number") T=String(T);
+  T=Term(T);
+  if (!inRT(S)||!inRT(T)) throw Error("Invalid argument: "+S+","+T);
+  var cache=new Map();
+  function cachedCalc(s){
+    if (cache.has(s)) return cache.get(s);
+    else{
+      var r=eval(s);
+      cache.set(s,r);
+      return r;
+    }
+  }
+  if (S instanceof ZeroTerm) return "0"; //1
+  if (S instanceof SumTerm){ //2
+    var bp=fund(S.getRight(),T);
+    if (equal(bp,"0")) return S.getNotRight()+""; //2.1
+    else return S.getNotRight()+"+"+bp; //2.2
+  }
+  if (S instanceof PsiTerm){ //3
+    var a=toNat(S.sub);
+    var b=S.inner;
+    if (equal(cachedCalc("dom(b)"),"0")) return T+""; //3.1
+    else if (equal(cachedCalc("dom(b)"),"1")){ //3.2
+      if (equal(T.getRight(),"1")) return fund(S,fund(T,"0"))+"+"+fund(S,"1"); //3.2.1
+      else return "ψ_{"+normalizeAbbreviations(a)+"}("+fund(b,"0")+")"; //3.2.2
+    }else if (equal(cachedCalc("dom(b)"),"ω")) return "ψ_{"+normalizeAbbreviations(a)+"}("+fund(b,T)+")"; //3.3
+    else{ //3.4
+      var c=toNat(cachedCalc("Term(cachedCalc('dom(b)'))").sub);
+      var d=cachedCalc("Term(cachedCalc('dom(b)'))").inner;
+      if (a<c){ //3.4.1
+        var del0=c-a-1;
+        if (equal(cachedCalc("dom(d)"),"0")){ //3.4.1.1
+          if (del0<1){ //3.4.1.1.1
+            if (isNat(T)&&notEqual(T,"0")) return "ψ_{"+normalizeAbbreviations(a)+"}("+fund(b,fund(S,fund(T,"0")))+")"; //3.4.1.1.1.1
+            else return "ψ_{"+normalizeAbbreviations(a)+"}("+fund(b,"0")+")"; //3.4.1.1.1.2
+          }else{ //3.4.1.1.2
+            if (T instanceof ZeroTerm) return "ψ_{"+normalizeAbbreviations(a)+"}("+fund(b,"0")+")"; //3.4.1.1.2.1
+            else if (isNat(T)) return "ψ_{"+normalizeAbbreviations(a)+"}("+fund(b,ascend(fund(S,fund(T,"0")),del0,a,0))+")"; //3.4.1.1.2.2
+            else return "ψ_{"+normalizeAbbreviations(a)+"}("+fund(b,T)+")"; //3.4.1.1.2.3
+          }
+        }else{ //3.4.1.2
+          var e=toNat(cachedCalc("Term(cp(b))").sub);
+          var f=cachedCalc("Term(cp(b))").inner;
+          var g=toNat(Term(cp(f)).sub);
+          var del1=g-e-1;
+          var del2=g-a-1;
+          if (del0<del1){ //3.4.1.2.1
+            if (isNat(T)&&notEqual(T,"0")) return "ψ_{"+normalizeAbbreviations(a)+"}("+fund(b,ascend(fund(S,fund(T,"0")),del2,a,0))+")"; //3.4.1.2.1.1
+            else return "ψ_{"+normalizeAbbreviations(a)+"}("+fund(b,"0")+")"; //3.4.1.2.1.2
+          }else{ //3.4.1.2.2
+            if (T instanceof ZeroTerm) return "ψ_{"+normalizeAbbreviations(a)+"}("+fund(b,"0")+")"; //3.4.1.2.2.1
+            else if (isNat(T)) return "ψ_{"+normalizeAbbreviations(a)+"}("+fund(b,ascend(fund(S,fund(T,"0")),del2,a,0))+")"; //3.4.1.2.2.2
+            else return "ψ_{"+normalizeAbbreviations(a)+"}("+fund(b,T)+")"; //3.4.1.2.2.3
+          }
+        }
+      }else return "ψ_{"+normalizeAbbreviations(a)+"}("+fund(b,T)+")"; //3.4.2
+    }
+  }
+  throw Error("No rule to compute fund of "+S+","+T);
 }
 function findOTPath(x,limit){
   x=normalizeAbbreviations(x);
@@ -599,16 +658,13 @@ function findOTPath(x,limit){
     return r;
   }
 }
-function isStandard(x,limit){
-  return findOTPath(x,limit).isStandard;
-}
-//ψ_0(Λ(n))
+//ψ_0(ψ_n(0))
 function limitOrd(n){
-  return "ψ_0("+"ψ_".repeat(n+1)+"0"+"(0)".repeat(n+1)+")";
+  return "ψ_0(ψ_{"+normalizeAbbreviations(n)+"}(0))";
 }
 function FGH(X,n){
   X=normalizeAbbreviations(X);
-  if (!isStandard(X)||(typeof n!="number")) throw Error("Invalid argument: "+X);
+  if (typeof n!="number") throw Error("Invalid argument: "+X);
   if (equal(X,"0")) return n+1;
   else if (equal(dom(X),"1")){
     var r=n;
@@ -619,13 +675,12 @@ function FGH(X,n){
 }
 function largeFunction(n){
   if (typeof n!="number") throw Error("Invalid argument");
-  var ord=limitOrd(n);
-  var r=n;
-  for (var i=0;i<n;i++) r=FGH(ord,r);
-  return r;
+  return FGH(limitOrd(n),n);
 }
 function calculateN(){
-  return largeFunction(1e100);
+  var r=1e100;
+  for (var i=0;i<1e100;i++) r=largeFunction(r);
+  return r;
 }
 
 var input="";
@@ -655,24 +710,17 @@ function compute(){
           result=normalizeAbbreviations(args[0]);
         }else if (cmd=="abbreviate"||cmd=="abbr"){
           result=abbreviate(args[0]);
-        }else if (cmd=="lessThan"||cmd=="<"){
-          result=lessThan(args[0],args[1]);
-        }else if (cmd=="lessThanOrEqual"||cmd=="<="){
-          result=lessThanOrEqual(args[0],args[1]);
         }else if (cmd=="expand"){
           var t=normalizeAbbreviations(args[0]);
           result=[t];
           for (var i=1;i<args.length;i++){
             result.push(t=fund(t,args[i]));
           }
-        }else if (cmd=="isStandard"){
-          result=findOTPath(args[0],args[1]||3);
         }else{
           result=null;
         }
       }catch(e){
         result=e;
-        console.error(e);
       }
       last[l]=result;
     }else result=last[l];
@@ -682,10 +730,6 @@ function compute(){
       output+=result;
     }else if (cmd=="abbreviate"||cmd=="abbr"){
       output+=result;
-    }else if (cmd=="lessThan"||cmd=="<"){
-      output+=result;
-    }else if (cmd=="lessThanOrEqual"||cmd=="<="){
-      output+=result;
     }else if (cmd=="expand"){
       if (options.detail){
         for (var i=1;i<result.length;i++){
@@ -693,16 +737,6 @@ function compute(){
         }
       }else{
         output+=(options.abbreviate?abbreviate(result[result.length-1]):result[result.length-1]);
-      }
-    }else if (cmd=="isStandard"){
-      if (options.detail){
-        for (var i=1;i<result.path.length;i++){
-          output+=(options.abbreviate?abbreviate(result.path[i-1]):result.path[i-1])+"["+result.funds[i]+"]="+(options.abbreviate?abbreviate(result.path[i]):result.path[i])+"\n";
-        }
-        if (result.isStandard) output+=(options.abbreviate?abbreviate(args[0]):args[0])+"∈OT";
-        else output+=(options.abbreviate?abbreviate(args[0]):args[0])+"∉OT limited to n≦"+(args[1]||3);
-      }else{
-        output+=result.isStandard;
       }
     }else{
       output+="Unknown command "+cmd;
@@ -712,7 +746,6 @@ function compute(){
   dg("output").value=output;
 }
 window.onpopstate=function (e){
-  load();
   compute();
 }
 var handlekey=function(e){}

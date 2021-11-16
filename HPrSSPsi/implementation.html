@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SPrSS Psi Implementation</title>
+  <script src="./implementation.js"></script>
+  <link rel="stylesheet" type="text/css" href="./style.css">
+</head>
+<body>
+  <h1>HPrSS Psi Implementation</h1>
+  <form name=form>
+    <textarea id="input" class="inputbox" contentEditable>expand ψ(ψ_1(0)) 2&#13;&#10;expand ψ(ψ_2(0)+ψ_2(0)) 2&#13;&#10;expand ψ(ψ_3(ψ_4(0)+ψ_3(ψ_5(0)))) 2&#13;&#10;expand ψ(ψ_2(ψ_4(ψ_5(ψ_7(ψ_9(0)))))) 2</textarea>
+    <ul>
+      <li>Abbreviate: <input id="abbreviate" type="checkbox" checked></li>
+      <li>Details: <input id="detail" type="checkbox"></li>
+    </ul>
+    <input type="button" value="Compute" onclick="compute()">
+  </form>
+  <textarea id="output" class="outputbox" readonly>...</textarea>
+  <input type="text" id="copyarea" style="display:none"><br>
+  <div>
+    <a href="https://googology.wikia.org/ja/wiki/%E3%83%A6%E3%83%BC%E3%82%B6%E3%83%BC%E3%83%96%E3%83%AD%E3%82%B0:Kanrokoti/%E3%83%8F%E3%82%A4%E3%83%91%E3%83%BC%E5%8E%9F%E5%A7%8B%CF%88%E9%96%A2%E6%95%B0">Definition</a> (<a href="https://googology.wikia.org/wiki/User_blog:Kanrokoti/Hyper_Primitive_psi_Function">en</a>) by Kanrokoti, Retrieved 2021/11/15
+  </div>
+  <div>Last updated: 2021/11/15</div>
+</body>
+</html>
