@@ -158,13 +158,15 @@ Term.build=function (s,context){
     }else{
       throw Error("Unexpected character "+next+" at position "+scanpos+" in expression "+scanner.s);
     }
-    var peek=scanner.peek();
-    if (peek=="}"&&context==BRACES){
-      state=EXIT;
-    }else if (peek=="("&&context==PSITERMSUBSCRIPT){
-      state=EXIT;
-    }else if (peek==")"&&context==PSITERMINNER){
-      state=EXIT;
+    if (state==CLOSEDTERM){
+      var peek=scanner.peek();
+      if (context==BRACES&&peek=="}"){
+        state=EXIT;
+      }else if (context==PSITERMSUBSCRIPT&&peek=="("){
+        state=EXIT;
+      }else if (context==PSITERMINNER&&peek==")"){
+        state=EXIT;
+      }
     }
   }
   if (context==TOP){
@@ -698,6 +700,10 @@ function compute(){
   if (oldinput!=input) last=[];
   var output="";
   var lines=input.split(lineBreakRegex);
+  function abbreviateIfEnabled(x){
+    if (options.abbreviate) return abbreviate(x);
+    else return x;
+  }
   for (var l=0;l<lines.length;l++){
     var line=lines[l];
     var args=line.split(itemSeparatorRegex);
@@ -710,17 +716,30 @@ function compute(){
           result=normalizeAbbreviations(args[0]);
         }else if (cmd=="abbreviate"||cmd=="abbr"){
           result=abbreviate(args[0]);
+        }else if (cmd=="lessThan"||cmd=="<"){
+          result=lessThan(args[0],args[1]);
+        }else if (cmd=="lessThanOrEqual"||cmd=="<="){
+          result=lessThanOrEqual(args[0],args[1]);
+        }else if (cmd=="ascend"||cmd=="delta"){
+          result=ascend(args[0],+args[1],+args[2],+args[3]);
+        }else if (cmd=="cp"){
+          result=cp(args[0]);
+        }else if (cmd=="dom"){
+          result=dom(args[0]);
         }else if (cmd=="expand"){
           var t=normalizeAbbreviations(args[0]);
           result=[t];
           for (var i=1;i<args.length;i++){
             result.push(t=fund(t,args[i]));
           }
+        }else if (cmd=="isStandard"){
+          result=findOTPath(args[0],args[1]||3);
         }else{
           result=null;
         }
       }catch(e){
         result=e;
+        console.error(e);
       }
       last[l]=result;
     }else result=last[l];
@@ -730,13 +749,33 @@ function compute(){
       output+=result;
     }else if (cmd=="abbreviate"||cmd=="abbr"){
       output+=result;
+    }else if (cmd=="lessThan"||cmd=="<"){
+      output+=result;
+    }else if (cmd=="lessThanOrEqual"||cmd=="<="){
+      output+=result;
+    }else if (cmd=="ascend"||cmd=="delta"){
+      output+=abbreviateIfEnabled(result);
+    }else if (cmd=="cp"){
+      output+=abbreviateIfEnabled(result);
+    }else if (cmd=="dom"){
+      output+=abbreviateIfEnabled(result);
     }else if (cmd=="expand"){
       if (options.detail){
         for (var i=1;i<result.length;i++){
-          output+=(options.abbreviate?abbreviate(result[i-1]):result[i-1])+"["+args[i]+"]="+(options.abbreviate?abbreviate(result[i]):result[i])+(i==result.length-1?"":"\n");
+          output+=abbreviateIfEnabled(result[i-1])+"["+args[i]+"]="+abbreviateIfEnabled(result[i])+(i==result.length-1?"":"\n");
         }
       }else{
-        output+=(options.abbreviate?abbreviate(result[result.length-1]):result[result.length-1]);
+        output+=abbreviateIfEnabled(result[result.length-1]);
+      }
+    }else if (cmd=="isStandard"){
+      if (options.detail){
+        for (var i=1;i<result.path.length;i++){
+          output+=abbreviateIfEnabled(result.path[i-1])+"["+result.funds[i]+"]="+abbreviateIfEnabled(result.path[i])+"\n";
+        }
+        if (result.isStandard) output+=abbreviateIfEnabled(args[0])+"∈OT";
+        else output+=abbreviateIfEnabled(args[0])+"∉OT limited to n≦"+(args[1]||3);
+      }else{
+        output+=result.isStandard;
       }
     }else{
       output+="Unknown command "+cmd;
