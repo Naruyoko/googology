@@ -11,10 +11,10 @@ function dg(s){
 }
 
 function normalizeAbbreviations(s){
-  return Term(s+"")+"";
+  return new Term(s+"")+"";
 }
 function abbreviate(s){
-  return Term(s+"").toString(true);
+  return new Term(s+"").toString(true);
 }
 
 function Scanner(s){
@@ -311,7 +311,7 @@ ZeroTerm.prototype.toString=function (abbreviate){
   return "0";
 }
 ZeroTerm.prototype.equal=function (other){
-  if (!(other instanceof Term)) other=Term(other);
+  if (!(other instanceof Term)) other=new Term(other);
   return other instanceof ZeroTerm;
 }
 Object.defineProperty(ZeroTerm.prototype,"constructor",{
@@ -368,7 +368,7 @@ PsiTerm.prototype.toString=function (abbreviate){
   else return "ψ_"+this.sub.toStringWithImplicitBrace(abbreviate)+"("+this.inner.toString(abbreviate)+")";
 }
 PsiTerm.prototype.equal=function (other){
-  if (!(other instanceof Term)) other=Term(other);
+  if (!(other instanceof Term)) other=new Term(other);
   return other instanceof PsiTerm&&this.sub.equal(other.sub)&&this.inner.equal(other.inner);
 }
 Object.defineProperty(PsiTerm.prototype,"constructor",{
@@ -399,9 +399,9 @@ SumTerm.build=function (terms){
   r.terms=[];
   for (var i=0;i<terms.length;i++){
     if (terms[i] instanceof SumTerm){
-      r.terms=r.terms.concat(Term(terms[i]).terms);
+      r.terms=r.terms.concat(new Term(terms[i]).terms);
     }else{
-      r.terms.push(Term(terms[i]));
+      r.terms.push(new Term(terms[i]));
     }
   }
   return r;
@@ -444,7 +444,7 @@ SumTerm.prototype.toStringWithImplicitBrace=function (abbreviate){
   else return "{"+this.toString(abbreviate)+"}";
 }
 SumTerm.prototype.equal=function (other){
-  if (!(other instanceof Term)) other=Term(other);
+  if (!(other instanceof Term)) other=new Term(other);
   return other instanceof SumTerm
     ?this.terms.length==other.terms.length&&this.terms.every(function (e,i){return e.equal(other.terms[i]);})
     :this.terms.length==1&&this.terms[0].equal(other);
@@ -501,7 +501,7 @@ function inT(t){
 }
 function inPT(t){
   try{
-    t=Term(t);
+    if (!(t instanceof Term)) t=new Term(t);
   }catch(e){
     return false;
   }
@@ -525,9 +525,9 @@ function isNat(t){
 }
 /** @return {boolean|(t:any)=>boolean} */
 function equal(X,Y){
+  if (!(X instanceof Term)) X=new Term(X);
   if (arguments.length==1) return function(t){return equal(t,X);};
-  X=Term(X);
-  Y=Term(Y);
+  if (!(Y instanceof Term)) Y=new Term(Y);
   return X.equal(Y);
 }
 function notEqual(X,Y){
@@ -603,21 +603,19 @@ function ascend(X,Y,Z){
 function dom(X){
   if (!(X instanceof Term)) X=new Term(X);
   if (!inT(X)) throw Error("Invalid argument: "+X);
-  var temp={};
-  function calcTemp(s){
-    temp[s]=eval(s);
-  }
   if (X instanceof ZeroTerm) return "0"; //1
   if (X instanceof SumTerm) return dom(X.getRight()); //2
   if (X instanceof PsiTerm){ //3
-    calcTemp("dom(X.inner)");
-    if (equal(temp["dom(X.inner)"],"0")){ //3.1
-      calcTemp("dom(X.sub)");
-      if (equal(temp["dom(X.sub)"],"0")||equal(temp["dom(X.sub)"],"1")) return X+""; //3.1.1
-      else return temp["dom(X.sub)"]; //3.1.2
-    }else if (equal(temp["dom(X.inner)"],"1")||equal(temp["dom(X.inner)"],"ω")) return normalizeAbbreviations("ω"); //3.2
+    var dom_X_inner=dom(X.inner);
+    var Term_dom_X_inner=new Term(dom_X_inner);
+    if (equal(Term_dom_X_inner,"0")){ //3.1
+      var dom_X_sub=dom(X.sub);
+      var Term_dom_X_sub=new Term(dom_X_sub);
+      if (equal(Term_dom_X_sub,"0")||equal(Term_dom_X_sub,"1")) return X+""; //3.1.1
+      else return dom_X_sub; //3.1.2
+    }else if (equal(Term_dom_X_inner,"1")||equal(Term_dom_X_inner,"ω")) return normalizeAbbreviations("ω"); //3.2
     else{ //3.3
-      if (lessThan(temp["dom(X.inner)"],X)) return temp["dom(X.inner)"]; //3.3.1
+      if (lessThan(Term_dom_X_inner,X)) return dom_X_inner; //3.3.1
       else return normalizeAbbreviations("ω"); //3.3.2
     }
   }
@@ -633,10 +631,6 @@ function fund(X,Y){
   if (typeof Y=="number") Y=String(Y);
   if (!(Y instanceof Term)) Y=new Term(Y);
   if (!inT(X)||!inT(Y)) throw Error("Invalid argument: "+X+","+Y);
-  var temp={};
-  function calcTemp(s){
-    temp[s]=eval(s);
-  }
   if (X instanceof ZeroTerm) return "0"; //1
   if (X instanceof SumTerm){ //2
     var bp=fund(X.getRight(),Y);
@@ -644,28 +638,32 @@ function fund(X,Y){
     else return X.getNotRight()+"+"+bp; //2.2
   }
   if (X instanceof PsiTerm){ //3
-    calcTemp("dom(X.inner)");
-    if (equal(temp["dom(X.inner)"],"0")){ //3.1
-      calcTemp("dom(X.sub)");
-      if (equal(temp["dom(X.sub)"],"0")||equal(temp["dom(X.sub)"],"1")) return Y+""; //3.1.1
+    var dom_X_inner=dom(X.inner);
+    var Term_dom_X_inner=new Term(dom_X_inner);
+    if (equal(Term_dom_X_inner,"0")){ //3.1
+      var dom_X_sub=dom(X.sub);
+      var Term_dom_X_sub=new Term(dom_X_sub);
+      if (equal(Term_dom_X_sub,"0")||equal(Term_dom_X_sub,"1")) return Y+""; //3.1.1
       else return "ψ_"+fund(X.sub,Y)+"("+X.inner+")"; //3.1.2
-    }else if (equal(temp["dom(X.inner)"],"1")){ //3.2
-      calcTemp('fund(Y,"0")');
-      if (equal(Y,temp['fund(Y,"0")']+"+1")) return fund(X,temp['fund(Y,"0")'])+"+"+fund(X,"1"); //3.2.1
+    }else if (equal(Term_dom_X_inner,"1")){ //3.2
+      var fund_Y_0=fund(Y,"0");
+      if (equal(Y,fund_Y_0+"+1")) return fund(X,fund_Y_0)+"+"+fund(X,"1"); //3.2.1
       else return "ψ_"+X.sub+"("+fund(X.inner,"0")+")"; //3.2.2
-    }else if (equal(temp["dom(X.inner)"],"ω")) return "ψ_"+X.sub+"("+fund(X.inner,Y)+")"; //3.3
+    }else if (equal(Term_dom_X_inner,"ω")) return "ψ_"+X.sub+"("+fund(X.inner,Y)+")"; //3.3
     else{ //3.4
-      if (lessThan(temp["dom(X.inner)"],X)) return "ψ_"+X.sub+"("+fund(X.inner,Y)+")"; //3.4.1
-      var c=Term(temp["dom(X.inner)"]).sub; //3.4.2
+      if (lessThan(Term_dom_X_inner,X)) return "ψ_"+X.sub+"("+fund(X.inner,Y)+")"; //3.4.1
+      var Term_fund_X_fund_Y_0=null;
+      /** @type {Term} */
+      var c=Term_dom_X_inner.sub; //3.4.2
       var ap=code(X.sub);
       var cp=code(c);
       var del=cp-ap-1;
       if (del>0){ //3.4.3
-        if (isNat(Y)&&(calcTemp('Term(fund(X,fund(Y,"0")))'),equal(temp['Term(fund(X,fund(Y,"0")))'].sub,X.sub))) return "ψ_"+X.sub+"("+fund(X.inner,"ψ_"+fund(c,"0")+"("+ascend(temp['Term(fund(X,fund(Y,"0")))'].inner,del,ap)+")")+")"; //3.4.3.1
+        if (isNat(Y)&&((Term_fund_X_fund_Y_0=new Term(fund(X,fund(Y,"0")))) instanceof PsiTerm&&equal(Term_fund_X_fund_Y_0.sub,X.sub))) return "ψ_"+X.sub+"("+fund(X.inner,"ψ_"+fund(c,"0")+"("+ascend(Term_fund_X_fund_Y_0.inner,del,ap)+")")+")"; //3.4.3.1
         else return "ψ_"+X.sub+"("+fund(X.inner,"ψ_"+fund(c,"0")+"(0)")+")"; //3.4.3.2
       }
       if (del<=0){ //3.4.4
-        if (isNat(Y)&&(calcTemp('Term(fund(X,fund(Y,"0")))'),equal(temp['Term(fund(X,fund(Y,"0")))'].sub,X.sub))) return "ψ_"+X.sub+"("+fund(X.inner,"ψ_"+fund(c,"0")+"("+temp['Term(fund(X,fund(Y,"0")))'].inner+")")+")"; //3.4.4.1
+        if (isNat(Y)&&((Term_fund_X_fund_Y_0=new Term(fund(X,fund(Y,"0")))) instanceof PsiTerm&&equal(Term_fund_X_fund_Y_0.sub,X.sub))) return "ψ_"+X.sub+"("+fund(X.inner,"ψ_"+fund(c,"0")+"("+Term_fund_X_fund_Y_0.inner+")")+")"; //3.4.4.1
         else return "ψ_"+X.sub+"("+fund(X.inner,"ψ_"+fund(c,"0")+"(0)")+")"; //3.4.4.2
       }
     }

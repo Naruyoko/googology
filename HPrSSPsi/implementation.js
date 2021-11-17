@@ -11,10 +11,10 @@ function dg(s){
 }
 
 function normalizeAbbreviations(s){
-  return Term(s+"")+"";
+  return new Term(s+"")+"";
 }
 function abbreviate(s){
-  return Term(s+"").toString(true);
+  return new Term(s+"").toString(true);
 }
 
 function Scanner(s){
@@ -311,7 +311,7 @@ ZeroTerm.prototype.toString=function (abbreviate){
   return "0";
 }
 ZeroTerm.prototype.equal=function (other){
-  if (!(other instanceof Term)) other=Term(other);
+  if (!(other instanceof Term)) other=new Term(other);
   return other instanceof ZeroTerm;
 }
 Object.defineProperty(ZeroTerm.prototype,"constructor",{
@@ -368,7 +368,7 @@ PsiTerm.prototype.toString=function (abbreviate){
   else return "ψ_"+this.sub.toStringWithImplicitBrace(abbreviate)+"("+this.inner.toString(abbreviate)+")";
 }
 PsiTerm.prototype.equal=function (other){
-  if (!(other instanceof Term)) other=Term(other);
+  if (!(other instanceof Term)) other=new Term(other);
   return other instanceof PsiTerm&&this.sub.equal(other.sub)&&this.inner.equal(other.inner);
 }
 Object.defineProperty(PsiTerm.prototype,"constructor",{
@@ -399,9 +399,9 @@ SumTerm.build=function (terms){
   r.terms=[];
   for (var i=0;i<terms.length;i++){
     if (terms[i] instanceof SumTerm){
-      r.terms=r.terms.concat(Term(terms[i]).terms);
+      r.terms=r.terms.concat(new Term(terms[i]).terms);
     }else{
-      r.terms.push(Term(terms[i]));
+      r.terms.push(new Term(terms[i]));
     }
   }
   return r;
@@ -444,7 +444,7 @@ SumTerm.prototype.toStringWithImplicitBrace=function (abbreviate){
   else return "{"+this.toString(abbreviate)+"}";
 }
 SumTerm.prototype.equal=function (other){
-  if (!(other instanceof Term)) other=Term(other);
+  if (!(other instanceof Term)) other=new Term(other);
   return other instanceof SumTerm
     ?this.terms.length==other.terms.length&&this.terms.every(function (e,i){return e.equal(other.terms[i]);})
     :this.terms.length==1&&this.terms[0].equal(other);
@@ -592,25 +592,18 @@ function ascend(S,del,br,pr){
 function cp(S){
   if (!(S instanceof Term)) S=new Term(S);
   if (!inRT(S)) throw Error("Invalid argument: "+S);
-  var cache=new Map();
-  function cachedCalc(s){
-    if (cache.has(s)) return cache.get(s);
-    else{
-      var r=eval(s);
-      cache.set(s,r);
-      return r;
-    }
-  }
   if (S instanceof ZeroTerm) return "0"; //1
   if (S instanceof SumTerm) return cp(S.getRight()); //2
   if (S instanceof PsiTerm){ //3
     var a=toNat(S.sub);
     var b=S.inner;
-    if (equal(cachedCalc("cp(b)"),"0")) return S+""; //3.1
-    else if (equal(cachedCalc("cp(b)"),"1")||equal(cachedCalc("cp(b)"),"ω")) return normalizeAbbreviations("ω"); //3.2
+    var Term_cp_b=new Term(cp(b));
+    if (equal(Term_cp_b,"0")) return S+""; //3.1
+    else if (equal(Term_cp_b,"1")||equal(Term_cp_b,"ω")) return normalizeAbbreviations("ω"); //3.2
     else{ //3.3
-      var c=toNat(cachedCalc("Term(cachedCalc('dom(b)'))").sub);
-      var d=cachedCalc("Term(cachedCalc('dom(b)'))").inner;
+      var c=toNat(Term_cp_b.sub);
+      /** @type {Term} */
+      var d=Term_cp_b.inner;
       if (equal(d,"0")){ //3.3.1
         if (a<c) return S+""; //3.3.1.1
         else return cp(b); //3.3.1.2
@@ -626,39 +619,34 @@ function cp(S){
 function dom(S){
   if (!(S instanceof Term)) S=new Term(S);
   if (!inRT(S)) throw Error("Invalid argument: "+S);
-  var cache=new Map();
-  function cachedCalc(s){
-    if (cache.has(s)) return cache.get(s);
-    else{
-      var r=eval(s);
-      cache.set(s,r);
-      return r;
-    }
-  }
   if (S instanceof ZeroTerm) return "0"; //1
   if (S instanceof SumTerm) return dom(S.getRight()); //2
   if (S instanceof PsiTerm){ //3
     var a=toNat(S.sub);
     var b=S.inner;
-    if (equal(cachedCalc("dom(b)"),"0")) return S+"" //3.1
-    else if (equal(cachedCalc("dom(b)"),"1")||equal(cachedCalc("dom(b)"),"ω")) return normalizeAbbreviations("ω"); //3.2
+    var dom_b=dom(b);
+    var Term_dom_b=new Term(dom_b);
+    if (equal(Term_dom_b,"0")) return S+"" //3.1
+    else if (equal(Term_dom_b,"1")||equal(Term_dom_b,"ω")) return normalizeAbbreviations("ω"); //3.2
     else{ //3.3
-      var c=toNat(cachedCalc("Term(cachedCalc('dom(b)'))").sub);
-      var d=cachedCalc("Term(cachedCalc('dom(b)'))").inner;
+      var c=toNat(Term_dom_b.sub);
+      /** @type {Term} */
+      var d=Term_dom_b.inner;
       if (a<c){ //3.3.1
         var del0=c-a-1;
-        if (equal(cachedCalc("dom(d)"),"0")){ //3.3.1.1
+        if (equal(dom(d),"0")){ //3.3.1.1
           if (del0<1) return normalizeAbbreviations("ω"); //3.3.1.1.1
           else return S+""; //3.3.1.1.2
         }else{ //3.3.1.2
-          var e=toNat(cachedCalc("Term(cp(b))").sub);
-          var f=cachedCalc("Term(cp(b))").inner;
-          var g=toNat(Term(cp(f)).sub);
+          var Term_cp_b=new Term(cp(b));
+          var e=toNat(Term_cp_b.sub);
+          var f=Term_cp_b.inner;
+          var g=toNat(new Term(cp(f)).sub);
           var del1=g-e-1;
           if (del0<del1) return normalizeAbbreviations("ω"); //3.3.1.2.1
           else return S+""; //3.3.1.2.2
         }
-      }else return cachedCalc("dom(b)"); //3.3.2
+      }else return dom_b; //3.3.2
     }
   }
   throw Error("No rule to compute dom of "+S);
@@ -673,15 +661,6 @@ function fund(S,T){
   if (typeof T=="number") T=String(T);
   if (!(T instanceof Term)) T=new Term(T);
   if (!inRT(S)||!inRT(T)) throw Error("Invalid argument: "+S+","+T);
-  var cache=new Map();
-  function cachedCalc(s){
-    if (cache.has(s)) return cache.get(s);
-    else{
-      var r=eval(s);
-      cache.set(s,r);
-      return r;
-    }
-  }
   if (S instanceof ZeroTerm) return "0"; //1
   if (S instanceof SumTerm){ //2
     var bp=fund(S.getRight(),T);
@@ -691,17 +670,20 @@ function fund(S,T){
   if (S instanceof PsiTerm){ //3
     var a=toNat(S.sub);
     var b=S.inner;
-    if (equal(cachedCalc("dom(b)"),"0")) return T+""; //3.1
-    else if (equal(cachedCalc("dom(b)"),"1")){ //3.2
+    var dom_b=dom(b);
+    var Term_dom_b=new Term(dom_b);
+    if (equal(Term_dom_b,"0")) return T+""; //3.1
+    else if (equal(Term_dom_b,"1")){ //3.2
       if (equal(T.getRight(),"1")) return fund(S,fund(T,"0"))+"+"+fund(S,"1"); //3.2.1
       else return "ψ_{"+normalizeAbbreviations(a)+"}("+fund(b,"0")+")"; //3.2.2
-    }else if (equal(cachedCalc("dom(b)"),"ω")) return "ψ_{"+normalizeAbbreviations(a)+"}("+fund(b,T)+")"; //3.3
+    }else if (equal(Term_dom_b,"ω")) return "ψ_{"+normalizeAbbreviations(a)+"}("+fund(b,T)+")"; //3.3
     else{ //3.4
-      var c=toNat(cachedCalc("Term(cachedCalc('dom(b)'))").sub);
-      var d=cachedCalc("Term(cachedCalc('dom(b)'))").inner;
+      var c=toNat(Term_dom_b.sub);
+      /** @type {Term} */
+      var d=Term_dom_b.inner;
       if (a<c){ //3.4.1
         var del0=c-a-1;
-        if (equal(cachedCalc("dom(d)"),"0")){ //3.4.1.1
+        if (equal(dom(d),"0")){ //3.4.1.1
           if (del0<1){ //3.4.1.1.1
             if (isNat(T)&&notEqual(T,"0")) return "ψ_{"+normalizeAbbreviations(a)+"}("+fund(b,fund(S,fund(T,"0")))+")"; //3.4.1.1.1.1
             else return "ψ_{"+normalizeAbbreviations(a)+"}("+fund(b,"0")+")"; //3.4.1.1.1.2
@@ -711,9 +693,11 @@ function fund(S,T){
             else return "ψ_{"+normalizeAbbreviations(a)+"}("+fund(b,T)+")"; //3.4.1.1.2.3
           }
         }else{ //3.4.1.2
-          var e=toNat(cachedCalc("Term(cp(b))").sub);
-          var f=cachedCalc("Term(cp(b))").inner;
-          var g=toNat(Term(cp(f)).sub);
+          var Term_cp_b=new Term(cp(b));
+          var e=toNat(Term_cp_b.sub);
+          /** @type {Term} */
+          var f=Term_cp_b.inner;
+          var g=toNat(new Term(cp(f)).sub);
           var del1=g-e-1;
           var del2=g-a-1;
           if (del0<del1){ //3.4.1.2.1
@@ -739,7 +723,7 @@ function findOTPath(x,limit){
   }else{
     var n=0;
     var t;
-    while(n<=limit&&!lessThanOrEqual(x,limitOrd(n))){
+    while(n<=limit&&!(equal(x,t=limitOrd(n))||lessThan(x,t))){
       n++;
     };
     if (n>limit) return {isStandard:false,path:[],funds:[]};
