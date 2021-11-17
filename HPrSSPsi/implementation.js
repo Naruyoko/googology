@@ -65,12 +65,23 @@ Object.defineProperty(Scanner.prototype,"constructor",{
   writable:true
 });
 
+/**
+ * @constructor
+ * @param {*} s 
+ * @returns {Term}
+ */
 function Term(s){
   if (s instanceof Term) return s.clone();
   else if (typeof s!="undefined"&&typeof s!="string") throw Error("Invalid expression: "+s);
+  if (!(this instanceof Term)) return new Term(s);
   if (s) return Term.build(s);
   else return this;
 }
+/**
+ * @param {Term|string|Scanner} s 
+ * @param {number} context 
+ * @returns {Term}
+ */
 Term.build=function (s,context){
   if (s instanceof Term) return s.clone();
   function appendToRSum(term){
@@ -84,6 +95,7 @@ Term.build=function (s,context){
   if (typeof s=="string") scanner=new Scanner(s);
   else if (s instanceof Scanner) scanner=s;
   else throw Error("Invalid expression: "+s);
+  /** @type {Term} */
   var r=null;
   var startpos=scanner.pos;
   var TOP=0;
@@ -182,26 +194,44 @@ Term.build=function (s,context){
   }
   return r;
 }
+/** @returns {Term} */
 Term.buildNoClone=function (){
   throw Error("Not implemented");
 }
+/** @returns {Term} */
 Term.prototype.clone=function (){
   throw Error("Cloning undefined for this term type.");
 }
+/**
+ * @param {Term} x 
+ * @returns {Term}
+ */
 Term.clone=function (x){
   return x.clone();
 }
+/**
+ * @param {boolean} abbreviate
+ * @returns {string}
+ */
 Term.prototype.toString=function (abbreviate){
   throw Error("Stringification undefined for this term type.");
 }
+/**
+ * @param {boolean} abbreviate 
+ * @returns {string}
+ */
 Term.prototype.toStringWithImplicitBrace=function (abbreviate){
   return this.toString(abbreviate);
 }
+/** @returns {boolean} */
 Term.prototype.equal=function (other){
   throw Error("Equality undefined for this term type.");
 }
+/**
+ * @returns {boolean}
+ */
 Term.equal=function (x,y){
-  if (!(x instanceof Term)) x=Term(x);
+  if (!(x instanceof Term)) x=new Term(x);
   x.equal(y);
 }
 Object.defineProperty(Term.prototype,"constructor",{
@@ -210,32 +240,38 @@ Object.defineProperty(Term.prototype,"constructor",{
   writable:true
 });
 
+/**
+ * @extends {Term}
+ * @constructor
+ * @param {*} s 
+ * @returns {NullTerm}
+ */
 function NullTerm(s){
   if (s instanceof NullTerm) return s.clone();
-  else if (s instanceof Term&&typeof s!="string") throw Error("Invalid expression: "+s);
+  else if (typeof s!="undefined"&&s!==null) throw Error("Invalid expression: "+s);
   if (!(this instanceof NullTerm)) return new NullTerm(s);
-  var r=Term.call(this,s);
-  if (s&&!(r instanceof NullTerm)) throw Error("Invalid expression: "+s);
-  if (s) return r;
+  Term.call(this,s);
+  if (s&&!(this instanceof NullTerm)) throw Error("Invalid expression: "+s);
 }
 Object.assign(NullTerm,Term);
 NullTerm.build=function (){
-  var r=NullTerm();
+  var r=new NullTerm();
   return r;
 }
 NullTerm.buildNoClone=function (){
-  var r=NullTerm();
+  var r=new NullTerm();
   return r;
 }
 NullTerm.prototype=Object.create(Term.prototype);
 NullTerm.prototype.clone=function (){
   return NullTerm.build();
 }
+/** @param {boolean} abbreviate */
 NullTerm.prototype.toString=function (abbreviate){
   return "";
 }
 NullTerm.prototype.equal=function (other){
-  if (!(other instanceof Term)) other=Term(other);
+  if (!(other instanceof Term)) other=new Term(other);
   return other instanceof NullTerm;
 }
 Object.defineProperty(NullTerm.prototype,"constructor",{
@@ -244,27 +280,33 @@ Object.defineProperty(NullTerm.prototype,"constructor",{
   writable:true
 });
 
+/**
+ * @extends {Term}
+ * @constructor
+ * @param {*} s 
+ * @returns {ZeroTerm}
+ */
 function ZeroTerm(s){
   if (s instanceof ZeroTerm) return s.clone();
   else if (s instanceof Term&&typeof s!="string") throw Error("Invalid expression: "+s);
   if (!(this instanceof ZeroTerm)) return new ZeroTerm(s);
-  var r=Term.call(this,s);
-  if (s&&!(r instanceof ZeroTerm)) throw Error("Invalid expression: "+s);
-  if (s) return r;
+  Term.call(this,s);
+  if (s&&!(this instanceof ZeroTerm)) throw Error("Invalid expression: "+s);
 }
 Object.assign(ZeroTerm,Term);
 ZeroTerm.build=function (){
-  var r=ZeroTerm();
+  var r=new ZeroTerm();
   return r;
 }
 ZeroTerm.buildNoClone=function (){
-  var r=ZeroTerm();
+  var r=new ZeroTerm();
   return r;
 }
 ZeroTerm.prototype=Object.create(Term.prototype);
 ZeroTerm.prototype.clone=function (){
   return ZeroTerm.build();
 }
+/** @param {boolean} abbreviate */
 ZeroTerm.prototype.toString=function (abbreviate){
   return "0";
 }
@@ -278,23 +320,38 @@ Object.defineProperty(ZeroTerm.prototype,"constructor",{
   writable:true
 });
 
+/**
+ * @constructor
+ * @param {*} s 
+ * @returns {PsiTerm}
+ */
 function PsiTerm(s){
   if (s instanceof PsiTerm) return s.clone();
   else if (s instanceof Term&&typeof s!="string") throw Error("Invalid expression: "+s);
   if (!(this instanceof PsiTerm)) return new PsiTerm(s);
-  var r=Term.call(this,s);
-  if (s&&!(r instanceof PsiTerm)) throw Error("Invalid expression: "+s);
+  /** @type {PsiTerm} */
+  Term.call(this,s);
+  if (s&&!(this instanceof PsiTerm)) throw Error("Invalid expression: "+s);
+  /** @type {Term} */
+  this.sub=null;
+  /** @type {Term} */
+  this.inner=null;
   if (s) return r;
 }
 Object.assign(PsiTerm,Term);
 PsiTerm.build=function (sub,inner){
-  var r=PsiTerm();
-  r.sub=Term(sub);
-  r.inner=Term(inner);
+  var r=new PsiTerm();
+  r.sub=new Term(sub);
+  r.inner=new Term(inner);
   return r;
 }
+/**
+ * @param {Term} sub 
+ * @param {Term} inner 
+ * @returns {PsiTerm}
+ */
 PsiTerm.buildNoClone=function (sub,inner){
-  var r=PsiTerm();
+  var r=new PsiTerm();
   r.sub=sub;
   r.inner=inner;
   return r;
@@ -303,6 +360,7 @@ PsiTerm.prototype=Object.create(Term.prototype);
 PsiTerm.prototype.clone=function (){
   return PsiTerm.build(this.sub,this.inner);
 }
+/** @param {boolean} abbreviate */
 PsiTerm.prototype.toString=function (abbreviate){
   if (abbreviate&&this.equal(Term.ONE)) return "1";
   else if (abbreviate&&this.equal(Term.SMALLOMEGA)) return "ω";
@@ -319,17 +377,25 @@ Object.defineProperty(PsiTerm.prototype,"constructor",{
   writable:true
 });
 
+/**
+ * @extends {Term}
+ * @constructor
+ * @param {*} s 
+ * @returns {SumTerm}
+ */
 function SumTerm(s){
   if (s instanceof SumTerm) return s.clone();
   else if (s instanceof Term&&typeof s!="string") throw Error("Invalid expression: "+s);
   if (!(this instanceof SumTerm)) return new SumTerm(s);
-  var r=Term.call(this,s);
-  if (s&&!(r instanceof SumTerm)) throw Error("Invalid expression: "+s);
-  if (s) return r;
+  Term.call(this,s);
+  if (s&&!(this instanceof SumTerm)) throw Error("Invalid expression: "+s);
+  /** @type {Term[]} */
+  this.terms=null;
 }
 Object.assign(SumTerm,Term);
+/** @param {*[]} terms */
 SumTerm.build=function (terms){
-  var r=SumTerm();
+  var r=new SumTerm();
   r.terms=[];
   for (var i=0;i<terms.length;i++){
     if (terms[i] instanceof SumTerm){
@@ -340,8 +406,9 @@ SumTerm.build=function (terms){
   }
   return r;
 }
+/** @param {Term[]} terms */
 SumTerm.buildNoClone=function (terms){
-  var r=SumTerm();
+  var r=new SumTerm();
   r.terms=[];
   for (var i=0;i<terms.length;i++){
     if (terms[i] instanceof SumTerm){
@@ -356,6 +423,7 @@ SumTerm.prototype=Object.create(Term.prototype);
 SumTerm.prototype.clone=function (){
   return SumTerm.build(this.terms);
 }
+/** @param {boolean} abbreviate */
 SumTerm.prototype.toString=function (abbreviate){
   if (abbreviate){
     var strterms=this.terms.map(function (t){return t.toString(abbreviate);});
@@ -370,6 +438,7 @@ SumTerm.prototype.toString=function (abbreviate){
     return this.terms.join("+");
   }
 }
+/** @param {boolean} abbreviate */
 SumTerm.prototype.toStringWithImplicitBrace=function (abbreviate){
   if (abbreviate&&isNat(this)) return this.toString(abbreviate);
   else return "{"+this.toString(abbreviate)+"}";
@@ -381,27 +450,31 @@ SumTerm.prototype.equal=function (other){
     :this.terms.length==1&&this.terms[0].equal(other);
 }
 SumTerm.prototype.getLeft=function (){
-  return Term(this.terms[0]);
+  return new Term(this.terms[0]);
 }
 SumTerm.prototype.getNotLeft=function (){
   if (this.terms.length<2) return ZeroTerm.build();
-  else if (this.terms.length<=2) return Term(this.terms[1]);
+  else if (this.terms.length<=2) return new Term(this.terms[1]);
   else return SumTerm.build(this.terms.slice(1));
 }
 SumTerm.prototype.getRight=function (){
-  return Term(this.terms[this.terms.length-1]);
+  return new Term(this.terms[this.terms.length-1]);
 }
 SumTerm.prototype.getNotRight=function (){
   if (this.terms.length<2) return ZeroTerm.build();
-  else if (this.terms.length<=2) return Term(this.terms[0]);
+  else if (this.terms.length<=2) return new Term(this.terms[0]);
   else return SumTerm.build(this.terms.slice(0,-1));
 }
+/**
+ * @param {number} start 
+ * @param {number} end 
+ */
 SumTerm.prototype.slice=function (start,end){
   if (start<0) start=this.terms.length+start;
   if (end===undefined) end=this.terms.length;
   if (end<0) end=this.terms.length+end;
   if (start>=end) return NullTerm.build();
-  else if (end-start==1) return Term(this.terms[start]);
+  else if (end-start==1) return new Term(this.terms[start]);
   else return SumTerm.build(this.terms.slice(start,end));
 }
 Object.defineProperty(SumTerm.prototype,"constructor",{
@@ -414,9 +487,10 @@ Term.ZERO=new Term("0");
 Term.ONE=new Term("ψ_0(0)");
 Term.SMALLOMEGA=new Term("ψ_0(1)");
 
+/** @returns {boolean} */
 function inT(t){
   try{
-    t=Term(t);
+    if (!(t instanceof Term)) t=new Term(t);
   }catch(e){
     return false;
   }
@@ -427,7 +501,7 @@ function inT(t){
 }
 function inPT(t){
   try{
-    t=Term(t);
+    if (!(t instanceof Term)) t=new Term(t);
   }catch(e){
     return false;
   }
@@ -436,7 +510,7 @@ function inPT(t){
 }
 function inRT(t){
   try{
-    t=Term(t);
+    if (!(t instanceof Term)) t=new Term(t);
   }catch(e){
     return false;
   }
@@ -447,44 +521,56 @@ function inRT(t){
 }
 function inRPT(t){
   try{
-    t=Term(t);
+    if (!(t instanceof Term)) t=new Term(t);
   }catch(e){
     return false;
   }
   if (t instanceof PsiTerm) return isNat(t.sub)&&inT(t.sub)&&inT(t.inner);
   return false;
 }
+/**
+ * @param {Term} t
+ * @param {(value:Term,index:number,array:Term[])=>boolean} f
+ */
 function isSumAndTermsSatisfy(t,f){
   return t instanceof SumTerm&&t.terms.every(f);
 }
 function isNat(t){
   try{
-    t=Term(t);
+    if (!(t instanceof Term)) t=new Term(t);
   }catch(e){
     return false;
   }
-  return t.equal("0")||t.equal("1")||isSumAndTermsSatisfy(t,equal("1"));
+  return t instanceof Term&&(t.equal("0")||t.equal("1")||isSumAndTermsSatisfy(t,equal("1")));
 }
 function toNat(X){
-  X=Term(X);
+  if (!(X instanceof Term)) X=new Term(X);
   if (!isNat(X)) throw Error("Invalid argument: "+X);
   if (X instanceof ZeroTerm) return 0;
   if (X instanceof PsiTerm) return 1;
   if (X instanceof SumTerm) return X.terms.length;
   throw Error("This should be unreachable");
 }
+/** @return {boolean|(t:any)=>boolean} */
 function equal(X,Y){
+  if (!(X instanceof Term)) X=new Term(X);
   if (arguments.length==1) return function(t){return equal(t,X);};
-  X=Term(X);
-  Y=Term(Y);
+  if (!(Y instanceof Term)) Y=new Term(Y);
   return X.equal(Y);
 }
 function notEqual(X,Y){
   if (arguments.length==1) return function(t){return notEqual(t,X);};
   return !equal(X,Y);
 }
+/**
+ * @param {Term} S
+ * @param {number} del
+ * @param {number} br
+ * @param {0|1} pr
+ * @returns {string}
+ */
 function ascend(S,del,br,pr){
-  S=Term(S);
+  if (!(S instanceof Term)) S=new Term(S);
   if (!inRT(S)||typeof del!="number"||del===0||typeof br!="number"||(pr!==0&&pr!==1)) throw Error("Invalid argument: "+S+","+del+","+br+","+pr);
   if (S instanceof ZeroTerm) return "0"; //1
   if (S instanceof SumTerm) return S.terms.map(function (t){return ascend(t,del,br,pr);}).join("+"); //2
@@ -499,8 +585,12 @@ function ascend(S,del,br,pr){
   }
   throw Error("No rule to compute delta("+S+","+del+","+br+","+pr+")");
 }
+/**
+ * @param {Term} S 
+ * @returns {string}
+ */
 function cp(S){
-  S=Term(S);
+  if (!(S instanceof Term)) S=new Term(S);
   if (!inRT(S)) throw Error("Invalid argument: "+S);
   var cache=new Map();
   function cachedCalc(s){
@@ -529,8 +619,12 @@ function cp(S){
   }
   throw Error("No rule to compute cp("+S+")");
 }
+/**
+ * @param {Term} S 
+ * @returns {string}
+ */
 function dom(S){
-  S=Term(S);
+  if (!(S instanceof Term)) S=new Term(S);
   if (!inRT(S)) throw Error("Invalid argument: "+S);
   var cache=new Map();
   function cachedCalc(s){
@@ -569,10 +663,15 @@ function dom(S){
   }
   throw Error("No rule to compute dom of "+S);
 }
+/**
+ * @param {Term} S
+ * @param {Term|number} T
+ * @returns {string}
+ */
 function fund(S,T){
-  S=Term(S);
+  if (!(S instanceof Term)) S=new Term(S);
   if (typeof T=="number") T=String(T);
-  T=Term(T);
+  if (!(T instanceof Term)) T=new Term(T);
   if (!inRT(S)||!inRT(T)) throw Error("Invalid argument: "+S+","+T);
   var cache=new Map();
   function cachedCalc(s){
