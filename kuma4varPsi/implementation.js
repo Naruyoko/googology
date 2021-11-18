@@ -794,13 +794,12 @@ function FGH(X,n){
  */
 function largeFunction(n){
   if (typeof n!="number") throw Error("Invalid argument");
-  var ord=limitOrd(n);
-  var r=n;
-  for (var i=0;i<n;i++) r=FGH(ord,r);
-  return r;
+  return FGH(limitOrd(n),n);
 }
 function calculateN(){
-  return largeFunction(1e100);
+  var r=1e100;
+  for (var i=0;i<1e100;i++) r=largeFunction(r);
+  return r;
 }
 
 var input="";
