@@ -496,7 +496,7 @@ function inT(t){
   }
   if (t instanceof ZeroTerm) return true;
   if (t instanceof PsiTerm) return inT(t.sub)&&inT(t.inner);
-  if (t instanceof SumTerm) return t.terms.every(inPT);
+  if (t instanceof SumTerm) return t.terms.every(function (t){return !t.equal("0")&&inPT(t);});
   return false;
 }
 function inPT(t){
@@ -535,140 +535,144 @@ function notEqual(X,Y){
   return !equal(X,Y);
 }
 /**
- * @param {Term} X 
- * @param {Term} Y 
+ * @param {Term} S 
+ * @param {Term} T 
  * @returns {boolean}
  */
-function lessThan(X,Y){
-  if (!(X instanceof Term)) X=new Term(X);
-  if (!(Y instanceof Term)) Y=new Term(Y);
-  if (Y instanceof ZeroTerm) return false; //1
-  if (X instanceof ZeroTerm) return true; //2
-  if (X instanceof SumTerm){ //3
-    if (Y instanceof SumTerm) //3.1
-      return lessThan(X.getLeft(),Y.getLeft()) //3.1.1
-        ||equal(X.getLeft(),Y.getLeft())&&lessThan(X.getNotLeft(),Y.getNotLeft()); //3.1.2
-    if (Y instanceof PsiTerm) return lessThan(X.getLeft(),Y); //3.2
+function lessThan(S,T){
+  if (!(S instanceof Term)) S=new Term(S);
+  if (!(T instanceof Term)) T=new Term(T);
+  if (T instanceof ZeroTerm) return false; //1
+  if (S instanceof ZeroTerm) return true; //2
+  if (S instanceof SumTerm){ //3
+    if (T instanceof SumTerm) //3.1
+      return lessThan(S.getLeft(),T.getLeft()) //3.1.1
+        ||equal(S.getLeft(),T.getLeft())&&lessThan(S.getNotLeft(),T.getNotLeft()); //3.1.2
+    if (T instanceof PsiTerm) return lessThan(S.getLeft(),T); //3.2
   }
-  if (X instanceof PsiTerm){ //4
-    if (Y instanceof SumTerm) return lessThanOrEqual(X,Y.getLeft()) //4.1
-    if (Y instanceof PsiTerm) //4.2
-      return lessThan(X.sub,Y.sub) //4.2.1
-        ||equal(X.sub,Y.sub)&&lessThan(X.inner,Y.inner); //4.2.2
+  if (S instanceof PsiTerm){ //4
+    if (T instanceof SumTerm) return lessThanOrEqual(S,T.getLeft()) //4.1
+    if (T instanceof PsiTerm) //4.2
+      return lessThan(S.sub,T.sub) //4.2.1
+        ||equal(S.sub,T.sub)&&lessThan(S.inner,T.inner); //4.2.2
   }
-  throw Error("No rule to compare "+X+" and "+Y);
+  throw Error("No rule to compare "+S+" and "+T);
 }
 /** @returns {boolean} */
-function lessThanOrEqual(X,Y){
-  if (!(X instanceof Term)) X=new Term(X);
-  if (!(Y instanceof Term)) Y=new Term(Y);
-  return equal(X,Y)||lessThan(X,Y);
+function lessThanOrEqual(S,T){
+  if (!(S instanceof Term)) S=new Term(S);
+  if (!(T instanceof Term)) T=new Term(T);
+  return equal(S,T)||lessThan(S,T);
 }
-function code(X){
-  if (!(X instanceof Term)) X=new Term(X);
-  if (!inT(X)) throw Error("Invalid argument: "+X);
-  if (X instanceof ZeroTerm) return 0;
-  if (X instanceof PsiTerm) return equal(X,"1")?1:0;
-  if (X instanceof SumTerm){
+/**
+ * @param {Term} S 
+ * @returns {number}
+ */
+function code(S){
+  if (!(S instanceof Term)) S=new Term(S);
+  if (!inT(S)) throw Error("Invalid argument: "+S);
+  if (S instanceof ZeroTerm) return 0;
+  if (S instanceof PsiTerm) return equal(S,"1")?1:0;
+  if (S instanceof SumTerm){
     var r=0;
-    var i=X.terms.length-1;
-    while (i>=0&&equal(X.terms[i],"1")){
+    var i=S.terms.length-1;
+    while (i>=0&&equal(S.terms[i],"1")){
       r++;
       i--;
     }
     return r;
   }
 }
-/**\
- * @param {Term} X 
- * @param {number} Y 
- * @param {number} Z 
+/**
+ * @param {Term} S 
+ * @param {number} T 
+ * @param {number} U 
  * @returns {string}
  */
-function ascend(X,Y,Z){
-  if (!(X instanceof Term)) X=new Term(X);
-  if (!inT(X)||typeof Y!="number"||Y===0||typeof Z!="number") throw Error("Invalid argument: "+X+","+Y+","+Z);
-  if (X instanceof ZeroTerm) return "0"; //1
-  if (X instanceof SumTerm) return X.terms.map(function (t){return ascend(t,Y,Z);}).join("+"); //2
-  if (X instanceof PsiTerm){ //3
-    if (Z<code(X.sub)) return "ψ_{"+X.sub+"+"+Y+"}("+ascend(X.inner,Y,Z)+")"; //3.1
-    else return X+""; //3.2
+function ascend(S,T,U){
+  if (!(S instanceof Term)) S=new Term(S);
+  if (!inT(S)||typeof T!="number"||T===0||typeof U!="number") throw Error("Invalid argument: "+S+","+T+","+U);
+  if (S instanceof ZeroTerm) return "0"; //1
+  if (S instanceof SumTerm) return S.terms.map(function (t){return ascend(t,T,U);}).join("+"); //2
+  if (S instanceof PsiTerm){ //3
+    if (U<code(S.sub)) return "ψ_{"+S.sub+"+"+T+"}("+ascend(S.inner,T,U)+")"; //3.1
+    else return S+""; //3.2
   }
-  throw Error("No rule to compute delta("+X+","+Y+","+Z+")");
+  throw Error("No rule to compute delta("+S+","+T+","+U+")");
 }
 /**
- * @param {Term} X
+ * @param {Term} S
  * @returns {string}
  */
-function dom(X){
-  if (!(X instanceof Term)) X=new Term(X);
-  if (!inT(X)) throw Error("Invalid argument: "+X);
-  if (X instanceof ZeroTerm) return "0"; //1
-  if (X instanceof SumTerm) return dom(X.getRight()); //2
-  if (X instanceof PsiTerm){ //3
-    var dom_X_inner=dom(X.inner);
+function dom(S){
+  if (!(S instanceof Term)) S=new Term(S);
+  if (!inT(S)) throw Error("Invalid argument: "+S);
+  if (S instanceof ZeroTerm) return "0"; //1
+  if (S instanceof SumTerm) return dom(S.getRight()); //2
+  if (S instanceof PsiTerm){ //3
+    var dom_X_inner=dom(S.inner);
     var Term_dom_X_inner=new Term(dom_X_inner);
     if (equal(Term_dom_X_inner,"0")){ //3.1
-      var dom_X_sub=dom(X.sub);
+      var dom_X_sub=dom(S.sub);
       var Term_dom_X_sub=new Term(dom_X_sub);
-      if (equal(Term_dom_X_sub,"0")||equal(Term_dom_X_sub,"1")) return X+""; //3.1.1
+      if (equal(Term_dom_X_sub,"0")||equal(Term_dom_X_sub,"1")) return S+""; //3.1.1
       else return dom_X_sub; //3.1.2
     }else if (equal(Term_dom_X_inner,"1")||equal(Term_dom_X_inner,"ω")) return normalizeAbbreviations("ω"); //3.2
     else{ //3.3
-      if (lessThan(Term_dom_X_inner,X)) return dom_X_inner; //3.3.1
+      if (lessThan(Term_dom_X_inner,S)) return dom_X_inner; //3.3.1
       else return normalizeAbbreviations("ω"); //3.3.2
     }
   }
-  throw Error("No rule to compute dom of "+X);
+  throw Error("No rule to compute dom of "+S);
 }
 /**
- * @param {Term} X 
- * @param {Term|number} Y 
+ * @param {Term} S 
+ * @param {Term|number} T 
  * @returns {string}
  */
-function fund(X,Y){
-  if (!(X instanceof Term)) X=new Term(X);
-  if (typeof Y=="number") Y=String(Y);
-  if (!(Y instanceof Term)) Y=new Term(Y);
-  if (!inT(X)||!inT(Y)) throw Error("Invalid argument: "+X+","+Y);
-  if (X instanceof ZeroTerm) return "0"; //1
-  if (X instanceof SumTerm){ //2
-    var bp=fund(X.getRight(),Y);
-    if (equal(bp,"0")) return X.getNotRight()+""; //2.1
-    else return X.getNotRight()+"+"+bp; //2.2
+function fund(S,T){
+  if (!(S instanceof Term)) S=new Term(S);
+  if (typeof T=="number") T=String(T);
+  if (!(T instanceof Term)) T=new Term(T);
+  if (!inT(S)||!inT(T)) throw Error("Invalid argument: "+S+","+T);
+  if (S instanceof ZeroTerm) return "0"; //1
+  if (S instanceof SumTerm){ //2
+    var bp=fund(S.getRight(),T);
+    if (equal(bp,"0")) return S.getNotRight()+""; //2.1
+    else return S.getNotRight()+"+"+bp; //2.2
   }
-  if (X instanceof PsiTerm){ //3
-    var dom_X_inner=dom(X.inner);
+  if (S instanceof PsiTerm){ //3
+    var dom_X_inner=dom(S.inner);
     var Term_dom_X_inner=new Term(dom_X_inner);
     if (equal(Term_dom_X_inner,"0")){ //3.1
-      var dom_X_sub=dom(X.sub);
+      var dom_X_sub=dom(S.sub);
       var Term_dom_X_sub=new Term(dom_X_sub);
-      if (equal(Term_dom_X_sub,"0")||equal(Term_dom_X_sub,"1")) return Y+""; //3.1.1
-      else return "ψ_"+fund(X.sub,Y)+"("+X.inner+")"; //3.1.2
+      if (equal(Term_dom_X_sub,"0")||equal(Term_dom_X_sub,"1")) return T+""; //3.1.1
+      else return "ψ_"+fund(S.sub,T)+"("+S.inner+")"; //3.1.2
     }else if (equal(Term_dom_X_inner,"1")){ //3.2
-      var fund_Y_0=fund(Y,"0");
-      if (equal(Y,fund_Y_0+"+1")) return fund(X,fund_Y_0)+"+"+fund(X,"1"); //3.2.1
-      else return "ψ_"+X.sub+"("+fund(X.inner,"0")+")"; //3.2.2
-    }else if (equal(Term_dom_X_inner,"ω")) return "ψ_"+X.sub+"("+fund(X.inner,Y)+")"; //3.3
+      var fund_Y_0=fund(T,"0");
+      if (equal(T,fund_Y_0+"+1")) return fund(S,fund_Y_0)+"+"+fund(S,"1"); //3.2.1
+      else return "ψ_"+S.sub+"("+fund(S.inner,"0")+")"; //3.2.2
+    }else if (equal(Term_dom_X_inner,"ω")) return "ψ_"+S.sub+"("+fund(S.inner,T)+")"; //3.3
     else{ //3.4
-      if (lessThan(Term_dom_X_inner,X)) return "ψ_"+X.sub+"("+fund(X.inner,Y)+")"; //3.4.1
+      if (lessThan(Term_dom_X_inner,S)) return "ψ_"+S.sub+"("+fund(S.inner,T)+")"; //3.4.1
       var Term_fund_X_fund_Y_0=null;
       /** @type {Term} */
       var c=Term_dom_X_inner.sub; //3.4.2
-      var ap=code(X.sub);
+      var ap=code(S.sub);
       var cp=code(c);
       var del=cp-ap-1;
       if (del>0){ //3.4.3
-        if (isNat(Y)&&((Term_fund_X_fund_Y_0=new Term(fund(X,fund(Y,"0")))) instanceof PsiTerm&&equal(Term_fund_X_fund_Y_0.sub,X.sub))) return "ψ_"+X.sub+"("+fund(X.inner,"ψ_"+fund(c,"0")+"("+ascend(Term_fund_X_fund_Y_0.inner,del,ap)+")")+")"; //3.4.3.1
-        else return "ψ_"+X.sub+"("+fund(X.inner,"ψ_"+fund(c,"0")+"(0)")+")"; //3.4.3.2
+        if (isNat(T)&&((Term_fund_X_fund_Y_0=new Term(fund(S,fund(T,"0")))) instanceof PsiTerm&&equal(Term_fund_X_fund_Y_0.sub,S.sub))) return "ψ_"+S.sub+"("+fund(S.inner,"ψ_"+fund(c,"0")+"("+ascend(Term_fund_X_fund_Y_0.inner,del,ap)+")")+")"; //3.4.3.1
+        else return "ψ_"+S.sub+"("+fund(S.inner,"ψ_"+fund(c,"0")+"(0)")+")"; //3.4.3.2
       }
       if (del<=0){ //3.4.4
-        if (isNat(Y)&&((Term_fund_X_fund_Y_0=new Term(fund(X,fund(Y,"0")))) instanceof PsiTerm&&equal(Term_fund_X_fund_Y_0.sub,X.sub))) return "ψ_"+X.sub+"("+fund(X.inner,"ψ_"+fund(c,"0")+"("+Term_fund_X_fund_Y_0.inner+")")+")"; //3.4.4.1
-        else return "ψ_"+X.sub+"("+fund(X.inner,"ψ_"+fund(c,"0")+"(0)")+")"; //3.4.4.2
+        if (isNat(T)&&((Term_fund_X_fund_Y_0=new Term(fund(S,fund(T,"0")))) instanceof PsiTerm&&equal(Term_fund_X_fund_Y_0.sub,S.sub))) return "ψ_"+S.sub+"("+fund(S.inner,"ψ_"+fund(c,"0")+"("+Term_fund_X_fund_Y_0.inner+")")+")"; //3.4.4.1
+        else return "ψ_"+S.sub+"("+fund(S.inner,"ψ_"+fund(c,"0")+"(0)")+")"; //3.4.4.2
       }
     }
   }
-  throw Error("No rule to compute fund of "+X+","+Y);
+  throw Error("No rule to compute fund of "+S+","+T);
 }
 function findOTPath(x,limit){
   x=normalizeAbbreviations(x);
@@ -702,21 +706,33 @@ function findOTPath(x,limit){
 function isStandard(x,limit){
   return findOTPath(x,limit).isStandard;
 }
-//ψ_0(Λ(n))
+/**
+ * @param {number} n 
+ * @returns {string} ψ_0(Λ(n))
+ */
 function limitOrd(n){
   return "ψ_0("+"ψ_".repeat(n+1)+"0"+"(0)".repeat(n+1)+")";
 }
-function FGH(X,n){
-  X=normalizeAbbreviations(X);
-  if (!isStandard(X)||(typeof n!="number")) throw Error("Invalid argument: "+X);
-  if (equal(X,"0")) return n+1;
-  else if (equal(dom(X),"1")){
+/**
+ * @param {string} S 
+ * @param {number} n 
+ * @returns {number}
+ */
+function FGH(S,n){
+  S=normalizeAbbreviations(S);
+  if (!isStandard(S)||(typeof n!="number")) throw Error("Invalid argument: "+S);
+  if (equal(S,"0")) return n+1;
+  else if (equal(dom(S),"1")){
     var r=n;
-    var X0=fund(X,"0");
+    var X0=fund(S,"0");
     for (var i=0;i<n;i++) r=FGH(X0,r);
     return r;
-  }else return FGH(fund(X,n),n);
+  }else return FGH(fund(S,n),n);
 }
+/**
+ * @param {number} n 
+ * @returns {number}
+ */
 function largeFunction(n){
   if (typeof n!="number") throw Error("Invalid argument");
   var ord=limitOrd(n);

@@ -551,7 +551,6 @@ function equal(X,Y){
   if (arguments.length==1) return function(t){return equal(t,X);};
   if (!(Y instanceof Term)) Y=new Term(Y);
   return X.equal(Y);
-  return X.equal(Y);
 }
 function notEqual(X,Y){
   if (arguments.length==1) return function(t){return notEqual(t,X);};
@@ -659,7 +658,8 @@ function fund(X,Y){
         }else if (equal(Term_dom_X_inner1,"1")) return Y+""; //2.1.1.2
         else{ //2.1.1.3
           if (lessThan(Term_dom_X_inner1,X)) return "ψ_"+X.sub+"("+fund(X.inner1,Y)+","+X.inner2+","+X.inner3+")"; //2.1.1.3.1
-          else if (Term_dom_X_inner1 instanceof PsiTerm){ //2.1.1.3.2
+          else{ //2.1.1.3.2
+            if (!(Term_dom_X_inner1 instanceof PsiTerm)) throw Error("Unexpected error");
             var P=Term_dom_X_inner1.sub;
             var Q=Term_dom_X_inner1.inner1;
             var R=Term_dom_X_inner1.inner2;
@@ -680,7 +680,8 @@ function fund(X,Y){
       }else if (equal(Term_dom_X_inner2,"1")) return Y+""; //2.1.2
       else{ //2.1.3
         if (lessThan(Term_dom_X_inner2,X)) return "ψ_"+X.sub+"("+X.inner1+","+fund(X.inner2,Y)+","+X.inner3+")"; //2.1.3.1
-        else if (Term_dom_X_inner2 instanceof PsiTerm){ //2.1.3.2
+        else{ //2.1.3.2
+          if (!(Term_dom_X_inner2 instanceof PsiTerm)) throw Error("Unexpected error");
           var P=Term_dom_X_inner2.sub;
           var Q=Term_dom_X_inner2.inner1;
           var R=Term_dom_X_inner2.inner2;
@@ -705,7 +706,8 @@ function fund(X,Y){
     }else if (equal(Term_dom_X_inner3,"ω")) return "ψ_"+X.sub+"("+X.inner1+","+X.inner2+","+fund(X.inner3,Y)+")"; //2.3
     else{ //2.4
       if (lessThan(Term_dom_X_inner3,X)) return "ψ_"+X.sub+"("+X.inner1+","+X.inner2+","+fund(X.inner3,Y)+")"; //2.4.1
-      else if (Term_dom_X_inner3 instanceof PsiTerm){ //2.4.2
+      else{ //2.4.2
+        if (!(Term_dom_X_inner3 instanceof PsiTerm)) throw Error("Unexpected error");
         var P=Term_dom_X_inner3.sub;
         var Q=Term_dom_X_inner3.inner1;
         var R=Term_dom_X_inner3.inner2;
@@ -763,13 +765,21 @@ function findOTPath(x,limit){
 function isStandard(x,limit){
   return findOTPath(x,limit).isStandard;
 }
-//ψ_0(Λ(n))
+/**
+ * @param {number} n 
+ * @returns {string} ψ_0(Λ(n))
+ */
 function limitOrd(n){
   return "ψ_0(0,0,"+"ψ_".repeat(n+1)+"0"+"(0,0,0)".repeat(n+1)+")";
 }
+/**
+ * @param {string} X 
+ * @param {number} n 
+ * @returns {number}
+ */
 function FGH(X,n){
   X=normalizeAbbreviations(X);
-  if (!isStandard(X)||(typeof n!="number")) throw Error("Invalid argument: "+X);
+  if (typeof n!="number") throw Error("Invalid argument: "+X);
   if (equal(X,"0")) return n+1;
   else if (equal(dom(X),"1")){
     var r=n;
@@ -778,6 +788,10 @@ function FGH(X,n){
     return r;
   }else return FGH(fund(X,n),n);
 }
+/**
+ * @param {number} n 
+ * @returns {number}
+ */
 function largeFunction(n){
   if (typeof n!="number") throw Error("Invalid argument");
   var ord=limitOrd(n);

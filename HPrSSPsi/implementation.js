@@ -496,7 +496,7 @@ function inT(t){
   }
   if (t instanceof ZeroTerm) return true;
   if (t instanceof PsiTerm) return inT(t.sub)&&inT(t.inner);
-  if (t instanceof SumTerm) return t.terms.every(inPT);
+  if (t instanceof SumTerm) return t.terms.every(function (t){return !t.equal("0")&&inPT(t);});
   return false;
 }
 function inPT(t){
@@ -516,7 +516,7 @@ function inRT(t){
   }
   if (t instanceof ZeroTerm) return true;
   if (t instanceof PsiTerm) return isNat(t.sub)&&inT(t.sub)&&inT(t.inner);
-  if (t instanceof SumTerm) return t.terms.every(inPT);
+  if (t instanceof SumTerm) return t.terms.every(function (t){return !t.equal("0")&&inPT(t);});
   return false;
 }
 function inRPT(t){
@@ -574,7 +574,7 @@ function ascend(S,del,br,pr){
   if (!inRT(S)||typeof del!="number"||del===0||typeof br!="number"||(pr!==0&&pr!==1)) throw Error("Invalid argument: "+S+","+del+","+br+","+pr);
   if (S instanceof ZeroTerm) return "0"; //1
   if (S instanceof SumTerm) return S.terms.map(function (t){return ascend(t,del,br,pr);}).join("+"); //2
-  if (S instanceof PsiTerm&&inRT(S)){ //3
+  if (S instanceof PsiTerm){ //3
     var a=toNat(S.sub);
     var b=S.inner;
     if (br<a) return "ψ_{"+normalizeAbbreviations(a+del)+"}("+ascend(b,del,br,pr)+")"; //3.1
@@ -597,17 +597,18 @@ function cp(S){
   if (S instanceof PsiTerm){ //3
     var a=toNat(S.sub);
     var b=S.inner;
-    var Term_cp_b=new Term(cp(b));
+    var cp_b=cp(b);
+    var Term_cp_b=new Term(cp_b);
     if (equal(Term_cp_b,"0")) return S+""; //3.1
     else if (equal(Term_cp_b,"1")||equal(Term_cp_b,"ω")) return normalizeAbbreviations("ω"); //3.2
     else{ //3.3
+      if (!(Term_cp_b instanceof PsiTerm)) throw Error("Unexpected error");
       var c=toNat(Term_cp_b.sub);
-      /** @type {Term} */
       var d=Term_cp_b.inner;
       if (equal(d,"0")){ //3.3.1
         if (a<c) return S+""; //3.3.1.1
-        else return cp(b); //3.3.1.2
-      }else return cp(b); //3.3.2
+        else return cp_b; //3.3.1.2
+      }else return cp_b; //3.3.2
     }
   }
   throw Error("No rule to compute cp("+S+")");
@@ -629,8 +630,8 @@ function dom(S){
     if (equal(Term_dom_b,"0")) return S+"" //3.1
     else if (equal(Term_dom_b,"1")||equal(Term_dom_b,"ω")) return normalizeAbbreviations("ω"); //3.2
     else{ //3.3
+      if (!(Term_dom_b instanceof PsiTerm)) throw Error("Unexpected error");
       var c=toNat(Term_dom_b.sub);
-      /** @type {Term} */
       var d=Term_dom_b.inner;
       if (a<c){ //3.3.1
         var del0=c-a-1;
@@ -639,9 +640,12 @@ function dom(S){
           else return S+""; //3.3.1.1.2
         }else{ //3.3.1.2
           var Term_cp_b=new Term(cp(b));
+          if (!(Term_cp_b instanceof PsiTerm)) throw Error("Unexpected error");
           var e=toNat(Term_cp_b.sub);
           var f=Term_cp_b.inner;
-          var g=toNat(new Term(cp(f)).sub);
+          var Term_cp_f=new Term(cp(f));
+          if (!(Term_cp_f instanceof PsiTerm)) throw Error("Unexpected error");
+          var g=toNat(Term_cp_f.sub);
           var del1=g-e-1;
           if (del0<del1) return normalizeAbbreviations("ω"); //3.3.1.2.1
           else return S+""; //3.3.1.2.2
@@ -674,12 +678,13 @@ function fund(S,T){
     var Term_dom_b=new Term(dom_b);
     if (equal(Term_dom_b,"0")) return T+""; //3.1
     else if (equal(Term_dom_b,"1")){ //3.2
-      if (equal(T.getRight(),"1")) return fund(S,fund(T,"0"))+"+"+fund(S,"1"); //3.2.1
+      var Term_fund_T_0=new Term(fund(T,"0"));
+      if (equal(T,Term_fund_T_0+"+1")) return fund(S,Term_fund_T_0)+"+"+fund(S,"1"); //3.2.1
       else return "ψ_{"+normalizeAbbreviations(a)+"}("+fund(b,"0")+")"; //3.2.2
     }else if (equal(Term_dom_b,"ω")) return "ψ_{"+normalizeAbbreviations(a)+"}("+fund(b,T)+")"; //3.3
     else{ //3.4
+      if (!(Term_dom_b instanceof PsiTerm)) throw Error("Unexpected error");
       var c=toNat(Term_dom_b.sub);
-      /** @type {Term} */
       var d=Term_dom_b.inner;
       if (a<c){ //3.4.1
         var del0=c-a-1;
@@ -694,10 +699,12 @@ function fund(S,T){
           }
         }else{ //3.4.1.2
           var Term_cp_b=new Term(cp(b));
+          if (!(Term_cp_b instanceof PsiTerm)) throw Error("Unexpected error");
           var e=toNat(Term_cp_b.sub);
-          /** @type {Term} */
           var f=Term_cp_b.inner;
-          var g=toNat(new Term(cp(f)).sub);
+          var Term_cp_f=new Term(cp(f));
+          if (!(Term_cp_f instanceof PsiTerm)) throw Error("Unexpected error");
+          var g=toNat(Term_cp_f.sub);
           var del1=g-e-1;
           var del2=g-a-1;
           if (del0<del1){ //3.4.1.2.1
@@ -743,21 +750,33 @@ function findOTPath(x,limit){
     return r;
   }
 }
-//ψ_0(ψ_n(0))
+/**
+ * @param {number} n 
+ * @returns {string} ψ_0(ψ_n(0))
+ */
 function limitOrd(n){
   return "ψ_0(ψ_{"+normalizeAbbreviations(n)+"}(0))";
 }
-function FGH(X,n){
-  X=normalizeAbbreviations(X);
-  if (typeof n!="number") throw Error("Invalid argument: "+X);
-  if (equal(X,"0")) return n+1;
-  else if (equal(dom(X),"1")){
+/**
+ * @param {string} S 
+ * @param {number} n 
+ * @returns {number}
+ */
+function FGH(S,n){
+  S=normalizeAbbreviations(S);
+  if (typeof n!="number") throw Error("Invalid argument: "+S);
+  if (equal(S,"0")) return n+1;
+  else if (equal(dom(S),"1")){
     var r=n;
-    var X0=fund(X,"0");
+    var X0=fund(S,"0");
     for (var i=0;i<n;i++) r=FGH(X0,r);
     return r;
-  }else return FGH(fund(X,n),n);
+  }else return FGH(fund(S,n),n);
 }
+/**
+ * @param {number} n 
+ * @returns {number}
+ */
 function largeFunction(n){
   if (typeof n!="number") throw Error("Invalid argument");
   return FGH(limitOrd(n),n);
