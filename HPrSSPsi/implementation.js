@@ -708,7 +708,8 @@ function fund(S,T){
           var del1=g-e-1;
           var del2=g-a-1;
           if (del0<del1){ //3.4.1.2.1
-            if (isNat(T)&&notEqual(T,"0")) return "ψ_{"+normalizeAbbreviations(a)+"}("+fund(b,ascend(fund(S,fund(T,"0")),del2,a,0))+")"; //3.4.1.2.1.1
+            var Term_fund_S_fund_T_0=null;
+            if (isNat(T)&&notEqual(T,"0")&&(Term_fund_S_fund_T_0=new Term(fund(S,fund(T,"0")))) instanceof PsiTerm) return "ψ_{"+normalizeAbbreviations(a)+"}("+fund(b,ascend(Term_fund_S_fund_T_0.inner,del2-del0-1,a,0))+")"; //3.4.1.2.1.1
             else return "ψ_{"+normalizeAbbreviations(a)+"}("+fund(b,"0")+")"; //3.4.1.2.1.2
           }else{ //3.4.1.2.2
             if (T instanceof ZeroTerm) return "ψ_{"+normalizeAbbreviations(a)+"}("+fund(b,"0")+")"; //3.4.1.2.2.1
