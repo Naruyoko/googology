@@ -701,7 +701,7 @@ function isStandard(x,limit){
  * @returns {string} ψ_0(ψ_n(0))
  */
 function limitOrd(n){
-  return "ψ_0(ψ_{"+normalizeAbbreviations(n)+"}(0))";
+  return "ψ_0("+"ψ_".repeat(n+1)+"0"+"(0)".repeat(n+1)+")";
 }
 /**
  * @param {string} S 
