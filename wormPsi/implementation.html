@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Worm psi Function Implementation</title>
+  <script src="./implementation.js"></script>
+  <link rel="stylesheet" type="text/css" href="./style.css">
+</head>
+<body>
+  <h1>Worm psi Function Implementation</h1>
+  <form name=form>
+    <textarea id="input" class="inputbox" contentEditable>expand ψ(2) 2&#13;&#10;expand ω+ω 2&#13;&#10;expand ψ(2)+ω+ψ(2) 2&#13;&#10;expand ψ(ψ_1(0)) 2&#13;&#10;expand ψ(ψ_1(1)+ω+ψ_1(1)) 2&#13;&#10;isStandard ψ(ψ_2(ψ_1(0))+ψ_2(2)+ω+ψ_1(ψ_2(0)+1))</textarea>
+    <ul>
+      <li>Abbreviate: <input id="abbreviate" type="checkbox" checked></li>
+      <li>Details: <input id="detail" type="checkbox"></li>
+    </ul>
+    <input type="button" value="Compute" onclick="compute()">
+  </form>
+  <textarea id="output" class="outputbox" readonly>...</textarea>
+  <input type="text" id="copyarea" style="display:none"><br>
+  <div>
+    <a href="https://googology.wikia.org/ja/wiki/%E3%83%A6%E3%83%BC%E3%82%B6%E3%83%BC%E3%83%96%E3%83%AD%E3%82%B0:Kanrokoti/%E8%99%AB%CF%88%E9%96%A2%E6%95%B0" target="_blank">Definition of "Worm psi Function"</a> (<a href="https://googology.wikia.org/wiki/User_blog:Kanrokoti/Worm_psi_Function" target="_blank">en</a>) by Kanrokoti, Retrieved 2021/11/18<br>
+    The program (implementation.js) and the site (implementation.html) under https://naruyoko.github.io/googology/wormPsi is licensed by <a href="https://creativecommons.org/licenses/by-sa/3.0/legalcode" target="_blank">Creative Commons Attribution-ShareAlike 3.0 Unported License</a>.
+  </div>
+  <div>Last updated: 2021/11/18</div>
+</body>
+</html>
