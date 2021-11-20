@@ -338,7 +338,6 @@ function PsiTerm(s){
   this.inner1=null;
   /** @type {Term} */
   this.inner2=null;
-  if (s) return r;
 }
 Object.assign(PsiTerm,Term);
 PsiTerm.build=function (sub,inner1,inner2){
@@ -813,8 +812,6 @@ function compute(){
           result=lessThan(args[0],args[1]);
         }else if (cmd=="lessThanOrEqual"||cmd=="<="){
           result=lessThanOrEqual(args[0],args[1]);
-        }else if (cmd=="ascend"||cmd=="delta"){
-          result=ascend(args[0],+args[1],+args[2]);
         }else if (cmd=="dom"){
           result=dom(args[0]);
         }else if (cmd=="expand"){
@@ -844,8 +841,6 @@ function compute(){
       output+=result;
     }else if (cmd=="lessThanOrEqual"||cmd=="<="){
       output+=result;
-    }else if (cmd=="ascend"||cmd=="delta"){
-      output+=abbreviateIfEnabled(result);
     }else if (cmd=="dom"){
       output+=abbreviateIfEnabled(result);
     }else if (cmd=="expand"){
