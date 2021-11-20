@@ -79,7 +79,7 @@ Object.defineProperty(Scanner.prototype,"constructor",{
 }
 /**
  * @param {Term|string|Scanner} s 
- * @param {number} context 
+ * @param {number=} context 
  * @returns {Term}
  */
 Term.build=function (s,context){
@@ -160,13 +160,7 @@ Term.build=function (s,context){
       var subterm=Term.build(scanner,BRACES);
       var nextnext=scanner.next();
       if (nextnext!="}") throw Error("Expected closing } at position "+(scanner.pos-1)+", instead got "+nextnext+" in expression "+scanner.s);
-      if (state==START){
-        r=subterm;
-        state=CLOSEDTERM;
-      }else if (state==PLUS){
-        r=SubTerm.buildNoClone([r,subterm]);
-        state=CLOSEDTERM;
-      }
+      appendToRSum(subterm);
     }else{
       throw Error("Unexpected character "+next+" at position "+scanpos+" in expression "+scanner.s);
     }
@@ -336,7 +330,6 @@ Object.defineProperty(ZeroTerm.prototype,"constructor",{
   this.sub=null;
   /** @type {Term} */
   this.inner=null;
-  if (s) return r;
 }
 Object.assign(PsiTerm,Term);
 PsiTerm.build=function (sub,inner){
@@ -543,8 +536,8 @@ function notEqual(X,Y){
   return !equal(X,Y);
 }
 /**
- * @param {Term} S 
- * @param {Term} T 
+ * @param {Term|string} S 
+ * @param {Term|string} T 
  * @returns {boolean}
  */
 function lessThan(S,T){
@@ -573,7 +566,7 @@ function lessThanOrEqual(S,T){
   return equal(S,T)||lessThan(S,T);
 }
 /**
- * @param {Term} S
+ * @param {Term|string} S
  * @returns {string}
  */
 function dom(S){
@@ -598,8 +591,8 @@ function dom(S){
   throw Error("No rule to compute dom of "+S);
 }
 /**
- * @param {Term} S 
- * @param {Term|number} T 
+ * @param {Term|string} S 
+ * @param {Term|number|string} T 
  * @returns {string}
  */
 function fund(S,T){
@@ -769,8 +762,6 @@ function compute(){
           result=lessThan(args[0],args[1]);
         }else if (cmd=="lessThanOrEqual"||cmd=="<="){
           result=lessThanOrEqual(args[0],args[1]);
-        }else if (cmd=="ascend"||cmd=="delta"){
-          result=ascend(args[0],+args[1],+args[2]);
         }else if (cmd=="dom"){
           result=dom(args[0]);
         }else if (cmd=="expand"){
@@ -800,8 +791,6 @@ function compute(){
       output+=result;
     }else if (cmd=="lessThanOrEqual"||cmd=="<="){
       output+=result;
-    }else if (cmd=="ascend"||cmd=="delta"){
-      output+=abbreviateIfEnabled(result);
     }else if (cmd=="dom"){
       output+=abbreviateIfEnabled(result);
     }else if (cmd=="expand"){

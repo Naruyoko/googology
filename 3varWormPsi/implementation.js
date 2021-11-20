@@ -79,7 +79,7 @@ Object.defineProperty(Scanner.prototype,"constructor",{
 }
 /**
  * @param {Term|string|Scanner} s 
- * @param {number} context 
+ * @param {number=} context 
  * @returns {Term}
  */
 Term.build=function (s,context){
@@ -165,13 +165,7 @@ Term.build=function (s,context){
       var subterm=Term.build(scanner,BRACES);
       var nextnext=scanner.next();
       if (nextnext!="}") throw Error("Expected closing } at position "+(scanner.pos-1)+", instead got "+nextnext+" in expression "+scanner.s);
-      if (state==START){
-        r=subterm;
-        state=CLOSEDTERM;
-      }else if (state==PLUS){
-        r=SubTerm.buildNoClone([r,subterm]);
-        state=CLOSEDTERM;
-      }
+      appendToRSum(subterm);
     }else{
       throw Error("Unexpected character "+next+" at position "+scanpos+" in expression "+scanner.s);
     }
@@ -237,7 +231,7 @@ Term.prototype.equal=function (other){
  */
 Term.equal=function (x,y){
   if (!(x instanceof Term)) x=new Term(x);
-  x.equal(y);
+  return x.equal(y);
 }
 Object.defineProperty(Term.prototype,"constructor",{
   value:Term,
@@ -326,38 +320,12 @@ Object.defineProperty(ZeroTerm.prototype,"constructor",{
 });
 
 /**
+ * @extends {Term}
  * @constructor
  * @param {*} s 
  * @returns {PsiTerm}
  */
- function PsiTerm(s){
-  if (s instanceof PsiTerm) return s.clone();
-  else if (s instanceof Term&&typeof s!="string") throw Error("Invalid expression: "+s);
-  if (!(this instanceof PsiTerm)) return new PsiTerm(s);
-  /** @type {PsiTerm} */
-  Term.call(this,s);
-  if (s&&!(this instanceof PsiTerm)) throw Error("Invalid expression: "+s);
-  /** @type {Term} */
-  this.sub=null;
-  /** @type {Term} */
-  this.inner1=null;
-  /** @type {Term} */
-  this.inner2=null;
-  if (s) return r;
-}
-Object.assign(PsiTerm,Term);
-PsiTerm.build=function (sub,inner1,inner2){
-  var r=new PsiTerm();
-  r.sub=new Term(sub);
-  r.inner1=new Term(inner1);
-  return r;
-}
-/**
- * @constructor
- * @param {*} s 
- * @returns {PsiTerm}
- */
- function PsiTerm(s){
+function PsiTerm(s){
   if (s instanceof PsiTerm) return s.clone();
   else if (s instanceof Term&&typeof s!="string") throw Error("Invalid expression: "+s);
   if (!(this instanceof PsiTerm)) return new PsiTerm(s);
@@ -583,8 +551,8 @@ function notEqual(X,Y){
   return !equal(X,Y);
 }
 /**
- * @param {Term} S 
- * @param {Term} T 
+ * @param {Term|string} S 
+ * @param {Term|string} T 
  * @returns {boolean}
  */
 function lessThan(S,T){
@@ -616,7 +584,7 @@ function lessThanOrEqual(S,T){
   return equal(S,T)||lessThan(S,T);
 }
 /**
- * @param {Term} S
+ * @param {Term|string} S
  * @returns {string}
  */
 function dom(S){
@@ -649,8 +617,8 @@ function dom(S){
   throw Error("No rule to compute dom of "+S);
 }
 /**
- * @param {Term} S 
- * @param {Term|number} T 
+ * @param {Term|string} S 
+ * @param {Term|number|string} T 
  * @returns {string}
  */
 function fund(S,T){

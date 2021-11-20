@@ -79,7 +79,7 @@ function Term(s){
 }
 /**
  * @param {Term|string|Scanner} s 
- * @param {number} context 
+ * @param {number=} context 
  * @returns {Term}
  */
 Term.build=function (s,context){
@@ -164,13 +164,7 @@ Term.build=function (s,context){
       var subterm=Term.build(scanner,BRACES);
       var nextnext=scanner.next();
       if (nextnext!="}") throw Error("Expected closing } at position "+(scanner.pos-1)+", instead got "+nextnext+" in expression "+scanner.s);
-      if (state==START){
-        r=subterm;
-        state=CLOSEDTERM;
-      }else if (state==PLUS){
-        r=SubTerm.buildNoClone([r,subterm]);
-        state=CLOSEDTERM;
-      }
+      appendToRSum(subterm);
     }else{
       throw Error("Unexpected character "+next+" at position "+scanpos+" in expression "+scanner.s);
     }
@@ -236,7 +230,7 @@ Term.prototype.equal=function (other){
  */
 Term.equal=function (x,y){
   if (!(x instanceof Term)) x=new Term(x);
-  x.equal(y);
+  return x.equal(y);
 }
 Object.defineProperty(Term.prototype,"constructor",{
   value:Term,
@@ -344,7 +338,6 @@ function PsiTerm(s){
   this.inner2=null;
   /** @type {Term} */
   this.inner3=null;
-  if (s) return r;
 }
 Object.assign(PsiTerm,Term);
 PsiTerm.build=function (sub,inner1,inner2,inner3){
@@ -557,8 +550,8 @@ function notEqual(X,Y){
   return !equal(X,Y);
 }
 /**
- * @param {Term} X 
- * @param {Term} Y 
+ * @param {Term|string} X 
+ * @param {Term|string} Y 
  * @returns {boolean}
  */
 function lessThan(X,Y){
@@ -588,7 +581,7 @@ function lessThan(X,Y){
   throw Error("No rule to compare "+X+" and "+Y);
 }
 /**
- * @param {Term} X 
+ * @param {Term|string} X 
  * @returns {string}
  */
 function dom(X){
@@ -629,8 +622,8 @@ function dom(X){
   throw Error("No rule to compute dom of "+X);
 }
 /**
- * @param {Term} S
- * @param {Term|number} T
+ * @param {Term|string} X
+ * @param {Term|number|string} Y
  * @returns {string}
  */
 function fund(X,Y){
