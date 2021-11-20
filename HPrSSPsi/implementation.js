@@ -315,6 +315,7 @@ Object.defineProperty(ZeroTerm.prototype,"constructor",{
 });
 
 /**
+ * @extends {Term}
  * @constructor
  * @param {*} s 
  * @returns {PsiTerm}
@@ -715,35 +716,6 @@ function fund(S,T){
   }
   throw Error("No rule to compute fund of "+S+","+T);
 }
-function findOTPath(x,limit){
-  x=normalizeAbbreviations(x);
-  if (!inT(x)) throw Error("Invalid argument: "+x);
-  if (typeof limit=="undefined"||limit==-1) limit=Infinity;
-  if (equal(x,"0")){
-    return {isStandard:true,path:["0"],funds:[-1]};
-  }else{
-    var n=0;
-    var t;
-    while(n<=limit&&!(equal(x,t=limitOrd(n))||lessThan(x,t))){
-      n++;
-    };
-    if (n>limit) return {isStandard:false,path:[],funds:[]};
-    t=limitOrd(n);
-    console.log(abbreviate(t));
-    var r={isStandard:false,path:[t],funds:[n]};
-    while (!equal(x,t)){
-      n=0;
-      var nt;
-      while (n<=limit&&lessThan(nt=fund(t,n),x)) n++;
-      if (n>limit) return r;
-      r.path.push(t=nt);
-      r.funds.push(n);
-      console.log(abbreviate(nt));
-    }
-    r.isStandard=true;
-    return r;
-  }
-}
 /**
  * @param {number} n 
  * @returns {string} ψ_0(ψ_n(0))
@@ -812,10 +784,6 @@ function compute(){
           result=normalizeAbbreviations(args[0]);
         }else if (cmd=="abbreviate"||cmd=="abbr"){
           result=abbreviate(args[0]);
-        }else if (cmd=="lessThan"||cmd=="<"){
-          result=lessThan(args[0],args[1]);
-        }else if (cmd=="lessThanOrEqual"||cmd=="<="){
-          result=lessThanOrEqual(args[0],args[1]);
         }else if (cmd=="ascend"||cmd=="delta"){
           result=ascend(args[0],+args[1],+args[2],+args[3]);
         }else if (cmd=="cp"){
@@ -828,8 +796,6 @@ function compute(){
           for (var i=1;i<args.length;i++){
             result.push(t=fund(t,args[i]));
           }
-        }else if (cmd=="isStandard"){
-          result=findOTPath(args[0],args[1]||3);
         }else{
           result=null;
         }
@@ -845,10 +811,6 @@ function compute(){
       output+=result;
     }else if (cmd=="abbreviate"||cmd=="abbr"){
       output+=result;
-    }else if (cmd=="lessThan"||cmd=="<"){
-      output+=result;
-    }else if (cmd=="lessThanOrEqual"||cmd=="<="){
-      output+=result;
     }else if (cmd=="ascend"||cmd=="delta"){
       output+=abbreviateIfEnabled(result);
     }else if (cmd=="cp"){
@@ -862,16 +824,6 @@ function compute(){
         }
       }else{
         output+=abbreviateIfEnabled(result[result.length-1]);
-      }
-    }else if (cmd=="isStandard"){
-      if (options.detail){
-        for (var i=1;i<result.path.length;i++){
-          output+=abbreviateIfEnabled(result.path[i-1])+"["+result.funds[i]+"]="+abbreviateIfEnabled(result.path[i])+"\n";
-        }
-        if (result.isStandard) output+=abbreviateIfEnabled(args[0])+"∈OT";
-        else output+=abbreviateIfEnabled(args[0])+"∉OT limited to n≦"+(args[1]||3);
-      }else{
-        output+=result.isStandard;
       }
     }else{
       output+="Unknown command "+cmd;
