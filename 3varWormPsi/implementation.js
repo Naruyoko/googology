@@ -502,7 +502,7 @@ function inT(t){
     return false;
   }
   if (t instanceof ZeroTerm) return true;
-  if (t instanceof PsiTerm) return inT(t.inner1)&&inT(t.inner2);
+  if (t instanceof PsiTerm) return inT(t.sub)&&inT(t.inner1)&&inT(t.inner2);
   if (t instanceof SumTerm) return t.terms.every(function (t){return !t.equal("0")&&inPT(t);});
   return false;
 }
@@ -512,7 +512,7 @@ function inPT(t){
   }catch(e){
     return false;
   }
-  if (t instanceof PsiTerm) return inT(t.inner1)&&inT(t.inner2);
+  if (t instanceof PsiTerm) return inT(t.sub)&&inT(t.inner1)&&inT(t.inner2);
   return false;
 }
 /**
