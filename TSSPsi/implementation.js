@@ -853,7 +853,11 @@ function compute(){
         output+=abbreviateIfEnabled(result[result.length-1]);
       }
     }else if (cmd=="trans"){
-      output+=args[0]+(+args[1]?" (+"+(+args[1])+")":"")+"->"+result.map(function (t){return "("+t.join(",")+")";}).join("");
+      if (options.detail){
+        output+=args[0]+(+args[1]?" (+"+(+args[1])+")":"")+"->"+result.map(function (t){return "("+t.join(",")+")";}).join("");
+      }else{
+        output+=result.map(function (t){return "("+t.join(",")+")";}).join("");
+      }
     }else{
       output+="Unknown command "+cmd;
     }
