@@ -621,7 +621,7 @@ function bp(S,T){
   if (S instanceof ZeroTerm) return "0"; //1
   var S_getLeft;
   if (S instanceof SumTerm&&(S_getLeft=S.getLeft()) instanceof PsiTerm){ //2
-    var a=S_getLeft;
+    var a=S_getLeft.sub;
     if (lessThan(T,a)) return S+""; //2.1
     else return bp(S.getNotLeft(),T); //2.2
   }
