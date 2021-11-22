@@ -592,7 +592,7 @@ function dom(S){
         else return dom_S_sub; //3.1.1.2
       }else if (equal(Term_dom_S_inner1,"1")) return S+""; //3.1.2
       else{ //3.1.3
-        if (lessThan(Term_dom_S_inner1,"1")) return dom_S_inner1; //3.1.3.1
+        if (lessThan(Term_dom_S_inner1,S)) return dom_S_inner1; //3.1.3.1
         else{ //3.1.3.2
           if (!(Term_dom_S_inner1 instanceof PsiTerm)) throw Error("Unexpected error");
           var d=Term_dom_S_inner1.sub;
@@ -678,8 +678,8 @@ function fund(S,T){
             else if (isNat(T)&&(Term_fund_S_fund_T_0=new Term(fund(S,fund(T,"0")))) instanceof PsiTerm&&equal(Term_fund_S_fund_T_0.sub,S.sub)&&equal(Term_fund_S_fund_T_0.inner2,S.inner2)) return "ψ_"+S.sub+"("+fund(S.inner1,"ψ_"+fund(d,"0")+"("+Term_fund_S_fund_T_0.inner1+",0)")+","+S.inner2+")"; //3.1.3.2.1.2
             else return "ψ_"+S.sub+"("+fund(S.inner1,T)+","+S.inner2+")"; //3.1.3.2.1.3
           }else if (equal(Term_dom_e,"1")){ //3.1.3.2.2
-            if (isNat(T)&&(Term_fund_S_fund_T_0=new Term(fund(S,fund(T,"0")))) instanceof PsiTerm&&equal(Term_fund_S_fund_T_0.sub,S.sub)&&equal(Term_fund_S_fund_T_0.inner2,S.inner2)) return "ψ_"+S.sub+"("+fund(S.inner1,"ψ_"+fund(d,"0")+"("+fund(e,"0")+","+Term_fund_S_fund_T_0.inner1+")")+","+S.inner2+")"; //3.1.3.2.2.1
-            else return "ψ_"+S.sub+"("+fund(S.inner1,"ψ_"+fund(d,"0")+"("+fund(e,"0")+",0)")+","+S.inner2+")"; //3.1.3.2.2.2
+            if (isNat(T)&&(Term_fund_S_fund_T_0=new Term(fund(S,fund(T,"0")))) instanceof PsiTerm&&equal(Term_fund_S_fund_T_0.sub,S.sub)&&equal(Term_fund_S_fund_T_0.inner2,S.inner2)) return "ψ_"+S.sub+"("+fund(S.inner1,"ψ_"+d+"("+fund(e,"0")+","+Term_fund_S_fund_T_0.inner1+")")+","+S.inner2+")"; //3.1.3.2.2.1
+            else return "ψ_"+S.sub+"("+fund(S.inner1,"ψ_"+d+"("+fund(e,"0")+",0)")+","+S.inner2+")"; //3.1.3.2.2.2
           }else if (Term_dom_e instanceof PsiTerm){ //3.1.3.2.3
             var f=Term_dom_e.sub;
             if (equal(T,"0")) return "ψ_"+S.sub+"("+fund(S.inner1,"0")+","+S.inner2+")"; //3.1.3.2.3.1
