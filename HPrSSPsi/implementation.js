@@ -509,8 +509,8 @@ function inRT(t){
     return false;
   }
   if (t instanceof ZeroTerm) return true;
-  if (t instanceof PsiTerm) return isNat(t.sub)&&inT(t.sub)&&inT(t.inner);
-  if (t instanceof SumTerm) return t.terms.every(function (t){return !t.equal("0")&&inPT(t);});
+  if (t instanceof PsiTerm) return isNat(t.sub)&&inRT(t.inner);
+  if (t instanceof SumTerm) return t.terms.every(function (t){return !t.equal("0")&&inRPT(t);});
   return false;
 }
 function inRPT(t){
@@ -519,7 +519,7 @@ function inRPT(t){
   }catch(e){
     return false;
   }
-  if (t instanceof PsiTerm) return isNat(t.sub)&&inT(t.sub)&&inT(t.inner);
+  if (t instanceof PsiTerm) return isNat(t.sub)&&inRT(t.inner);
   return false;
 }
 /**
