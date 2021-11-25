@@ -23,24 +23,6 @@ infixl 9 !
 ilength :: [a] -> Integer
 ilength xs = genericLength xs :: Integer
 
-itake :: Integer -> [a] -> [a]
-itake = genericTake
-
-idrop :: Integer -> [a] -> [a]
-idrop = genericDrop
-
-replaceAt :: [a] -> Int -> a -> [a]
-replaceAt arr index new = take index arr ++ (new : drop (index+1) arr)
-
-replaceAt2D :: [[a]] -> Int -> Int -> a -> [[a]]
-replaceAt2D arr y x new = replaceAt arr y $ replaceAt (arr !! y) x new
-
-ireplaceAt :: [a] -> Integer -> a -> [a]
-ireplaceAt arr index new = itake index arr ++ (new : idrop (index+1) arr)
-
-ireplaceAt2D :: [[a]] -> Integer -> Integer -> a -> [[a]]
-ireplaceAt2D arr y x new = ireplaceAt arr y $ ireplaceAt (arr ! y) x new
-
 type Sequence = [Integer]
 data POffset = NoParent | HasParent Integer
 type VPPair = (Integer,POffset)
@@ -50,23 +32,23 @@ type UnfilledVPPair = (Maybe Integer,POffset)
 type UnfilledMountainRow = [Maybe UnfilledVPPair]
 type UnfilledMountain = [UnfilledMountainRow]
 
-split :: Char -> String -> [String]
-split char "" = []
-split char str =
+splitString :: Char -> String -> [String]
+splitString char "" = []
+splitString char str =
   case elemIndex char str of
-    Just index -> take index str : split char (drop (index+1) str)
+    Just index -> take index str : splitString char (drop (index+1) str)
     Nothing -> [str]
 
-join :: Char -> [String] -> String
-join char [] = ""
-join char [str] = str
-join char (str:strs) = str ++ singleton char ++ join char strs
+joinString :: Char -> [String] -> String
+joinString char [] = ""
+joinString char [str] = str
+joinString char (str:strs) = str ++ singleton char ++ joinString char strs
 
 parseSequence :: String -> Sequence
-parseSequence input = map (\x -> read x :: Integer) $ split ',' input
+parseSequence input = map (\x -> read x :: Integer) $ splitString ',' input
 
 stringifySequence :: Sequence -> String
-stringifySequence seq = join ',' $ map show seq
+stringifySequence seq = joinString ',' $ map show seq
 
 isValid :: Sequence -> Bool
 isValid (x:xs) = x==1 && all (>=1) xs
@@ -134,17 +116,17 @@ fillParentsAndBuildNextRow last target
 calcMountain :: Sequence -> Mountain
 calcMountain seq = if not $ isValid seq then error "Invalid sequence" else fillParentsAndBuildNextRow Nothing $ map (Just . (, NoParent)) seq
 
-extractSequence :: Mountain -> Sequence
-extractSequence = map (fst . fromJust) . head
+extractSequence :: MountainRow -> Sequence
+extractSequence = map (fst . fromJust)
 
 stringifyTest :: Mountain -> String
-stringifyTest = join '\n' . reverse . map (\row -> join ' ' $ map (\index ->
+stringifyTest = joinString '\n' . reverse . map (\row -> joinString ' ' $ map (\index ->
   let node = row ! index in
   "(" ++ show (fst $ fromJust node) ++ "," ++ show index ++ ")"
   ) [0..ilength row-1])
 
 stringifyMountain :: Mountain -> String
-stringifyMountain = join '\n' . reverse . map (\row -> join ' ' $ map (\index ->
+stringifyMountain = joinString '\n' . reverse . map (\row -> joinString ' ' $ map (\index ->
   let node = row ! index in
   if isNothing node
     then "(-,-)"
@@ -154,7 +136,7 @@ stringifyMountain = join '\n' . reverse . map (\row -> join ' ' $ map (\index ->
   ) [0..ilength row-1])
 
 stringifyUnfilledMountain :: UnfilledMountain -> String
-stringifyUnfilledMountain = join '\n' . reverse . map (\row -> join ' ' $ map (\index ->
+stringifyUnfilledMountain = joinString '\n' . reverse . map (\row -> joinString ' ' $ map (\index ->
   let node = row ! index in
   if isNothing node
     then "(-,-)"
@@ -172,10 +154,10 @@ badRoot mountain = if hasNoParent $ fromJust $ last $ mountain ! 0 then -1 else 
           | otherwise = go (y+1)
 
 goodPart :: Mountain -> Mountain
-goodPart mountain = map (itake $ badRoot mountain) mountain
+goodPart mountain = map (genericTake $ badRoot mountain) mountain
 
 badPart :: Mountain -> Mountain
-badPart mountain = map (init . idrop (badRoot mountain)) mountain
+badPart mountain = map (init . genericDrop (badRoot mountain)) mountain
 
 splitParts :: Mountain -> (Mountain, Mountain)
 splitParts mountain = (goodPart mountain, badPart mountain)
@@ -202,28 +184,17 @@ hollowCopy (g,b,cut) m = map (\y -> map (go y) [0..width-1]) [0..height-1]
 markUnfilled :: Mountain -> UnfilledMountain
 markUnfilled = map (map (\node -> if isJust node then Just $ first Just (fromJust node) else Nothing))
 
-markFilled :: UnfilledMountain -> Mountain
-markFilled = map (map (\node -> if isJust node then Just $ first fromJust (fromJust node) else Nothing))
-
-fillEmpty :: UnfilledMountain -> Mountain
-fillEmpty mountain = markFilled $ foldl (\mountain y -> foldl (`go` y) mountain [0..width-1]) mountain [height-1,height-2..0]
-  where width = ilength $ mountain ! 0
-        height = ilength mountain
-        go mountain y x = ireplaceAt2D mountain y x (
-          if isNothing node
-            then Nothing
-          else if isNothing $ fst $ fromJust node
-            then Just (Just $ fromJust (fst $ fromJust $ row ! uparentIndex row x) + fromJust (fst $ fromJust $ mountain ! (y+1) ! x), snd $ fromJust node)
-            else node
-          )
-          where row = mountain ! y
-                node = row ! x
+fillEmpty :: UnfilledMountainRow -> MountainRow -> MountainRow
+fillEmpty row rowAbove = foldl go [] $ zip row [0..]
+  where go acc (Nothing, _) = acc ++ [Nothing]
+        go acc (Just (Just v, p), _) = acc ++ [Just (v, p)]
+        go acc (Just (Nothing, p), x) = acc ++ [Just (fst (fromJust $ acc ! uparentIndex row x) + fst (fromJust $ rowAbove ! x), p)]
 
 expand :: Sequence -> Integer -> Sequence
 expand [] n = []
 expand seq _ | not (isValid seq) = error "Invalid sequence"
 expand seq _ | last seq == 1 = init seq
-expand seq n = extractSequence $ fillEmpty $ map concat $ transpose $ markUnfilled (map init mountain) : map (hollowCopy (g, b, map last mountain)) [1..n]
+expand seq n = extractSequence $ foldr (fillEmpty . concat) undefined $ transpose $ markUnfilled (map init mountain) : map (hollowCopy (g, b, map last mountain)) [1..n]
   where mountain = calcMountain seq
         (g,b) = splitParts mountain
 
@@ -231,6 +202,6 @@ calc :: (Integer -> Integer) -> Sequence -> Integer -> Integer
 calc f [] n = n
 calc f seq n = calc f (expand seq n) (f n)
 
-calcDispStep :: (Integer -> Integer) -> Sequence -> Integer -> String
-calcDispStep f [] n = "()"
-calcDispStep f seq n = "(" ++ stringifySequence seq ++ ")\n[" ++ show n ++ "]> " ++ calcDispStep f (expand seq n) (f n)
+calcSteps :: (Integer -> Integer) -> Sequence -> Integer -> [(Sequence, Integer)]
+calcSteps f [] n = [([], n)]
+calcSteps f seq n = (seq, n) : calcSteps f (expand seq n) (f n)
