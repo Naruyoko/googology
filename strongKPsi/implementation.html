@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Strong K-psi function Implementation</title>
+  <script src="./implementation.js"></script>
+  <link rel="stylesheet" type="text/css" href="./style.css">
+</head>
+<body>
+  <h1>Strong K-psi function Implementation</h1>
+  <form name=form>
+    <textarea id="input" class="inputbox" contentEditable>expand ψ^2(ψ^2_2(0)) 2&#13;&#10;expand ψ^3(ψ^3_2(ψ^3_1(ψ^3_2(0)+ψ^3_2(0)))) 2&#13;&#10;expand ψ^3(ψ^3_2(ψ^3_1(ψ^3_1(ψ^3_2(0)+ψ^3_2(0))))) 2&#13;&#10;expand ψ^3(ψ^3_2(ψ^3_1(ψ^3_1(ψ^3_1(ψ^3_2(0)+ψ^3_2(0)))))) 2&#13;&#10;expand ψ^3(ψ^3_2(ψ^3_1(ψ^3_1(ψ^3_1(ψ^3_1(ψ^3_2(0)+ψ^3_2(0))))))) 2&#13;&#10;expand ψ^3(ψ^3_2(ψ^3_1(ψ^3_1(ψ^3_1(ψ^3(0)))))) 2&#13;&#10;expand ψ^4(ψ^4_3(ψ^4_1(ψ^4_1(ψ^4_1(ψ^4_1(ψ^4_2(0)+ψ^4_2(0))))))) 2&#13;&#10;expand ψ^4(ψ^4_3(ψ^4_1(ψ^4_1(ψ^4_1(ψ^4_1(ψ^4_1(ψ^4_2(0)+ψ^4_2(0)))))))) 2</textarea>
+    <ul>
+      <li>Abbreviate: <input id="abbreviate" type="checkbox" checked></li>
+      <li>Details: <input id="detail" type="checkbox"></li>
+    </ul>
+    <input type="button" value="Compute" onclick="compute()">
+  </form>
+  <textarea id="output" class="outputbox" readonly>...</textarea>
+  <input type="text" id="copyarea" style="display:none"><br>
+  <div>
+    <a href="https://googology.fandom.com/ja/wiki/%E3%83%A6%E3%83%BC%E3%82%B6%E3%83%BC%E3%83%96%E3%83%AD%E3%82%B0:Kanrokoti/%E5%BC%B7K-%CF%88%E9%96%A2%E6%95%B0" target="_blank">Definition of "Strong K-psi function"</a> (<a href="https://googology.fandom.com/wiki/User_blog:Kanrokoti/Strong_K-psi_function" target="_blank">en</a>) by Kanrokoti, Retrieved 2021/11/30<br>
+    The program (implementation.js) and the site (implementation.html) under https://naruyoko.github.io/googology/strongKPsi is licensed by <a href="https://creativecommons.org/licenses/by-sa/3.0/legalcode" rel="license" target="_blank">Creative Commons Attribution-ShareAlike 3.0 Unported License</a>.
+  </div>
+  <div>Last updated: 2021/11/30</div>
+</body>
+</html>
