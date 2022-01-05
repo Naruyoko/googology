@@ -2,20 +2,16 @@ var lineBreakRegex=/\r?\n/g;
 var itemSeparatorRegex=/[\t ,]/g;
 window.onload=function (){
   console.clear();
-  dg('input').onkeydown=handlekey;
-  dg('input').onfocus=handlekey;
-  dg('input').onmousedown=handlekey;
-  //compute();
-}
-function dg(s){
-  return document.getElementById(s);
+  document.getElementById('input').onkeydown=handlekey;
+  document.getElementById('input').onfocus=handlekey;
+  document.getElementById('input').onmousedown=handlekey;
 }
 
 function normalizeAbbreviations(s){
-  return Term(s)+"";
+  return (s instanceof Term?s:new Term(s+""))+"";
 }
-function abbreviate(s){
-  return Term(s).toString(true);
+function abbreviate(s,abbreviate){
+  return (s instanceof Term?s:new Term(s+"")).toString(typeof abbreviate=="object"?abbreviate:true);
 }
 
 function Scanner(s){
@@ -66,19 +62,29 @@ Object.defineProperty(Scanner.prototype,"constructor",{
   writable:true
 });
 
-function Term(s){
+/**
+ * @constructor
+ * @param {*} s 
+ * @returns {Term}
+ */
+ function Term(s){
   if (s instanceof Term) return s.clone();
   else if (typeof s!="undefined"&&typeof s!="string") throw Error("Invalid expression: "+s);
   if (!(this instanceof Term)) return new Term(s);
   if (s) return Term.build(s);
   else return this;
 }
+/**
+ * @param {Term|string|Scanner} s 
+ * @param {number=} context 
+ * @returns {Term}
+ */
 Term.build=function (s,context){
   if (s instanceof Term) return s.clone();
   function appendToRSum(term){
     if (state==START) r=term;
     else if (state==PLUS){
-      if (term instanceof ZeroTerm);
+      if (term instanceof ZeroTerm){}
       else if (r instanceof ZeroTerm) r=term;
       else r=SumTerm.buildNoClone([r,term]);
     }else throw Error("Wrong state when attempting to append as sum");
@@ -89,6 +95,7 @@ Term.build=function (s,context){
   if (typeof s=="string") scanner=new Scanner(s);
   else if (s instanceof Scanner) scanner=s;
   else throw Error("Invalid expression: "+s);
+  /** @type {Term} */
   var r=null;
   var startpos=scanner.pos;
   var TOP=0;
@@ -144,7 +151,7 @@ Term.build=function (s,context){
         scanner.move(1);
         var num=scanner.nextNumber();
         if (num==0){
-          throw Error("Invalid expression "+scanner.scanner.s.substring(scanpos,scanner.pos)+" at position "+scanpos+" in expression "+scanner.s);
+          throw Error("Invalid expression "+scanner.s.substring(scanpos,scanner.pos)+" at position "+scanpos+" in expression "+scanner.s);
         }else if (num==1){
           appendToRSum(Term.LARGEOMEGA.clone());
         }else{
@@ -163,7 +170,7 @@ Term.build=function (s,context){
         scanner.move(1);
         var num=scanner.nextNumber();
         if (num==0){
-          throw Error("Invalid expression "+scanner.scanner.s.substring(scanpos,scanner.pos)+" at position "+scanpos+" in expression "+scanner.s);
+          throw Error("Invalid expression "+scanner.s.substring(scanpos,scanner.pos)+" at position "+scanpos+" in expression "+scanner.s);
         }else if (num==1){
           appendToRSum(Term.I.clone());
         }else{
@@ -209,7 +216,7 @@ Term.build=function (s,context){
         r=subterm;
         state=CLOSEDTERM;
       }else if (state==PLUS){
-        r=SubTerm.buildNoClone([r,subterm]);
+        r=SumTerm.buildNoClone([r,subterm]);
         state=CLOSEDTERM;
       }
     }else{
@@ -232,36 +239,40 @@ Term.build=function (s,context){
     if (scanner.hasNext()) throw Error("Something went wrong");
     if (state==START) r=ZeroTerm.build();
     else if (state==PLUS) throw Error("Unexpected end of input");
-    else if (state==CLOSEDTERM);
+    else if (state==CLOSEDTERM){}
   }else{
     if (!scanner.hasNext()) throw Error("Unexpected end of input");
     if (state==START) r=ZeroTerm.build();
     else if (state==PLUS) throw Error("Something went wrong");
-    else if (state==CLOSEDTERM);
+    else if (state==CLOSEDTERM){}
   }
   return r;
 }
+/** @returns {Term} */
 Term.buildNoClone=function (){
   throw Error("Not implemented");
 }
+/** @returns {Term} */
 Term.prototype.clone=function (){
   throw Error("Cloning undefined for this term type.");
 }
-Term.clone=function (x){
-  return x.clone();
-}
+/**
+ * @param {boolean} abbreviate
+ * @returns {string}
+ */
 Term.prototype.toString=function (abbreviate){
   throw Error("Stringification undefined for this term type.");
 }
+/**
+ * @param {boolean} abbreviate 
+ * @returns {string}
+ */
 Term.prototype.toStringWithImplicitBrace=function (abbreviate){
   return this.toString(abbreviate);
 }
+/** @returns {boolean} */
 Term.prototype.equal=function (other){
   throw Error("Equality undefined for this term type.");
-}
-Term.equal=function (x,y){
-  if (!(x instanceof Term)) x=Term(x);
-  x.equal(y);
 }
 Object.defineProperty(Term.prototype,"constructor",{
   value:Term,
@@ -269,32 +280,38 @@ Object.defineProperty(Term.prototype,"constructor",{
   writable:true
 });
 
-function NullTerm(s){
+/**
+ * @extends {Term}
+ * @constructor
+ * @param {*} s 
+ * @returns {NullTerm}
+ */
+ function NullTerm(s){
   if (s instanceof NullTerm) return s.clone();
-  else if (s instanceof Term&&typeof s!="string") throw Error("Invalid expression: "+s);
+  else if (typeof s!="undefined"&&s!==null) throw Error("Invalid expression: "+s);
   if (!(this instanceof NullTerm)) return new NullTerm(s);
-  var r=Term.call(this,s);
-  if (s&&!(r instanceof NullTerm)) throw Error("Invalid expression: "+s);
-  if (s) return r;
+  Term.call(this,s);
+  if (s&&!(this instanceof NullTerm)) throw Error("Invalid expression: "+s);
 }
 Object.assign(NullTerm,Term);
 NullTerm.build=function (){
-  var r=NullTerm();
+  var r=new NullTerm();
   return r;
 }
 NullTerm.buildNoClone=function (){
-  var r=NullTerm();
+  var r=new NullTerm();
   return r;
 }
 NullTerm.prototype=Object.create(Term.prototype);
 NullTerm.prototype.clone=function (){
   return NullTerm.build();
 }
+/** @param {boolean} abbreviate */
 NullTerm.prototype.toString=function (abbreviate){
   return "";
 }
 NullTerm.prototype.equal=function (other){
-  if (!(other instanceof Term)) other=Term(other);
+  if (!(other instanceof Term)) other=new Term(other);
   return other instanceof NullTerm;
 }
 Object.defineProperty(NullTerm.prototype,"constructor",{
@@ -303,32 +320,38 @@ Object.defineProperty(NullTerm.prototype,"constructor",{
   writable:true
 });
 
-function ZeroTerm(s){
+/**
+ * @extends {Term}
+ * @constructor
+ * @param {*} s 
+ * @returns {ZeroTerm}
+ */
+ function ZeroTerm(s){
   if (s instanceof ZeroTerm) return s.clone();
   else if (s instanceof Term&&typeof s!="string") throw Error("Invalid expression: "+s);
   if (!(this instanceof ZeroTerm)) return new ZeroTerm(s);
-  var r=Term.call(this,s);
-  if (s&&!(r instanceof ZeroTerm)) throw Error("Invalid expression: "+s);
-  if (s) return r;
+  Term.call(this,s);
+  if (s&&!(this instanceof ZeroTerm)) throw Error("Invalid expression: "+s);
 }
 Object.assign(ZeroTerm,Term);
 ZeroTerm.build=function (){
-  var r=ZeroTerm();
+  var r=new ZeroTerm();
   return r;
 }
 ZeroTerm.buildNoClone=function (){
-  var r=ZeroTerm();
+  var r=new ZeroTerm();
   return r;
 }
 ZeroTerm.prototype=Object.create(Term.prototype);
 ZeroTerm.prototype.clone=function (){
   return ZeroTerm.build();
 }
+/** @param {boolean} abbreviate */
 ZeroTerm.prototype.toString=function (abbreviate){
   return "0";
 }
 ZeroTerm.prototype.equal=function (other){
-  if (!(other instanceof Term)) other=Term(other);
+  if (!(other instanceof Term)) other=new Term(other);
   return other instanceof ZeroTerm;
 }
 Object.defineProperty(ZeroTerm.prototype,"constructor",{
@@ -337,22 +360,33 @@ Object.defineProperty(ZeroTerm.prototype,"constructor",{
   writable:true
 });
 
+/**
+ * @extends {Term}
+ * @constructor
+ * @param {*} s 
+ * @returns {IITerm}
+ */
 function IITerm(s){
   if (s instanceof IITerm) return s.clone();
   else if (s instanceof Term&&typeof s!="string") throw Error("Invalid expression: "+s);
   if (!(this instanceof IITerm)) return new IITerm(s);
-  var r=Term.call(this,s);
-  if (s&&!(r instanceof IITerm)) throw Error("Invalid expression: "+s);
-  if (s) return r;
+  Term.call(this,s);
+  if (s&&!(this instanceof IITerm)) throw Error("Invalid expression: "+s);
+  /** @type {Term} */
+  this.inner=null;
 }
 Object.assign(IITerm,Term);
 IITerm.build=function (inner){
-  var r=IITerm();
-  r.inner=Term(inner);
+  var r=new IITerm();
+  r.inner=new Term(inner);
   return r;
 }
+/**
+ * @param {Term} inner 
+ * @returns {IITerm}
+ */
 IITerm.buildNoClone=function (inner){
-  var r=IITerm();
+  var r=new IITerm();
   r.inner=inner;
   return r;
 }
@@ -360,13 +394,16 @@ IITerm.prototype=Object.create(Term.prototype);
 IITerm.prototype.clone=function (){
   return IITerm.build(this.inner);
 }
+/** @param {boolean} abbreviate */
 IITerm.prototype.toString=function (abbreviate){
-  if (abbreviate&&this.equal("Ω")) return "Ω";
-  else if (abbreviate&&this.equal("I")) return "I";
-  else return "ℐ["+this.inner.toString(abbreviate)+"]";
+  if (abbreviate){
+    if ((abbreviate===true||abbreviate["Ω_1"])&&this.equal(Term.LARGEOMEGA)) return abbreviate===true||abbreviate["Ω"]?"Ω":"Ω_1";
+    else if ((abbreviate===true||abbreviate["I_1"])&&this.equal(Term.I)) return abbreviate===true||abbreviate["I"]?"I":"I_1";
+  }
+  return "ℐ["+this.inner.toString(abbreviate)+"]";
 }
 IITerm.prototype.equal=function (other){
-  if (!(other instanceof Term)) other=Term(other);
+  if (!(other instanceof Term)) other=new Term(other);
   return other instanceof IITerm&&this.inner.equal(other.inner);
 }
 Object.defineProperty(IITerm.prototype,"constructor",{
@@ -375,24 +412,42 @@ Object.defineProperty(IITerm.prototype,"constructor",{
   writable:true
 });
 
+/**
+ * @extends {Term}
+ * @constructor
+ * @param {*} s 
+ * @returns {PsiTerm}
+ */
 function PsiTerm(s){
   if (s instanceof PsiTerm) return s.clone();
   else if (s instanceof Term&&typeof s!="string") throw Error("Invalid expression: "+s);
   if (!(this instanceof PsiTerm)) return new PsiTerm(s);
-  var r=Term.call(this,s);
-  if (s&&!(r instanceof PsiTerm)) throw Error("Invalid expression: "+s);
-  if (s) return r;
+  /** @type {PsiTerm} */
+  Term.call(this,s);
+  if (s&&!(this instanceof PsiTerm)) throw Error("Invalid expression: "+s);
+  /** @type {Term} */
+  this.level=null;
+  /** @type {Term} */
+  this.sub=null;
+  /** @type {Term} */
+  this.inner=null;
 }
 Object.assign(PsiTerm,Term);
 PsiTerm.build=function (level,sub,inner){
-  var r=PsiTerm();
-  r.level=Term(level);
-  r.sub=Term(sub);
-  r.inner=Term(inner);
+  var r=new PsiTerm();
+  r.level=new Term(level);
+  r.sub=new Term(sub);
+  r.inner=new Term(inner);
   return r;
 }
+/**
+ * @param {Term} level 
+ * @param {Term} sub 
+ * @param {Term} inner 
+ * @returns {PsiTerm}
+ */
 PsiTerm.buildNoClone=function (level,sub,inner){
-  var r=PsiTerm();
+  var r=new PsiTerm();
   r.level=level;
   r.sub=sub;
   r.inner=inner;
@@ -403,15 +458,22 @@ PsiTerm.prototype.clone=function (){
   return PsiTerm.build(this.level,this.sub,this.inner);
 }
 PsiTerm.prototype.toString=function (abbreviate){
-  if (abbreviate&&this.equal("1")) return "1";
-  else if (abbreviate&&this.equal("ω")) return "ω";
-  else if (abbreviate&&this.level.equal("0")&&this.sub.equal("Ω")) return "ψ("+this.inner.toString(abbreviate)+")";
-  else if (abbreviate&&this.level.equal("1")&&this.sub.equal("I")&&isNat(this.inner)) return "Ω_"+(toNat(this.inner)+1);
-  else if (abbreviate&&this.level.equal("2")&&this.sub.equal("ℐ[2]")&&isNat(this.inner)) return "I_"+(toNat(this.inner)+1);
-  else return "ψ^"+this.level.toStringWithImplicitBrace(abbreviate)+"_"+this.sub.toStringWithImplicitBrace(abbreviate)+"("+this.inner.toString(abbreviate)+")";
+  if (abbreviate){
+    if ((abbreviate===true||abbreviate["1"])&&this.equal(Term.ONE)) return "1";
+    else if ((abbreviate===true||abbreviate["ω"])&&this.equal(Term.SMALLOMEGA)) return "ω";
+    else if ((abbreviate===true||abbreviate["Ω_n"])&&this.level.equal(Term.ONE)&&this.sub.equal(Term.I)&&isNat(this.inner)) return "Ω_"+(toNat(this.inner)+1);
+    else if ((abbreviate===true||abbreviate["I_n"])&&this.level.equal("2")&&this.sub.equal("ℐ[2]")&&isNat(this.inner)) return "I_"+(toNat(this.inner)+1);
+    if ((abbreviate===true||abbreviate["2ψ"])&&this.level.equal(Term.ZERO)){
+      if ((abbreviate===true||abbreviate["1ψ"])&&this.sub.equal(Term.LARGEOMEGA)) return "ψ("+this.inner.toString(abbreviate)+")";
+      else return "ψ_"+this.sub.toStringWithImplicitBrace(abbreviate)+"("+this.inner.toString(abbreviate)+")";
+    }
+  }
+  var superscriptstr=this.level.toStringWithImplicitBrace(abbreviate);
+  if (/^[ΩI](_|$)/.test(superscriptstr)) superscriptstr="{"+superscriptstr+"}";
+  return "ψ^"+superscriptstr+"_"+this.sub.toStringWithImplicitBrace(abbreviate)+"("+this.inner.toString(abbreviate)+")";
 }
 PsiTerm.prototype.equal=function (other){
-  if (!(other instanceof Term)) other=Term(other);
+  if (!(other instanceof Term)) other=new Term(other);
   return other instanceof PsiTerm&&this.level.equal(other.level)&&this.sub.equal(other.sub)&&this.inner.equal(other.inner);
 }
 Object.defineProperty(PsiTerm.prototype,"constructor",{
@@ -420,29 +482,38 @@ Object.defineProperty(PsiTerm.prototype,"constructor",{
   writable:true
 });
 
-function SumTerm(s){
+/**
+ * @extends {Term}
+ * @constructor
+ * @param {*} s 
+ * @returns {SumTerm}
+ */
+ function SumTerm(s){
   if (s instanceof SumTerm) return s.clone();
   else if (s instanceof Term&&typeof s!="string") throw Error("Invalid expression: "+s);
   if (!(this instanceof SumTerm)) return new SumTerm(s);
-  var r=Term.call(this,s);
-  if (s&&!(r instanceof SumTerm)) throw Error("Invalid expression: "+s);
-  if (s) return r;
+  Term.call(this,s);
+  if (s&&!(this instanceof SumTerm)) throw Error("Invalid expression: "+s);
+  /** @type {Term[]} */
+  this.terms=null;
 }
 Object.assign(SumTerm,Term);
+/** @param {*[]} terms */
 SumTerm.build=function (terms){
-  var r=SumTerm();
+  var r=new SumTerm();
   r.terms=[];
   for (var i=0;i<terms.length;i++){
     if (terms[i] instanceof SumTerm){
-      r.terms=r.terms.concat(Term(terms[i]).terms);
+      r.terms=r.terms.concat(new Term(terms[i]).terms);
     }else{
-      r.terms.push(Term(terms[i]));
+      r.terms.push(new Term(terms[i]));
     }
   }
   return r;
 }
+/** @param {Term[]} terms */
 SumTerm.buildNoClone=function (terms){
-  var r=SumTerm();
+  var r=new SumTerm();
   r.terms=[];
   for (var i=0;i<terms.length;i++){
     if (terms[i] instanceof SumTerm){
@@ -457,13 +528,16 @@ SumTerm.prototype=Object.create(Term.prototype);
 SumTerm.prototype.clone=function (){
   return SumTerm.build(this.terms);
 }
+/** @param {boolean} abbreviate */
 SumTerm.prototype.toString=function (abbreviate){
   if (abbreviate){
     var strterms=this.terms.map(function (t){return t.toString(abbreviate);});
-    for (var i=0;i<strterms.length;i++){
-      if (strterms[i]=="1"){
-        for (var j=i;j<strterms.length&&strterms[j]=="1";j++);
-        strterms.splice(i,j-i,(j-i)+"");
+    if (abbreviate===true||abbreviate["1"]&&abbreviate["n"]){
+      for (var i=0;i<strterms.length;i++){
+        if (strterms[i]=="1"){
+          for (var j=i;j<strterms.length&&strterms[j]=="1";j++);
+          strterms.splice(i,j-i,(j-i)+"");
+        }
       }
     }
     return strterms.join("+");
@@ -471,36 +545,48 @@ SumTerm.prototype.toString=function (abbreviate){
     return this.terms.join("+");
   }
 }
+/** @param {boolean} abbreviate */
 SumTerm.prototype.toStringWithImplicitBrace=function (abbreviate){
-  if (abbreviate&&isNat(this)) return this.toString(abbreviate);
-  else return "{"+this.toString(abbreviate)+"}";
+  if (abbreviate){
+    if ((abbreviate===true||abbreviate["1"]&&abbreviate["n"])&&isSumAndTermsSatisfy(this,equalFunc(Term.ONE))) return this.toString(abbreviate);
+  }
+  return "{"+this.toString(abbreviate)+"}";
 }
 SumTerm.prototype.equal=function (other){
-  if (!(other instanceof Term)) other=Term(other);
-  return other instanceof SumTerm&&this.terms.length==other.terms.length&&this.terms.every(function (e,i){return Term(e).equal(other.terms[i]);});
+  if (!(other instanceof Term)) other=new Term(other);
+  return other instanceof SumTerm
+    ?this.terms.length==other.terms.length&&this.terms.every(function (e,i){return e.equal(other.terms[i]);})
+    :this.terms.length==1&&this.terms[0].equal(other);
 }
 SumTerm.prototype.getLeft=function (){
-  return Term(this.terms[0]);
+  return new Term(this.terms[0]);
 }
+/** @returns {Term} */
 SumTerm.prototype.getNotLeft=function (){
   if (this.terms.length<2) return ZeroTerm.build();
-  else if (this.terms.length<=2) return Term(this.terms[1]);
+  else if (this.terms.length<=2) return new Term(this.terms[1]);
   else return SumTerm.build(this.terms.slice(1));
 }
 SumTerm.prototype.getRight=function (){
-  return Term(this.terms[this.terms.length-1]);
+  return new Term(this.terms[this.terms.length-1]);
 }
+/** @returns {Term} */
 SumTerm.prototype.getNotRight=function (){
   if (this.terms.length<2) return ZeroTerm.build();
-  else if (this.terms.length<=2) return Term(this.terms[0]);
+  else if (this.terms.length<=2) return new Term(this.terms[0]);
   else return SumTerm.build(this.terms.slice(0,-1));
 }
+/**
+ * @param {number} start 
+ * @param {number} end 
+ * @returns {Term}
+ */
 SumTerm.prototype.slice=function (start,end){
   if (start<0) start=this.terms.length+start;
   if (end===undefined) end=this.terms.length;
   if (end<0) end=this.terms.length+end;
   if (start>=end) return NullTerm.build();
-  else if (end-start==1) return Term(this.terms[start]);
+  else if (end-start==1) return new Term(this.terms[start]);
   else return SumTerm.build(this.terms.slice(start,end));
 }
 Object.defineProperty(SumTerm.prototype,"constructor",{
@@ -509,26 +595,32 @@ Object.defineProperty(SumTerm.prototype,"constructor",{
   writable:true
 });
 
-Term.ZERO=Term("0");
-Term.LARGEOMEGA=Term("ℐ[0]");
-Term.ONE=Term("ψ^0_Ω(0)");
-Term.SMALLOMEGA=Term("ψ^0_Ω(1)");
-Term.I=Term("ℐ[1]");
+Term.ZERO=new Term("0");
+Term.LARGEOMEGA=new Term("ℐ[0]");
+Term.ONE=new Term("ψ^0_Ω(0)");
+Term.SMALLOMEGA=new Term("ψ^0_Ω(1)");
+Term.I=new Term("ℐ[1]");
 
-function isSumAndTermsSatisfy(t,f){
+/**
+ * @param {Term} t
+ * @param {(value:Term,index:number,array:Term[])=>boolean} f
+ */
+ function isSumAndTermsSatisfy(t,f){
   return t instanceof SumTerm&&t.terms.every(f);
 }
+/** @returns {boolean} */
 function isNat(t){
   try{
-    t=Term(t);
+    if (!(t instanceof Term)) t=new Term(t);
   }catch(e){
     return false;
   }
-  return t.equal("1")||isSumAndTermsSatisfy(t,equal("1"));
+  return t.equal("1")||isSumAndTermsSatisfy(t,equalFunc("1"));
 }
+/** @returns {number} */
 function toNat(t){
   try{
-    t=Term(t);
+    if (!(t instanceof Term)) t=new Term(t);
   }catch(e){
     return NaN;
   }
@@ -537,9 +629,10 @@ function toNat(t){
     else return t.terms.length;
   }else return NaN;
 }
+/** @returns {boolean} */
 function inT(t){
   try{
-    t=Term(t);
+    if (!(t instanceof Term)) t=new Term(t);
   }catch(e){
     return false;
   }
@@ -558,30 +651,59 @@ function inT(t){
   if (t instanceof SumTerm) return t.terms.every(inT);
   return false;
 }
+/**
+ * @param {Term|string} X 
+ * @returns {Term}
+ */
 function regulimity(X){
-  X=Term(X);
+  if (!(X instanceof Term)) X=new Term(X);
   if (X instanceof ZeroTerm) return ZeroTerm.build();
   if (X instanceof IITerm) return leftSucc(X.inner);
   if (X instanceof PsiTerm){
-    if (lessThan(dom(X.inner),X)) return Term(X.level);
+    if (lessThan(dom(X.inner),X)) return X.level.clone();
     else return ZeroTerm.build();
   }
   if (X instanceof SumTerm) return ZeroTerm.build();
   throw Error("No rule to compute regulimity of "+X);
 }
+/**
+ * @param {Term|string} X 
+ * @param {Term|string} Y 
+ */
 function equal(X,Y){
-  if (arguments.length==1) return function(t){return equal(t,X);};
-  X=Term(X);
-  Y=Term(Y);
+  if (!(X instanceof Term)) X=new Term(X);
+  if (!(Y instanceof Term)) Y=new Term(Y);
   return X.equal(Y);
 }
+/**
+ * @param {Term|string} X 
+ */
+function equalFunc(X){
+  if (!(X instanceof Term)) X=new Term(X);
+  return function(t){return equal(t,X);};
+}
+/**
+ * @param {Term|string} X 
+ * @param {Term|string} Y 
+ */
 function notEqual(X,Y){
-  if (arguments.length==1) return function(t){return notEqual(t,X);};
   return !equal(X,Y);
 }
+/**
+ * @param {Term|string} X 
+ */
+function notEqualFunc(X){
+  if (!(X instanceof Term)) X=new Term(X);
+  return function(t){return notEqual(t,X);};
+}
+/**
+ * @param {Term|string} X 
+ * @param {Term|string} Y 
+ * @returns {boolean}
+ */
 function lessThan(X,Y){
-  X=Term(X);
-  Y=Term(Y);
+  if (!(X instanceof Term)) X=new Term(X);
+  if (!(Y instanceof Term)) Y=new Term(Y);
   if (X instanceof ZeroTerm) return !(Y instanceof ZeroTerm);
   if (X instanceof IITerm){
     if (Y instanceof ZeroTerm) return false;
@@ -593,6 +715,8 @@ function lessThan(X,Y){
     if (Y instanceof ZeroTerm) return false;
     if (Y instanceof IITerm) return !lessThanOrEqual(Y,X);
     if (Y instanceof PsiTerm){
+      if (!(X.sub instanceof IITerm||X.sub instanceof PsiTerm)) throw Error("Unexpected error");
+      if (!(Y.sub instanceof IITerm||Y.sub instanceof PsiTerm)) throw Error("Unexpected error");
       if (equal(X.sub,Y.sub)){
         if (equal(X.level,Y.level)) return lessThan(X.inner,Y.inner);
         else return lessThan(X.level,Y.level);
@@ -630,14 +754,23 @@ function lessThan(X,Y){
   }
   throw Error("No rule to compare "+X+" and "+Y);
 }
+/**
+ * @param {Term|string} X 
+ * @param {Term|string} Y 
+ */
 function lessThanOrEqual(X,Y){
-  X=Term(X);
-  Y=Term(Y);
+  if (!(X instanceof Term)) X=new Term(X);
+  if (!(Y instanceof Term)) Y=new Term(Y);
   return equal(X,Y)||lessThan(X,Y);
 }
+/**
+ * @param {Term|string} X 
+ * @param {Term|string} Y 
+ * @returns {boolean}
+ */
 function isPlusNat(X,Y){
-  X=Term(X);
-  Y=Term(Y);
+  if (!(X instanceof Term)) X=new Term(X);
+  if (!(Y instanceof Term)) Y=new Term(Y);
   if (X instanceof ZeroTerm) return isNat(Y);
   if (X instanceof SumTerm){
     if (Y instanceof SumTerm){
@@ -656,98 +789,119 @@ function isPlusNat(X,Y){
     else return false;
   }
 }
+/**
+ * @param {Term|string} X 
+ * @returns {Term}
+ */
 function removeNat(X){
-  X=Term(X);
+  if (!(X instanceof Term)) X=new Term(X);
   if (X instanceof SumTerm){
     for (var i=X.terms.length-1;i>=0;i--){
       if (!equal(X.terms[i],"1")) return SumTerm.build(X.terms.slice(0,i+1));
     }
     return ZeroTerm.build();
-  }else return X;
+  }else return X.clone();
 }
+/**
+ * @param {Term|string} X 
+ * @returns {string}
+ */
 function dom(X){
-  X=Term(X);
-  Y=null;
+  if (!(X instanceof Term)) X=new Term(X);
   if (!inT(X)) throw Error("Invalid argument: "+X);
-  var temp={};
-  function calcTemp(s){
-    temp[s]=eval(s);
-  }
   if (X instanceof ZeroTerm) return "0";
   if (X instanceof IITerm){
-    calcTemp("dom(regulimity(X))");
-    if (equal(temp["dom(regulimity(X))"],"1")) return X+"";
-    else return temp["dom(regulimity(X))"];
+    var dom_regulimity_X=dom(regulimity(X));
+    var Term_dom_regulimity_X=new Term(dom_regulimity_X);
+    if (equal(Term_dom_regulimity_X,"1")) return X+"";
+    else return dom_regulimity_X;
   }
   if (X instanceof PsiTerm){
-    calcTemp("dom(X.level)");
-    if (equal(temp["dom(X.level)"],"0")){
-      calcTemp("dom(X.inner)");
-      if (equal(temp["dom(X.inner)"],"0")){
+    var dom_X_level=dom(X.level);
+    var Term_dom_X_level=new Term(dom_X_level);
+    if (equal(Term_dom_X_level,"0")){
+      var dom_X_inner=dom(X.inner);
+      var Term_dom_X_inner=new Term(dom_X_inner);
+      if (equal(Term_dom_X_inner,"0")){
         if (X.sub instanceof IITerm){
           if (lessThan(X.sub.inner,"ω")) return normalizeAbbreviations("1");
           else return dom(removeNat(X.sub.inner));
         }
         if (X.sub instanceof PsiTerm){
-          calcTemp("dom(X.sub.inner)");
+          var dom_X_sub_inner=dom(X.sub.inner);
+          var Term_dom_X_sub_inner=new Term(dom_X_sub_inner);
           if (equal(X.sub.level,"1")){
-            if (equal(temp["dom(X.sub.inner)"],"1")) return "ψ^"+X.sub.level+"_"+X.sub.sub+"("+fund(X.sub.inner,"0")+")";
-            else return temp["dom(X.sub.inner)"];
+            if (equal(Term_dom_X_sub_inner,"1")) return "ψ^"+X.sub.level+"_"+X.sub.sub+"("+fund(X.sub.inner,"0")+")";
+            else return dom_X_sub_inner;
           }else if (equal(dom(X.sub.level),"1")){
-            if (equal(temp["dom(X.sub.inner)"],"1")) return dom(X.sub);
-            else return temp["dom(X.sub.inner)"];
+            if (equal(Term_dom_X_sub_inner,"1")) return dom(X.sub);
+            else return dom_X_sub_inner;
           }else{
-            if (equal(temp["dom(X.sub.inner)"],"1")) return dom(X.sub.level);
-            else return temp["dom(X.sub.inner)"];
+            if (equal(Term_dom_X_sub_inner,"1")) return dom(X.sub.level);
+            else return dom_X_sub_inner;
           }
         }
-      }else if (equal(temp["dom(X.inner)"],"1")){
-        return normalizeAbbreviations("ω");
-      }else if (equal(temp["dom(X.inner)"],"ω")){
-        return normalizeAbbreviations("ω");
+      }else if (equal(Term_dom_X_inner,"1")){
+        return Term.SMALLOMEGA+"";
+      }else if (equal(Term_dom_X_inner,"ω")){
+        return Term.SMALLOMEGA+"";
       }else{
-        if (lessThan(temp["dom(X.inner)"],X)) return temp["dom(X.inner)"];
-        else return normalizeAbbreviations("ω");
+        if (lessThan(Term_dom_X_inner,X)) return dom_X_inner;
+        else return Term.SMALLOMEGA+"";
       }
-    }else if (equal(temp["dom(X.level)"],"1")){
+    }else if (equal(dom_X_level,"1")){
       if (lessThan(dom(X.inner),X)) return X+"";
-      else return normalizeAbbreviations("ω");
+      else return Term.SMALLOMEGA+"";
     }else{
-      if (lessThan(dom(X.inner),X)) return temp["dom(X.level)"];
-      else return normalizeAbbreviations("ω");
+      if (lessThan(dom(X.inner),X)) return dom_X_level;
+      else return Term.SMALLOMEGA+"";
     }
   }
   if (X instanceof SumTerm) return dom(X.getRight());
   throw Error("No rule to compute dom of "+X);
 }
+/**
+ * @param {Term|string} X 
+ * @returns {Term}
+ */
 function leftPred(X){
-  X=Term(X);
+  if (!(X instanceof Term)) X=new Term(X);
   if (X instanceof ZeroTerm) return ZeroTerm.build();
   else if (isNat(X)) return mult("1",toNat(X)-1);
-  else return X;
+  else return X.clone();
 }
+/**
+ * @param {Term|string} X 
+ * @returns {Term}
+ */
 function leftSucc(X){
-  X=Term(X);
-  if (X instanceof ZeroTerm) return Term("1");
+  if (!(X instanceof Term)) X=new Term(X);
+  if (X instanceof ZeroTerm) return Term.ONE.clone();
   else if (isNat(X)) return mult("1",toNat(X)+1);
-  else return X;
+  else return X.clone();
 }
+/**
+ * @param {Term|string} X 
+ * @param {number} n 
+ * @returns {Term}
+ */
 function mult(X,n){
+  if (!(X instanceof Term)) X=new Term(X);
   if (n==0) return ZeroTerm.build();
-  else if (n==1) return Term(X);
+  else if (n==1) return X.clone();
   else{
     var a=[];
-    var t=Term(X);
+    var t=X.clone();
     for (var i=0;i<n;i++) a.push(t);
     return SumTerm.build(a);
   }
 }
+/**
+ * @param {Term|string} X 
+ * @returns {string}
+ */
 function fixSubscript(X){
-  X=Term(X);
-  var temp={};
-  function calcTemp(s){
-    temp[s]=eval(s);
-  }
+  if (!(X instanceof Term)) X=new Term(X);
   if (X instanceof ZeroTerm) return "0";
   if (X instanceof IITerm) return X+"";
   if (X instanceof PsiTerm){
@@ -760,15 +914,16 @@ function fixSubscript(X){
         }
       }
       if (X.sub instanceof PsiTerm){
-        calcTemp("dom(X.sub.inner)");
-        if (lessThan(temp["dom(X.sub.inner)"],"ω")){
+        var dom_X_sub_inner=dom(X.sub.inner);
+        var Term_dom_X_sub_inner=new Term(dom_X_sub_inner);
+        if (lessThan(Term_dom_X_sub_inner,"ω")){
           if (isPlusNat(X.level,X.sub.level)){
-            if (equal(temp["dom(X.sub.inner)"],"0")) return fixSubscript("ψ^"+X.level+"_"+X.sub.sub+"("+X.sub.inner+")");
-            else if (equal(temp["dom(X.sub.inner)"],"1")) return fixSubscript("ψ^"+X.sub.level+"_"+X.sub.sub+"("+fund(X.sub.inner,"0")+")");
+            if (equal(Term_dom_X_sub_inner,"0")) return fixSubscript("ψ^"+X.level+"_"+X.sub.sub+"("+X.sub.inner+")");
+            else if (equal(Term_dom_X_sub_inner,"1")) return fixSubscript("ψ^"+X.sub.level+"_"+X.sub.sub+"("+fund(X.sub.inner,"0")+")");
             else return "ψ^"+X.level+"_ψ^"+removeNat(X.sub.level)+"_"+X.sub.sub+"("+X.sub.inner+")("+X.inner+")";
           }else{
-            if (equal(temp["dom(X.sub.inner)"],"0")) return fixSubscript("ψ^"+X.level+"_"+X.sub.sub+"("+X.sub.inner+")");
-            else if (equal(temp["dom(X.sub.inner)"],"1")){
+            if (equal(Term_dom_X_sub_inner,"0")) return fixSubscript("ψ^"+X.level+"_"+X.sub.sub+"("+X.sub.inner+")");
+            else if (equal(Term_dom_X_sub_inner,"1")){
               if (equal(X.level,"0")) return fixSubscript("ψ^"+X.sub.level+"_"+X.sub.sub+"("+fund(X.sub.inner,"0")+")");
               else return X+"";
             }else return "ψ^"+X.level+"_ψ^"+removeNat(X.sub.level)+"_"+X.sub.sub+"("+X.sub.inner+")("+X.inner+")";
@@ -787,25 +942,28 @@ function fixSubscript(X){
   }
   throw Error("No rule to fix subscript of "+X);
 }
+/**
+ * @param {Term|string} X 
+ * @param {Term|string|number} Y 
+ * @returns {string}
+ */
 function fund(X,Y){
-  X=Term(X);
+  if (!(X instanceof Term)) X=new Term(X);
   if (typeof Y=="number") Y=String(Y);
-  Y=Term(Y);
+  if (!(Y instanceof Term)) Y=new Term(Y);
   if (!inT(X)||!inT(Y)) throw Error("Invalid argument: "+X+","+Y);
-  var temp={};
-  function calcTemp(s){
-    temp[s]=eval(s);
-  }
   if (X instanceof ZeroTerm) return "0";
   if (X instanceof IITerm){
-    calcTemp("regulimity(X)")
-    if (equal(dom(temp["regulimity(X)"]),"1")) return Y+"";
-    else return "ψ^"+fund(temp["regulimity(X)"],Y)+"_"+X+"(0)";
+    var regulimity_X=regulimity(X);
+    var Term_regulimity_X=new Term(regulimity_X);
+    if (equal(dom(Term_regulimity_X),"1")) return Y+"";
+    else return "ψ^"+fund(Term_regulimity_X,Y)+"_"+X+"(0)";
   }
   if (X instanceof PsiTerm){
-    calcTemp("dom(X.inner)");
+    var dom_X_inner=dom(X.inner);
+    var Term_dom_X_inner=new Term(dom_X_inner);
     if (equal(X.level,"0")){
-      if (equal(temp["dom(X.inner)"],"0")){
+      if (equal(Term_dom_X_inner,"0")){
         if (X.sub instanceof IITerm){
           if (lessThan(X.sub.inner,"ω")) return "0";
           else return "ℐ["+fund(X.sub.inner,Y)+"]";
@@ -822,49 +980,55 @@ function fund(X,Y){
             else return fixSubscript("ψ^"+X.sub.level+"_"+X.sub.sub+"("+fund(X.sub.inner,Y)+")");
           }
         }
-      }else if (equal(temp["dom(X.inner)"],"1")){
-        if (isNat(Y)) return mult(fixSubscript("ψ^"+X.level+"_"+X.sub+"("+fund(X.inner,"0")+")"),toNat(Y));
+      }else if (equal(Term_dom_X_inner,"1")){
+        if (isNat(Y)) return mult(fixSubscript("ψ^"+X.level+"_"+X.sub+"("+fund(X.inner,"0")+")"),toNat(Y))+"";
         else return "0";
-      }else if (equal(temp["dom(X.inner)"],"ω")){
+      }else if (equal(Term_dom_X_inner,"ω")){
         return fixSubscript("ψ^"+X.level+"_"+X.sub+"("+fund(X.inner,Y)+")");
       }else{
-        if (lessThan(temp["dom(X.inner)"],X)) return "ψ^"+X.level+"_"+X.sub+"("+fund(X.inner,Y)+")";
+        if (lessThan(Term_dom_X_inner,X)) return "ψ^"+X.level+"_"+X.sub+"("+fund(X.inner,Y)+")";
         else{
-          var Z=Term(temp["dom(X.inner)"]);
-          if (isNat(Y)){
-            var G=Term(fund(X,fund(Y,"0")));
+          var Z=Term_dom_X_inner;
+          var G;
+          if (isNat(Y)&&(G=new Term(fund(X,fund(Y,"0")))) instanceof PsiTerm){
             return "ψ^"+X.level+"_"+X.sub+"("+fund(X.inner,fixSubscript("ψ^"+fund(regulimity(Z),"0")+"_"+Z+"("+G.inner+")"))+")";
           }else return "ψ^"+X.level+"_"+X.sub+"("+fund(X.inner,fixSubscript("ψ^"+fund(regulimity(Z),"0")+"_"+Z+"(0)"))+")";
         }
       }
     }else if (equal(dom(X.level),"1")){
-      if (lessThan(temp["dom(X.inner)"],X)) return Y+"";
+      if (lessThan(Term_dom_X_inner,X)) return Y+"";
       else{
-        var Z=Term(temp["dom(X.inner)"]);
-        if (isNat(Y)){
-          var G=Term(fund(X,fund(Y,"0")));
+        var Z=Term_dom_X_inner;
+        var G;
+        if (isNat(Y)&&(G=new Term(fund(X,fund(Y,"0")))) instanceof PsiTerm){
           return "ψ^"+X.level+"_"+X.sub+"("+fund(X.inner,fixSubscript("ψ^"+fund(regulimity(Z),"0")+"_"+Z+"("+G.inner+")"))+")";
         }else return "ψ^"+X.level+"_"+X.sub+"("+fund(X.inner,fixSubscript("ψ^"+fund(regulimity(Z),"0")+"_"+Z+"(0)"))+")";
       }
     }else{
-      if (lessThan(temp["dom(X.inner)"],X)) return fixSubscript("ψ^"+fund(regulimity(X),Y)+"_"+X+"(0)");
+      if (lessThan(Term_dom_X_inner,X)) return fixSubscript("ψ^"+fund(regulimity(X),Y)+"_"+X+"(0)");
       else{
-        var Z=Term(temp["dom(X.inner)"]);
-        if (isNat(Y)){
-          var G=Term(fund(X,fund(Y,"0")));
+        var Z=Term_dom_X_inner;
+        var G;
+        if (isNat(Y)&&(G=new Term(fund(X,fund(Y,"0")))) instanceof PsiTerm){
           return "ψ^"+X.level+"_"+X.sub+"("+fund(X.inner,fixSubscript("ψ^"+fund(regulimity(Z),"0")+"_"+Z+"("+G.inner+")"))+")";
         }else return "ψ^"+X.level+"_"+X.sub+"("+fund(X.inner,fixSubscript("ψ^"+fund(regulimity(Z),"0")+"_"+Z+"(0)"))+")";
       }
     }
   }
   if (X instanceof SumTerm){
-    if (equal(fund(X.getRight(),Y),"0")) return X.getNotRight();
-    else return SumTerm.build([X.getNotRight(),fund(X.getRight(),Y)]);
+    var fund_X_getRight_Y=fund(X.getRight(),Y)
+    if (equal(fund_X_getRight_Y,"0")) return X.getNotRight()+"";
+    else return X.getNotRight()+"+"+fund_X_getRight_Y;
   }
   throw Error("No rule to compute fund of "+X+","+Y);
 }
+/**
+ * @param {Term|string} x 
+ * @param {number=} limit 
+ * @returns {{isStandard:boolean,path:string[],funds:number[]}}
+ */
 function findOTPath(x,limit){
-  x=normalizeAbbreviations(x);
+  if (!(x instanceof Term)) x=new Term(x);
   if (!inT(x)) throw Error("Invalid argument: "+x);
   if (typeof limit=="undefined"||limit==-1) limit=Infinity;
   if (equal(x,"0")){
@@ -892,15 +1056,26 @@ function findOTPath(x,limit){
     return r;
   }
 }
+/**
+ * @param {Term|string} x 
+ * @param {number=} limit 
+ * @returns {boolean}
+ */
 function isStandard(x,limit){
   return findOTPath(x,limit).isStandard;
 }
+/** @param {number} n */
 function limitOrd(n){
   if (n==0) return normalizeAbbreviations("ψ(0)");
   else return normalizeAbbreviations("ψ("+"ℐ[".repeat(n)+"0"+"]".repeat(n)+")");
 }
+/**
+ * @param {Term|string} X 
+ * @param {number} n
+ * @returns {number}
+ */
 function FGH(X,n){
-  X=Term(X);
+  if (!(X instanceof Term)) X=new Term(X);
   if (!inT(X)||typeof n!="number") throw Error("Invalid argument: "+X+","+n);
   if (equal(dom(X),"0")) return n+1;
   else if (equal(dom(X),"1")){
@@ -910,6 +1085,7 @@ function FGH(X,n){
     return r;
   }else return FGH(fund(X,n),n);
 }
+/** @param {number} n */
 function largeFunction(n){
   if (typeof n!="number") throw Error("Invalid argument");
   return FGH(limitOrd(n),n);
@@ -921,99 +1097,102 @@ function calculateN(){
 }
 /*「崩壊しないℐ関数数」をNumber型が任意の自然数を取り、String型が任意の有限の長さを取り、Arrayが任意の有限の長さを取り、十分な大きさのメモリとスタックが確保されているとき、calculateN()が出力する自然数と定義する。*/
 
-function testFunction(){
+var testTerms=[
+  "ψ(Ω)",
+  "ψ(Ω_2)",
+  "ψ(Ω_2+Ω_2)",
+  "ψ(ψ^0_ψ^1_I(ω)(0))",
+  "ψ(ψ^1_I(ω))",
+  "ψ(I)",
+  "ψ(I+ψ^1_I(I+1))",
+  "ψ(ψ^0_ψ^1_I_2(1)(1))",
+  "ψ(ψ^1_I_2(1))",
+  "ψ(I_2)",
+  "ψ(ψ^0_ψ^2_ℐ[2](ω)(0))",
+  "ψ(ψ^0_ψ^1_ψ^2_ℐ[2](ω)(0)(1))",
+  "ψ(ψ^1_ψ^2_ℐ[2](ω)(0))",
+  "ψ(ψ^2_ℐ[2](ω))",
+  "ψ(ψ^2_ℐ[2](I))",
+  "ψ(ψ^1_ψ^2_ℐ[2](I+1)(1))",
+  "ψ(ℐ[2])",
+  "ψ(ℐ[2]+ψ^2_ℐ[2](1))",
+  "ψ(ℐ[2]+ψ^2_ℐ[2](I))",
+  "ψ(ℐ[2]+ψ^1_ψ^2_ℐ[2](I+1)(1))",
+  "ψ(ℐ[2]+ψ^2_ℐ[2](I+1))",
+  "ψ(ℐ[2]+ψ^2_ℐ[2](ℐ[2]))",
+  "ψ(ψ^0_ℐ[ω](0))",
+  "ψ(ψ^1_ℐ[ω](0))",
+  "ψ(ℐ[ω]+ψ^1_I(ℐ[2]))",
+  "ψ(ℐ[ω]+ψ^0_ψ^1_ψ^2_ℐ[2](1)(I)(0))",
+  "ψ(ℐ[ω]+ψ^0_ℐ[ω](0))",
+  "ψ(ℐ[ω]+ψ^1_ℐ[ω](0))",
+  "ψ(ℐ[ω]+ψ^1_ℐ[ω](1))",
+  "ψ(ℐ[ω+1]+ψ^0_ψ^ω_ℐ[ω+1](1)(1))",
+  "ψ(ℐ[ω+1]+ψ^ω_ℐ[ω+1](1))",
+  "ψ(ψ^0_ℐ[ω+ω](0))",
+  "ψ(ψ^ω_ℐ[ω+ω](0))",
+  "ψ(ψ^0_ψ^ω_ℐ[ω+ω](1)(1))",
+  "ψ(ψ^ω_ℐ[ω+ω](1))",
+  "ψ(ℐ[ω+ω]+ψ^ω_ℐ[ω+ω](1))",
+  "ψ(ℐ[ω+ω]+ψ^ω+2_ℐ[ω+ω](0))",
+  "ψ(ψ^0_ℐ[Ω](0))",
+  "ψ(ψ^ω_ℐ[Ω](0))",
+  "ψ(ℐ[Ω]+ψ^0_ℐ[Ω](0))",
+  "ψ(ℐ[Ω]+ψ^ω_ℐ[Ω](0))",
+  "ψ(ℐ[ℐ[Ω]])"
+];
+/** @param {boolean} logInfoToConsole */
+function testFunction(logInfoToConsole){
   function f(t,l){var r=findOTPath(t,l||3);console.log(r.isStandard);console.log(r.path.map(abbreviate));return r;}
-  var l=[
-    "ψ(Ω)",
-    "ψ(Ω_2)",
-    "ψ(Ω_2+Ω_2)",
-    "ψ(ψ^0_ψ^1_I(ω)(0))",
-    "ψ(ψ^1_I(ω))",
-    "ψ(I)",
-    "ψ(I+ψ^1_I(I+1))",
-    "ψ(ψ^0_ψ^1_I_2(1)(1))",
-    "ψ(ψ^1_I_2(1))",
-    "ψ(I_2)",
-    "ψ(ψ^0_ψ^2_ℐ[2](ω)(0))",
-    "ψ(ψ^0_ψ^1_ψ^2_ℐ[2](ω)(0)(1))",
-    "ψ(ψ^1_ψ^2_ℐ[2](ω)(0))",
-    "ψ(ψ^2_ℐ[2](ω))",
-    "ψ(ψ^2_ℐ[2](I))",
-    "ψ(ψ^1_ψ^2_ℐ[2](I+1)(1))",
-    "ψ(ℐ[2])",
-    "ψ(ℐ[2]+ψ^2_ℐ[2](1))",
-    "ψ(ℐ[2]+ψ^2_ℐ[2](I))",
-    "ψ(ℐ[2]+ψ^1_ψ^2_ℐ[2](I+1)(1))",
-    "ψ(ℐ[2]+ψ^2_ℐ[2](I+1))",
-    "ψ(ℐ[2]+ψ^2_ℐ[2](ℐ[2]))",
-    "ψ(ψ^0_ℐ[ω](0))",
-    "ψ(ψ^1_ℐ[ω](0))",
-    "ψ(ℐ[ω]+ψ^1_I(ℐ[2]))",
-    "ψ(ℐ[ω]+ψ^0_ψ^1_ψ^2_ℐ[2](1)(I)(0))",
-    "ψ(ℐ[ω]+ψ^0_ℐ[ω](0))",
-    "ψ(ℐ[ω]+ψ^1_ℐ[ω](0))",
-    "ψ(ℐ[ω]+ψ^1_ℐ[ω](1))",
-    "ψ(ℐ[ω+1]+ψ^0_ψ^ω_ℐ[ω+1](1)(1))",
-    "ψ(ℐ[ω+1]+ψ^ω_ℐ[ω+1](1))",
-    "ψ(ψ^0_ℐ[ω+ω](0))",
-    "ψ(ψ^ω_ℐ[ω+ω](0))",
-    "ψ(ψ^0_ψ^ω_ℐ[ω+ω](1)(1))",
-    "ψ(ψ^ω_ℐ[ω+ω](1))",
-    "ψ(ℐ[ω+ω]+ψ^ω_ℐ[ω+ω](1))",
-    "ψ(ℐ[ω+ω]+ψ^ω+2_ℐ[ω+ω](0))",
-    "ψ(ψ^0_ℐ[Ω](0))",
-    "ψ(ψ^ω_ℐ[Ω](0))",
-    "ψ(ℐ[Ω]+ψ^0_ℐ[Ω](0))",
-    "ψ(ℐ[Ω]+ψ^ω_ℐ[Ω](0))",
-    "ψ(ℐ[ℐ[Ω]])"
-  ];
   var r={lessThan:[],isStandard:[],errors:[]};
-  for (var i=0;i<l.length;i++){
-    for (var j=0;j<l.length;j++){
-      console.log("%cTesting: lessThan, "+l[i]+", "+l[j]+".","color:gold");
+  for (var i=0;i<testTerms.length;i++){
+    for (var j=0;j<testTerms.length;j++){
+      if (logInfoToConsole) console.log("%cTesting: lessThan, "+testTerms[i]+", "+testTerms[j]+".","color:gold");
       var d=Date.now();
       var caught=false;
+      var result;
       try{
-        var result=lessThan(l[i],l[j]);
+        result=lessThan(testTerms[i],testTerms[j]);
       }catch(e){
         var diff=Date.now()-d;
-        r.lessThan.push({arg0:l[i],arg1:l[j],result:e,time:diff});
-        r.errors.push({test:"lessThan",arg0:l[i],arg1:l[j],name:"error",content:e});
+        r.lessThan.push({arg0:testTerms[i],arg1:testTerms[j],result:e,time:diff});
+        r.errors.push({test:"lessThan",arg0:testTerms[i],arg1:testTerms[j],name:"error",content:e});
         console.error(e);
         var caught=true;
       }finally{
         var diff=Date.now()-d;
         if (!caught){
-          r.lessThan.push({arg0:l[i],arg1:l[j],result:result,time:diff});
-          console.log(diff);
+          r.lessThan.push({arg0:testTerms[i],arg1:testTerms[j],result:result,time:diff});
+          if (logInfoToConsole) console.log(diff);
           if (result!=(i<j)){
-            r.errors.push({test:"lessThan",arg0:l[i],arg1:l[j],name:"fail"});
-            console.error("Failed test: lessThan, "+l[i]+", "+l[j]+", expected "+(i<j)+".");
+            r.errors.push({test:"lessThan",arg0:testTerms[i],arg1:testTerms[j],name:"fail"});
+            console.error("Failed test: lessThan, "+testTerms[i]+", "+testTerms[j]+", expected "+(i<j)+".");
           }
         }
       }
     }
   }
-  for (var i=0;i<l.length;i++){
-    console.log("%cTesting: isStandard, "+l[i]+".","color:gold");
+  for (var i=0;i<testTerms.length;i++){
+    if (logInfoToConsole) console.log("%cTesting: isStandard, "+testTerms[i]+".","color:gold");
     var d=Date.now();
     var caught=false;
+    var result;
     try{
-      var result=findOTPath(l[i],3);
+      result=findOTPath(testTerms[i],3);
     }catch(e){
       var diff=Date.now()-d;
-      r.isStandard.push({arg0:l[i],result:e,time:diff});
-      r.errors.push({test:"isStandard",arg0:l[i],name:"error",content:e});
+      r.isStandard.push({arg0:testTerms[i],result:e,time:diff});
+      r.errors.push({test:"isStandard",arg0:testTerms[i],name:"error",content:e});
       console.error(e);
       caught=true;
     }finally{
       var diff=Date.now()-d;
       if (!caught){
-        r.isStandard.push({arg0:l[i],result:result,time:diff});
-        console.log(diff);
+        r.isStandard.push({arg0:testTerms[i],result:result,time:diff});
+        if (logInfoToConsole) console.log(diff);
         if (!result.isStandard){
-          r.errors.push({test:"isStandard",arg0:l[i],name:"fail"});
-          console.error("Failed test: isStandard, "+l[i]+".");
+          r.errors.push({test:"isStandard",arg0:testTerms[i],name:"fail"});
+          console.error("Failed test: isStandard, "+testTerms[i]+".");
         }
       }
     }
@@ -1026,16 +1205,51 @@ var options={
   abbreviate:undefined,
   detail:undefined
 }
+var optionList=[
+  "abbreviate",
+  "detail"
+];
+var abbreviateOptionList=[
+  "1",
+  "n",
+  "ω",
+  "Ω",
+  "Ω_1",
+  "Ω_n",
+  "I",
+  "I_1",
+  "I_n",
+  "2ψ",
+  "1ψ"
+];
+function toggleOptions(){
+  document.getElementById("options").style.display=document.getElementById("options").style.display=="none"?"block":"none";
+}
 var last=null;
 function compute(){
-  if (input==dg("input").value&&options.abbreviate==dg("abbreviate").checked&&options.detail==dg("detail").checked) return;
+  var inputChanged=false;
   var oldinput=input;
-  input=dg("input").value;
-  options.abbreviate=dg("abbreviate").checked;
-  options.detail=dg("detail").checked;
+  inputChanged||=input!=document.getElementById("input").value;
+  input=document.getElementById("input").value;
+  inputChanged||=!!options.abbreviate!=document.getElementById("abbreviate").checked;
+  options.abbreviate=document.getElementById("abbreviate").checked&&(options.abbreviate||{});
+  inputChanged||=options.detail!=document.getElementById("detail").checked;
+  options.detail=document.getElementById("detail").checked;
+  if (options.abbreviate){
+    abbreviateOptionList.forEach(function(option){
+      var elem=document.getElementById("abbreviate"+option);
+      inputChanged||=options.abbreviate[option]!=elem.checked;
+      options.abbreviate[option]=elem.checked;
+    });
+  }
+  if (!inputChanged) return;
   if (oldinput!=input) last=[];
   var output="";
   var lines=input.split(lineBreakRegex);
+  function abbreviateIfEnabled(x){
+    if (options.abbreviate) return abbreviate(x,options.abbreviate);
+    else return normalizeAbbreviations(x);
+  }
   for (var l=0;l<lines.length;l++){
     var line=lines[l];
     var args=line.split(itemSeparatorRegex);
@@ -1048,10 +1262,16 @@ function compute(){
           result=normalizeAbbreviations(args[0]);
         }else if (cmd=="abbreviate"||cmd=="abbr"){
           result=abbreviate(args[0]);
+        }else if (cmd=="inT"){
+          result=inT(args[0]);
+        }else if (cmd=="regulimity"){
+          result=regulimity(args[0]);
         }else if (cmd=="lessThan"||cmd=="<"){
           result=lessThan(args[0],args[1]);
         }else if (cmd=="lessThanOrEqual"||cmd=="<="){
           result=lessThanOrEqual(args[0],args[1]);
+        }else if (cmd=="dom"){
+          result=dom(args[0]);
         }else if (cmd=="expand"){
           var t=normalizeAbbreviations(args[0]);
           result=[t];
@@ -1059,7 +1279,7 @@ function compute(){
             result.push(t=fund(t,args[i]));
           }
         }else if (cmd=="isStandard"){
-          result=findOTPath(args[0],args[1]||3);
+          result=findOTPath(args[0],+args[1]||3);
         }else{
           result=null;
         }
@@ -1074,25 +1294,31 @@ function compute(){
       output+=result;
     }else if (cmd=="abbreviate"||cmd=="abbr"){
       output+=result;
+    }else if (cmd=="inT"){
+      output+=result;
+    }else if (cmd=="regulimity"){
+      output+=abbreviateIfEnabled(result);
     }else if (cmd=="lessThan"||cmd=="<"){
       output+=result;
     }else if (cmd=="lessThanOrEqual"||cmd=="<="){
       output+=result;
+    }else if (cmd=="dom"){
+      output+=result;
     }else if (cmd=="expand"){
       if (options.detail){
         for (var i=1;i<result.length;i++){
-          output+=(options.abbreviate?abbreviate(result[i-1]):result[i-1])+"["+args[i]+"]="+(options.abbreviate?abbreviate(result[i]):result[i])+(i==result.length-1?"":"\n");
+          output+=abbreviateIfEnabled(result[i-1])+"["+args[i]+"]="+abbreviateIfEnabled(result[i])+(i==result.length-1?"":"\n");
         }
       }else{
-        output+=(options.abbreviate?abbreviate(result[result.length-1]):result[result.length-1]);
+        output+=abbreviateIfEnabled(result[result.length-1]);
       }
     }else if (cmd=="isStandard"){
       if (options.detail){
         for (var i=1;i<result.path.length;i++){
-          output+=(options.abbreviate?abbreviate(result.path[i-1]):result.path[i-1])+"["+result.funds[i]+"]="+(options.abbreviate?abbreviate(result.path[i]):result.path[i])+"\n";
+          output+=abbreviateIfEnabled(result.path[i-1])+"["+result.funds[i]+"]="+abbreviateIfEnabled(result.path[i])+"\n";
         }
-        if (result.isStandard) output+=(options.abbreviate?abbreviate(args[0]):args[0])+"∈OT";
-        else output+=(options.abbreviate?abbreviate(args[0]):args[0])+"∉OT limited to n≦"+(args[1]||3);
+        if (result.isStandard) output+=abbreviateIfEnabled(args[0])+"∈OT";
+        else output+=abbreviateIfEnabled(args[0])+"∉OT limited to n≦"+(+args[1]||3);
       }else{
         output+=result.isStandard;
       }
@@ -1101,11 +1327,7 @@ function compute(){
     }
     output+="\n\n";
   }
-  dg("output").value=output;
-}
-window.onpopstate=function (e){
-  load();
-  compute();
+  document.getElementById("output").value=output;
 }
 var handlekey=function(e){}
 //console.log=function (s){alert(s)};

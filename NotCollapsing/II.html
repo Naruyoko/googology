@@ -12,8 +12,23 @@
   <div><a href="../index.html">Back</a></div>
   <form name=form>
     <textarea id="input" class="inputbox" contentEditable>expand ψ(Ω) 2&#13;&#10;expand ψ(Ω_2+Ω_2) 2&#13;&#10;expand ψ(ℐ[2]+ψ^1_I(ℐ[2])) 2&#13;&#10;expand ψ(ℐ[2]+ψ^0_ψ^1_I_2(I)(0)) 2&#13;&#10;expand ψ(ℐ[2]+I_2) 2&#13;&#10;expand ψ(ℐ[3]+ψ^2_ψ^3_ℐ[3](1)(1)) 2&#13;&#10;expand ψ(ℐ[3]+ψ^1_ψ^3_ℐ[3](1)(1)) 2&#13;&#10;expand ψ(ℐ[ω]+ψ^0_ℐ[ω](0)) 2&#13;&#10;expand ψ(ℐ[ω]+ψ^2_ℐ[ω](0)) 2&#13;&#10;expand ψ(ℐ[ω]+ℐ[ω]) 2&#13;&#10;expand ψ(ℐ[ω+1]+ψ^0_ψ^ω_ℐ[ω+1](1)(1)) 2&#13;&#10;expand ψ(ℐ[Ω]+ψ^0_ℐ[Ω](0)) 2&#13;&#10;expand ψ(ℐ[Ω]+ψ^ω_ℐ[Ω](0)) 2&#13;&#10;expand ψ(ℐ[Ω]+ℐ[Ω]) 2&#13;&#10;< Ω ψ^0_Ω_2(1)&#13;&#10;isStandard ψ(I+ψ^0_ψ^1_I(I+ω+1)(I+ψ^1_I(I+ω)+ψ^1_I(I+ω))) 3</textarea>
-    <ul>
-      <li>Abbreviate: <input id="abbreviate" type="checkbox" checked></li>
+    <input type="button" value="Options" onclick="toggleOptions()">
+    <ul id="options" style="display:none;">
+      <li>Abbreviate: <input id="abbreviate" type="checkbox" checked>
+        <ul>
+          <li>ψ_Ω(0)→1 <input id="abbreviate1" type="checkbox" checked></li>
+          <li>1+...+1→n <input id="abbreviaten" type="checkbox" checked></li>
+          <li>ψ_Ω(1)→ω <input id="abbreviateω" type="checkbox" checked></li>
+          <li>Ω_1→Ω <input id="abbreviateΩ" type="checkbox" checked></li>
+          <li>ℐ[0]→Ω_1 <input id="abbreviateΩ_1" type="checkbox" checked></li>
+          <li>ψ^1_I(1+1+...+1) (with n-1 1s)→Ω_n <input id="abbreviateΩ_n" type="checkbox" checked></li>
+          <li>I_1→I <input id="abbreviateI" type="checkbox" checked></li>
+          <li>ℐ[1]→Ω_1 <input id="abbreviateI_1" type="checkbox" checked></li>
+          <li>ψ^2_ℐ[2](1+1+...+1) (with n-1 1s)→I_n <input id="abbreviateI_n" type="checkbox" checked></li>
+          <li>ψ^0_t(u)→ψ_t(u) <input id="abbreviate2ψ" type="checkbox" checked></li>
+          <li>ψ^0_Ω(u)→ψ(u) <input id="abbreviate1ψ" type="checkbox" checked></li>
+        </ul>
+      </li>
       <li>Details: <input id="detail" type="checkbox"></li>
     </ul>
     <input type="button" value="Compute" onclick="compute()">
@@ -21,27 +36,12 @@
   <textarea id="output" class="outputbox" readonly>...</textarea>
   <input type="text" id="copyarea" style="display:none"><br>
   <div>
-    Abbreviations:<br>
-    <ul>
-      <li>W or Ω - ℐ[0]</li>
-      <li>p(#) or ψ(#) - ψ^0_Ω(#)</li>
-      <li>1 - ψ(0)</li>
-      <li>n - 1+1+...+1 (with n 1s)</li>
-      <li>w or ω - ψ(1)</li>
-      <li>W_n or Ω_n - ψ^1_I(1+1+...+1) (with n-1 1s)</li>
-      <li>I - ℐ[1]</li>
-      <li>I_n - ψ^2_ℐ[2](1+1+...+1) (with n-1 1s)</li>
-      <li>p - ψ</li>
-      <li>II - ℐ</li>
-    </ul>
-  </div>
-  <div>
     お気持ち表明<br>
     <p>
-      UN0CFのψ<sub>C(a,b)</sub>の動きの再現に失敗しました。Y+1の形でないXに対するℐ[X]の動きがおかしいです。ついでに崩壊しないℐ関数数を定義しました。予想はRathjenのψ関数と急増加関数でf<sub>ψ<sub>Ω</sub>(ψ<sub>χ<sub>M</sub>(0)</sub>(0))+1</sub>(10<sup>100</sup>)以上f<sub>ψ<sub>Ω</sub>(ψ<sub>χ<sub>φ<sub>0</sub>(M+M)</sub>(0)</sub>(0))+1</sub>(10<sup>100</sup>)以下です。<br>
+      UN0CFのψ<sub>C(a,b)</sub>の動きの再現に失敗しました。Y+1の形でないXに対するℐ[X]の動きがおかしいです。ついでに崩壊しないℐ関数数を定義しました(II.js参照)。予想はRathjenのψ関数と急増加関数でf<sub>ψ<sub>Ω</sub>(ψ<sub>χ<sub>ω</sub>(0)</sub>(0))+1</sub>(10<sup>100</sup>)以上f<sub>ψ<sub>Ω</sub>(ψ<sub>χ<sub>M</sub>(0)</sub>(0))+1</sub>(10<sup>100</sup>)以下です。<br>
       p進大好きbot氏の<a href="https://googology.wikia.org/ja/wiki/%E3%83%A6%E3%83%BC%E3%82%B6%E3%83%BC%E3%83%96%E3%83%AD%E3%82%B0:P%E9%80%B2%E5%A4%A7%E5%A5%BD%E3%81%8Dbot/%E6%8B%A1%E5%BC%B5Buchholz_OCF%E3%81%AB%E4%BC%B4%E3%81%86%E9%A0%86%E5%BA%8F%E6%95%B0%E8%A1%A8%E8%A8%98">拡張Buchholz OCFに伴う順序数表記</a>を参考にした<a href="./I.html">「NotCollapsing - I」</a>を拡張しました。<br>
     </p>
   </div>
-  <div>Last updated: 2021/11/15</div>
+  <div>Last updated: 2022/01/05</div>
 </body>
 </html>
