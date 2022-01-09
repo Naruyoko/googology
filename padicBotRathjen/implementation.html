@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>p進大好きbot's Rathjen-type Ordinal Notation Implementation</title>
+  <script src="./implementation.js"></script>
+  <link rel="stylesheet" type="text/css" href="./style.css">
+</head>
+<body>
+  <h1>p進大好きbot's Rathjen-type Ordinal Notation Implementation</h1>
+  <div><a href="./index.html">Back</a></div>
+  <form name=form>
+    <textarea id="input" class="inputbox" contentEditable></textarea>
+    <input type="button" value="Options" onclick="toggleOptions()">
+    <ul id="options" style="display:none;">
+      <li>Abbreviate: <input id="abbreviate" type="checkbox" checked>
+        <ul>
+          <li>φ^0_0(0)→1 <input id="abbreviate1" type="checkbox" checked></li>
+          <li>1+...+1→n <input id="abbreviaten" type="checkbox" checked></li>
+          <li>φ^0_0(1)→ω <input id="abbreviateω" type="checkbox" checked></li>
+          <li>Ω_1→Ω <input id="abbreviateΩ" type="checkbox"></li>
+          <li>φ^1_0(n+1)→Ω_n <input id="abbreviateΩ_n" type="checkbox" checked></li>
+          <li>φ^1_0(ω)→Ω_ω <input id="abbreviateΩ_ω" type="checkbox" checked></li>
+          <li>φ^1_0(t)→Ω_t fot ω&lt;t <input id="abbreviateΩ_t" type="checkbox"></li>
+          <li>I_0→I<input id="abbreviateI" type="checkbox"></li>
+          <li>χ^{M_0}_0(t)→I_t<input id="abbreviateI_t" type="checkbox" checked></li>
+          <li>M_0→M <input id="abbreviateM" type="checkbox"></li>
+          <li>φ^2_0(t)→M_t <input id="abbreviateM_t" type="checkbox" checked></li>
+          <li>K_0→K <input id="abbreviateK" type="checkbox"></li>
+          <li>φ^3_0(t)→K_t <input id="abbreviateK_t" type="checkbox" checked></li>
+          <li>φ^0_t(u)→φ_t(u) <input id="abbreviate2φ" type="checkbox"></li>
+          <li>φ_0(u)→φ(u) <input id="abbreviate1φ" type="checkbox"></li>
+          <li>χ^{M}_t(u)→χ_t(u) <input id="abbreviate2χ" type="checkbox"></li>
+          <li>χ_0(u)→χ(u) <input id="abbreviate1χ" type="checkbox"></li>
+          <li>ψ^Ω_1(u)→ψ(u) <input id="abbreviate1ψ" type="checkbox"></li>
+        </ul>
+      </li>
+      <li>Details: <input id="detail" type="checkbox"></li>
+    </ul>
+    <input type="button" value="Compute" onclick="compute()">
+  </form>
+  <textarea id="output" class="outputbox" readonly>...</textarea>
+  <input type="text" id="copyarea" style="display:none"><br>
+  <div>
+    <a href="https://googology.fandom.com/wiki/User_blog:P%E9%80%B2%E5%A4%A7%E5%A5%BD%E3%81%8Dbot/Rathjen-type_Ordinal_Notation" target="_blank">Definition of "Rathjen-type Ordinal Notation"</a> by p進大好きbot, Retrieved 2022/01/08<br>
+    The program (implementation.js) and the site (implementation.html) under https://naruyoko.github.io/googology/padicBotRathjen is licensed by <a href="https://creativecommons.org/licenses/by-sa/3.0/legalcode" rel="license" target="_blank">Creative Commons Attribution-ShareAlike 3.0 Unported License</a>.
+  </div>
+  <div>Last updated: 2022/01/08</div>
+</body>
+</html>
