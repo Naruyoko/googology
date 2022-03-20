@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>1-var θψ function Implementation</title>
+  <script src="./implementation.js"></script>
+  <link rel="stylesheet" type="text/css" href="./style.css">
+</head>
+<body>
+  <h1>1-var θψ function Implementation</h1>
+  <form name=form>
+    <textarea id="input" class="inputbox" contentEditable>expand ψ(ψ_θ(0)(0)) 2&#13;&#10;expand ψ(ψ_{θ(0)+θ(0)}(0)) 2&#13;&#10;expand ψ(ψ_{θ(0)+θ(0)}(0)+ψ_θ(0)(0)) 2&#13;&#10;expand ψ(ψ_{θ(0)+θ(0)}(0)+ψ_{θ(0)+θ(0)}(0)) 2&#13;&#10;expand ψ(ψ_θ(1)(0)) 2&#13;&#10;expand ψ(ψ_θ(θ(0))(0)) 2&#13;&#10;expand ψ(ψ_θ(θ(0))(0)+ψ_θ(ψ_θ(θ(0))(0))(0)) 2&#13;&#10;expand ψ(ψ_θ(θ(0))(0)+ψ_θ(θ(0))(0)) 2&#13;&#10;expand ψ(ψ_θ(θ(0))(ψ_θ(ψ_θ(θ(0))(0))(0))) 2&#13;&#10;expand ψ(ψ_θ(θ(0))(ψ_θ(θ(0))(0))) 2&#13;&#10;expand ψ(ψ_{θ(θ(0))+θ(0)}(0)) 2&#13;&#10;expand ψ(ψ_{θ(θ(0))+θ(ψ_θ(θ(0))(0))}(0)) 2&#13;&#10;expand ψ(ψ_{θ(θ(0))+θ(θ(0))}(0)) 2&#13;&#10;expand ψ(ψ_θ(θ(θ(0)))(0)) 2&#13;&#10;expand ψ(ψ_θ(θ(θ(0)))(0)+ψ_θ(ψ_θ(θ(θ(0)))(0))(0)) 2&#13;&#10;expand ψ(ψ_θ(θ(θ(0)))(0)+ψ_θ(θ(ψ_θ(θ(θ(0)))(0)))(0)) 2&#13;&#10;expand ψ(ψ_θ(θ(θ(0)))(0)+ψ_θ(θ(θ(0)))(0)) 2&#13;&#10;expand ψ(ψ_{θ(θ(θ(0)))+θ(θ(θ(0)))}(0)) 2&#13;&#10;expand ψ(ψ_θ(θ(θ(ψ_θ(ψ_θ(θ(θ(0)))(0))(0))))(0)) 2&#13;&#10;expand ψ(ψ_θ(θ(θ(ψ_θ(θ(0)+θ(0))(0))))(0)) 2&#13;&#10;expand ψ(ψ_θ(θ(θ(ψ_θ(θ(ψ_θ(θ(θ(0)))(0)))(0))))(0)) 2&#13;&#10;expand ψ(ψ_θ(θ(θ(ψ_θ(θ(θ(0)))(0))))(0)) 2&#13;&#10;expand ψ(ψ_θ(θ(θ(θ(0))))(0)) 2&#13;&#10;isStandard ψ(ψ_θ(θ(0))(0)+ψ_θ(ψ_θ(θ(0))(0))(0))&#13;&#10;isStandard ψ(ψ_{θ(θ(0))+θ(0)}(0))&#13;&#10;isStandard ψ(ψ_θ(θ(0))(ψ_θ(θ(0))(0)))</textarea>
+    <ul>
+      <li>Abbreviate: <input id="abbreviate" type="checkbox" checked></li>
+      <li>Details: <input id="detail" type="checkbox"></li>
+    </ul>
+    <input type="button" value="Compute" onclick="compute()">
+  </form>
+  <textarea id="output" class="outputbox" readonly>...</textarea>
+  <input type="text" id="copyarea" style="display:none"><br>
+  <div>
+    <a href="https://googology.fandom.com/ja/wiki/%E3%83%A6%E3%83%BC%E3%82%B6%E3%83%BC%E3%83%96%E3%83%AD%E3%82%B0:Kanrokoti/%CE%B8%CF%88%E9%96%A2%E6%95%B0#1.E5.A4.89.E6.95.B0.CE.B8.CF.88.E9.96.A2.E6.95.B0" target="_blank">Definition of "1-var θψ function"</a> (<a href="https://googology.fandom.com/wiki/User_blog:Kanrokoti/%CE%B8%CF%88_function#1-var_.CE.B8.CF.88_function" target="_blank">en</a>) by Kanrokoti, Retrieved 2022/03/19<br>
+    The program (implementation.js) and the site (implementation.html) under https://naruyoko.github.io/googology/1varThetaPsi is licensed by <a href="https://creativecommons.org/licenses/by-sa/3.0/legalcode" rel="license" target="_blank">Creative Commons Attribution-ShareAlike 3.0 Unported License</a>.
+  </div>
+  <div>Last updated: 2022/03/19</div>
+</body>
+</html>
