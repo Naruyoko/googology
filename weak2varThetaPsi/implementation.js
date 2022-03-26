@@ -569,7 +569,7 @@ function inTTheta(t){
     return false;
   }
   if (t instanceof ZeroTerm) return true;
-  if (t instanceof ThetaTerm) return inT(t.inner1);
+  if (t instanceof ThetaTerm) return inT(t.inner1)&&inT(t.inner2);
   if (t instanceof SumTerm) return inPTTheta(t.terms[0])&&t.terms.slice(1).every(inPT);
   return false;
 }
@@ -580,7 +580,7 @@ function inPTTheta(t){
   }catch(e){
     return false;
   }
-  if (t instanceof ThetaTerm) return inT(t.inner1);
+  if (t instanceof ThetaTerm) return inT(t.inner1)&&inT(t.inner2);
   return false;
 }
 /** @returns {boolean} */
@@ -614,7 +614,7 @@ function inT(t){
   }
   if (t instanceof ZeroTerm) return true;
   if (t instanceof PsiTerm) return inTTheta(t.sub)&&inTPsi(t.inner);
-  if (t instanceof ThetaTerm) return inT(t.inner1);
+  if (t instanceof ThetaTerm) return inT(t.inner1)&&inT(t.inner2);
   if (t instanceof SumTerm) return inPTTheta(t.terms[0])&&t.terms.slice(1).every(inPT)||t.terms.every(inPTPsi);
   return false;
 }
@@ -625,7 +625,7 @@ function inPT(t){
     return false;
   }
   if (t instanceof PsiTerm) return inTTheta(t.sub)&&inTPsi(t.inner);
-  if (t instanceof ThetaTerm) return inT(t.inner1);
+  if (t instanceof ThetaTerm) return inT(t.inner1)&&inT(t.inner2);
   return false;
 }
 function isSumAndTermsSatisfy(t,f){
