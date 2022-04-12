@@ -87,7 +87,7 @@ function parseBuchholz(s,context){
   else if (s instanceof Scanner) scanner=s;
   else throw Error("Invalid expression: "+s);
   var nums="0123456789";
-  var symbols="+()<>{}_";
+  var symbols="+()<>{}_,";
   var notword=nums+symbols;
   var NUMBER=0;
   var SYMBOL=1;
@@ -252,9 +252,20 @@ function oplus(x,y){
 function triangle(x){
   if (x instanceof Array){
     if (x.length==0) return WEAK_ZERO;
-    else if (x.length==2) return {left:trans(x[0]),right:triangle(x[1])};
-    else return {left:trans(x[0]),right:triangle(x.slice(1))};
-  }else return {left:trans(x),right:WEAK_ZERO};
+    else if (x.length==2) return {left:diamond(x[0]),right:triangle(x[1])};
+    else return {left:diamond(x[0]),right:triangle(x.slice(1))};
+  }else return {left:diamond(x),right:WEAK_ZERO};
+}
+/**
+ * @param {BuchholzTerm} x 
+ * @returns {WeakTerm}
+ */
+function diamond(x){
+  if (x instanceof Array){
+    if (x.length==0) return WEAK_ZERO;
+    else if (x.length==2) return oplus(diamond(x[0]),diamond(x[1]));
+    else return oplus(diamond(x[0]),diamond(x.slice(1)));
+  }else return {left:triangle(x.left),right:triangle(x.right)};
 }
 /**
  * @param {BuchholzTerm} x 
@@ -265,7 +276,8 @@ function trans(x){
     if (x.length==0) return WEAK_ZERO;
     else if (x.length==2) return oplus(trans(x[0]),trans(x[1]));
     else return oplus(trans(x[0]),trans(x.slice(1)));
-  }else return {left:triangle(x.left),right:triangle(x.right)};
+  }else if (x.left instanceof Array&&x.left.length==0) return diamond(x);
+  else return triangle(x);
 }
 
 /**
