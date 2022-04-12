@@ -771,8 +771,14 @@ function fund(S,T){
       else{ //4.1.3
         if (lessThan(Term_dom_S_sub,S)) return "ψ("+fund(S.sub,T)+","+S.inner+")"; //4.1.3.1
         else{ //4.1.3.2
-          if (isNat(T)&&(Term_fund_S_fund_T_0=new Term(fund(S,fund(T,"0")))) instanceof PsiTerm) return "ψ("+fund(S.sub,bp(Term_fund_S_fund_T_0.sub))+","+S.inner+")"; //4.1.3.2.1
-          else return "ψ("+fund(S.sub,"0")+","+S.inner+")"; //4.1.3.2.2
+          if (!(Term_dom_S_sub instanceof PsiTerm&&equal(Term_dom_S_sub.inner,"0"))) throw Error("Unexpected error");
+          if (equal(dom(Term_dom_S_sub.sub),"θ(0)")){ //4.1.3.2.1
+            if (isNat(T)&&(Term_fund_S_fund_T_0=new Term(fund(S,fund(T,"0")))) instanceof PsiTerm&&equal(Term_fund_S_fund_T_0.inner,S.inner)) return "ψ("+fund(S.sub,"ψ("+fund(Term_dom_S_sub.sub,"0")+","+bp(Term_fund_S_fund_T_0.sub)+")")+","+S.inner+")"; //4.1.3.2.1.1
+            else return "ψ("+fund(S.sub,"ψ("+fund(Term_dom_S_sub.sub,"0")+",0)")+","+S.inner+")"; //4.1.3.2.1.2
+          }else{ //4.1.3.2.2
+            if (isNat(T)&&(Term_fund_S_fund_T_0=new Term(fund(S,fund(T,"0")))) instanceof PsiTerm&&equal(Term_fund_S_fund_T_0.inner,S.inner)) return "ψ("+fund(S.sub,bp(Term_fund_S_fund_T_0.sub))+","+S.inner+")"; //4.1.3.2.2.1
+            else return "ψ("+fund(S.sub,"0")+","+S.inner+")"; //4.1.3.2.2.2
+          }
         }
       }
     }else if (equal(Term_dom_S_inner,"1")){ //4.2
