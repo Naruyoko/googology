@@ -95,6 +95,7 @@ Term.build=function (s,context){
   if (typeof s=="string") scanner=new Scanner(s);
   else if (s instanceof Scanner) scanner=s;
   else throw Error("Invalid expression: "+s);
+  /** @type {Term} */
   var r=null;
   var startpos=scanner.pos;
   var TOP=0;
@@ -319,6 +320,7 @@ Object.defineProperty(ZeroTerm.prototype,"constructor",{
 });
 
 /**
+ * @extends {Term}
  * @constructor
  * @param {*} s 
  * @returns {PsiTerm}
@@ -687,7 +689,7 @@ function fund(X,Y){
               else return "ψ_"+X.sub+"("+X.inner1+","+fund(X.inner2,"ψ_"+P+"("+fund(Q,"0")+","+R+",0)")+","+X.inner3+")"; //2.1.3.2.1.2.2
             }
           }else{ //2.1.3.2.2
-            if (isNat(Y)&&(Term_fund_X_fund_Y_0=new Term(fund(X,fund(Y,"0")))) instanceof PsiTerm&&equal(X.sub,Term_fund_X_fund_Y_0.sub)&&equal(X.inner1,Term_fund_X_fund_Y_0.inner1)&&equal(X.inner3,Term_fund_X_fund_Y_0.inner3)) return "ψ_"+X.sub+"("+X.inner1+","+fund(X.inner2,"ψ_"+P+"("+Q+","+fund(R,"0")+","+Term_fund_X_fund_Y_0.inner3+")")+","+X.inner3+")"; //2.1.3.2.2.1
+            if (isNat(Y)&&(Term_fund_X_fund_Y_0=new Term(fund(X,fund(Y,"0")))) instanceof PsiTerm&&equal(X.sub,Term_fund_X_fund_Y_0.sub)&&equal(X.inner1,Term_fund_X_fund_Y_0.inner1)&&equal(X.inner3,Term_fund_X_fund_Y_0.inner3)) return "ψ_"+X.sub+"("+X.inner1+","+fund(X.inner2,"ψ_"+P+"("+Q+","+fund(R,"0")+","+Term_fund_X_fund_Y_0.inner2+")")+","+X.inner3+")"; //2.1.3.2.2.1
             else return "ψ_"+X.sub+"("+X.inner1+","+fund(X.inner2,"ψ_"+P+"("+Q+","+fund(R,"0")+",0)")+","+X.inner3+")"; //2.1.3.2.2.2
           }
         }
