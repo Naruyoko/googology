@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>三 function Implementation</title>
+  <script src="./implementation.js"></script>
+  <link rel="stylesheet" type="text/css" href="./style.css">
+</head>
+<body>
+  <h1>三 function Implementation</h1>
+  <div><a href="../index.html">Back</a></div>
+  <form name=form>
+    <textarea id="input" class="inputbox" contentEditable></textarea>
+    <input type="button" value="Options" onclick="toggleOptions()">
+    <ul id="options" style="display:none;">
+      <li>Abbreviate: <input id="abbreviate" type="checkbox" checked>
+        <ul>
+          <li>三(0)→1 <input id="abbreviate1" type="checkbox" checked></li>
+          <li>1+...+1→n <input id="abbreviaten" type="checkbox" checked></li>
+          <li>三(1)→ω <input id="abbreviateω" type="checkbox" checked></li>
+          <li>三(s,t)→三_s(t) <input id="abbreviate2三" type="checkbox" checked></li>
+          <li>三_0(t)→三(t) <input id="abbreviate1三" type="checkbox"></li>
+        </ul>
+      </li>
+      <li>Details: <input id="detail" type="checkbox"></li>
+    </ul>
+    <input type="button" value="Compute" onclick="compute()">
+  </form>
+  <textarea id="output" class="outputbox" readonly>...</textarea>
+  <input type="text" id="copyarea" style="display:none"><br>
+  <div>
+    <a href="https://googology.fandom.com/ja/wiki/User_blog:P%E9%80%B2%E5%A4%A7%E5%A5%BD%E3%81%8Dbot/%E3%83%B4%E3%82%A7%E3%83%96%E3%83%AC%E3%83%B3%E9%96%A2%E6%95%B0%E2%86%92%E3%83%96%E3%83%BC%E3%83%95%E3%83%9B%E3%83%AB%E3%83%84%E3%81%AE%CF%88%E9%96%A2%E6%95%B0%E2%86%92%EF%BC%9F" target="_blank">Definition of "三関数"</a> by p進大好きbot, Retrieved 2022/05/12<br>
+    The program (implementation.js) and the site (implementation.html) under https://naruyoko.github.io/googology/threeFunction is licensed by <a href="https://creativecommons.org/licenses/by-sa/3.0/legalcode" rel="license" target="_blank">Creative Commons Attribution-ShareAlike 3.0 Unported License</a>.
+  </div>
+  <div>Last updated: 2022/05/12</div>
+</body>
+</html>
