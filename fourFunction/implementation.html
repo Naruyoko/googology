@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>四 function Implementation</title>
+  <script src="./implementation.js"></script>
+  <link rel="stylesheet" type="text/css" href="./style.css">
+</head>
+<body>
+  <h1>四 function Implementation</h1>
+  <div><a href="../index.html">Back</a></div>
+  <form name=form>
+    <textarea id="input" class="inputbox" contentEditable></textarea>
+    <input type="button" value="Options" onclick="toggleOptions()">
+    <ul id="options" style="display:none;">
+      <li>Abbreviate: <input id="abbreviate" type="checkbox" checked>
+        <ul>
+          <li>()→0 <input id="abbreviate0" type="checkbox" checked></li>
+          <li>四(0)→1 <input id="abbreviate1" type="checkbox" checked></li>
+          <li>1+...+1→n <input id="abbreviaten" type="checkbox" checked></li>
+          <li>四(1)→ω <input id="abbreviateω" type="checkbox" checked></li>
+          <li>四_1(0)→Ω <input id="abbreviateΩ" type="checkbox" checked></li>
+          <li>(n_0,v_0),(n_1,v_1),...,s_0,s_1→v_0,0,...,0,v_1,0,...,0,...,s_0,s_1 <input id="abbreviatef[" type="checkbox" checked></li>
+          <li>...,(x),(n_0,v_0),(n_1,v_1),...,s_0,s_1→...,(x),v_0,0,...,0,v_1,0,...,0,...,s_0,s_1 <input id="abbreviatetf[" type="checkbox"></li>
+          <li>四((1,0,1),0,0)→M <input id="abbreviateM" type="checkbox" checked></li>
+          <li>四(s,t)→四_s(t) <input id="abbreviate2四" type="checkbox" checked></li>
+          <li>四_0(t)→四(t) <input id="abbreviate1四" type="checkbox" checked></li>
+        </ul>
+      </li>
+      <li>Details: <input id="detail" type="checkbox"></li>
+    </ul>
+    <input type="button" value="Compute" onclick="compute()">
+  </form>
+  <textarea id="output" class="outputbox" readonly>...</textarea>
+  <input type="text" id="copyarea" style="display:none"><br>
+  <div>
+    <a href="https://googology.fandom.com/ja/wiki/User_blog:P%E9%80%B2%E5%A4%A7%E5%A5%BD%E3%81%8Dbot/%E7%AC%AC%EF%BC%94%E5%9B%9E%E6%9D%B1%E6%96%B9%E5%B7%A8%E5%A4%A7%E6%95%B0%E6%8A%95%E7%A8%BF%E7%94%A8" target="_blank">Definition of "四関数"</a> by p進大好きbot, Retrieved 2022/06/04<br>
+    The program (implementation.js) and the site (implementation.html) under https://naruyoko.github.io/googology/fourFunction is licensed by <a href="https://creativecommons.org/licenses/by-sa/3.0/legalcode" rel="license" target="_blank">Creative Commons Attribution-ShareAlike 3.0 Unported License</a>.
+  </div>
+  <div>Last updated: 2022/06/04</div>
+</body>
+</html>
