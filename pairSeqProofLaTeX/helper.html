@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <style>
+    * {
+      font-family: Arial, Helvetica, sans-serif;
+    }
+    textarea {
+      width:400px;
+      height:100px;
+      font-family:'Courier New', Courier, monospace;
+      font-size:14px;
+    }
+  </style>
+  <script src="./helper.js"></script>
+  <title>Helper tools</title>
+</head>
+<body>
+  <h1>Helper tools</h1>
+  <h2>Convert</h2>
+  <textarea id="convertin" onchange="document.getElementById('convertout').value=convert(document.getElementById('convertin').value)"></textarea>
+  <textarea id="convertout" readonly></textarea>
+  <h2>Theorem</h2>
+  <textarea id="theoremin" onchange="document.getElementById('theoremout').value=converttheorem(document.getElementById('theoremin').value)"></textarea>
+  <textarea id="theoremout" readonly></textarea>
+  <h2>Proof</h2>
+  <textarea id="proofin" onchange="document.getElementById('proofout').value=convertproof(document.getElementById('proofin').value)"></textarea>
+  <textarea id="proofout" readonly></textarea>
+  <h2>Nenumerate</h2>
+  <textarea id="nenumeratein" onchange="document.getElementById('nenumerateout').value=convertnenumerate(document.getElementById('nenumeratein').value)"></textarea>
+  <textarea id="nenumerateout" readonly></textarea>
+  <h2>Indented</h2>
+  <textarea id="indentedin" onchange="document.getElementById('indentedout').value=convertindented(document.getElementById('indentedin').value)"></textarea>
+  <textarea id="indentedout" readonly></textarea>
+  <h2>Penumerate</h2>
+  <textarea id="penumeratein" onchange="document.getElementById('penumerateout').value=convertpenumerate(document.getElementById('penumeratein').value)"></textarea>
+  <textarea id="penumerateout" readonly></textarea>
+  <h2>Section</h2>
+  <textarea id="sectionin" onchange="document.getElementById('sectionout').value=convertsection(document.getElementById('sectionin').value)"></textarea>
+  <textarea id="sectionout" readonly></textarea>
+  <h2>Footnote</h2>
+  <textarea id="footnotein" onchange="document.getElementById('footnoteout').value=convertfootnote(document.getElementById('footnotein').value)"></textarea>
+  <textarea id="footnoteout" readonly></textarea>
+  <h2>Nameref</h2>
+  <textarea id="namerefin" onchange="document.getElementById('namerefout').value=convertnameref(document.getElementById('namerefin').value)"></textarea>
+  <textarea id="namerefout" readonly></textarea>
+</body>
+</html>
