@@ -106,7 +106,7 @@ Term.build=function (s,context){
   var THREETERMSUBSCRIPT=1;
   var THREETERMINNER=2;
   var BRACES=3;
-  var contextNames=["TOP","FOURTERMSUBSCRIPT","FOURTERMINNER","BRACES"];
+  var contextNames=["TOP","THREETERMSUBSCRIPT","THREETERMINNER","BRACES"];
   if (typeof context=="undefined") context=TOP;
   var START=0;
   var PLUS=1;
@@ -471,7 +471,7 @@ SumTerm.prototype.getNotRight=function (){
 }
 /**
  * @param {number} start 
- * @param {number} end 
+ * @param {number=} end 
  * @returns {Term}
  */
 SumTerm.prototype.slice=function (start,end){
@@ -519,22 +519,6 @@ function inPT(t){
  */
 function isSumAndTermsSatisfy(t,f){
   return t instanceof SumTerm&&t.terms.every(f);
-}
-function isNat(t){
-  try{
-    if (!(t instanceof Term)) t=new Term(t);
-  }catch(e){
-    return false;
-  }
-  return t instanceof Term&&(t.equal(Term.ONE)||isSumAndTermsSatisfy(t,equalFunc(Term.ONE)));
-}
-function toNat(X){
-  if (!(X instanceof Term)) X=new Term(X);
-  if (!isNat(X)) throw Error("Invalid argument: "+X);
-  if (X instanceof ZeroTerm) return 0;
-  if (X instanceof ThreeTerm) return 1;
-  if (X instanceof SumTerm) return X.terms.length;
-  throw Error("This should be unreachable");
 }
 /**
  * @param {Term|string} X 
@@ -603,13 +587,136 @@ function lessThan(S,T){
 }
 /**
  * @param {Term|string} S 
+ * @param {Term|string} T 
+ * @returns {string}
+ */
+function add(S,T){
+  if (!(S instanceof Term)) S=new Term(S);
+  if (!(T instanceof Term)) T=new Term(T);
+  if (!inT(S)||!inT(T)) throw Error("Invalid argument: "+S+","+T);
+  if (S instanceof ZeroTerm) return T+""; //1
+  else if (T instanceof ZeroTerm) return S+""; //2
+  else return S+"+"+T; //2
+  throw Error("No rule to compute add("+S+","+T+")");
+}
+/**
+ * @param {Term|string} S 
+ * @param {Term|string} T 
+ * @returns {boolean} ∃u.S=add(u,T)?
+ */
+function canCancelAddRight(S,T){
+  if (!(S instanceof Term)) S=new Term(S);
+  if (!(T instanceof Term)) T=new Term(T);
+  if (!inT(S)||!inT(T)) throw Error("Invalid argument: "+S+","+T);
+  if (T instanceof ZeroTerm) return true;
+  if (T instanceof ThreeTerm){
+    if (S instanceof ZeroTerm) return false;
+    if (S instanceof ThreeTerm) return equal(S,T);
+    if (S instanceof SumTerm) return equal(S.getRight(),T);
+  }
+  if (T instanceof SumTerm){
+    if (S instanceof ZeroTerm) return false;
+    if (S instanceof ThreeTerm) return false;
+    if (S instanceof SumTerm) return equal(S.slice(-T.terms.length),T);
+  }
+  throw Error("No rule to compute if there exists u such that "+S+"=add(u,"+T+")");
+}
+/**
+ * @param {Term|string} S 
+ * @param {Term|string} T 
+ * @returns {string} u.S=add(u,T)
+ */
+function cancelAddRight(S,T){
+  if (!(S instanceof Term)) S=new Term(S);
+  if (!(T instanceof Term)) T=new Term(T);
+  if (!inT(S)||!inT(T)) throw Error("Invalid argument: "+S+","+T);
+  if (!canCancelAddRight(S,T)) throw Error("No u exists such that "+S+"=add(u,"+T+")");
+  if (T instanceof ZeroTerm) return S+"";
+  if (T instanceof ThreeTerm){
+    if (S instanceof ThreeTerm) return "0";
+    if (S instanceof SumTerm) return S.getNotRight()+"";
+  }
+  if (T instanceof SumTerm){
+    if (S instanceof SumTerm) return S.slice(0,-T.terms.length)+"";
+  }
+  throw Error("No rule to compute u such that "+S+"=add(u,"+T+")");
+}
+/**
+ * @param {Term|string} S 
+ * @param {Term|string} T 
+ * @returns {boolean} ∃u.S=add(T,u)?
+ */
+function canCancelAddLeft(S,T){
+  if (!(S instanceof Term)) S=new Term(S);
+  if (!(T instanceof Term)) T=new Term(T);
+  if (!inT(S)||!inT(T)) throw Error("Invalid argument: "+S+","+T);
+  if (T instanceof ZeroTerm) return true;
+  if (T instanceof ThreeTerm){
+    if (S instanceof ZeroTerm) return false;
+    if (S instanceof ThreeTerm) return equal(S,T);
+    if (S instanceof SumTerm) return equal(S.getLeft(),T);
+  }
+  if (T instanceof SumTerm){
+    if (S instanceof ZeroTerm) return false;
+    if (S instanceof ThreeTerm) return false;
+    if (S instanceof SumTerm) return equal(S.slice(0,T.terms.length),T);
+  }
+  throw Error("No rule to compute if there exists u such that "+S+"=add("+T+",u)");
+}
+/**
+ * @param {Term|string} S 
+ * @param {Term|string} T 
+ * @returns {string} u.S=add(T,u)
+ */
+function cancelAddLeft(S,T){
+  if (!(S instanceof Term)) S=new Term(S);
+  if (!(T instanceof Term)) T=new Term(T);
+  if (!inT(S)||!inT(T)) throw Error("Invalid argument: "+S+","+T);
+  if (!canCancelAddLeft(S,T)) throw Error("No u exists such that "+S+"=add("+T+",u)");
+  if (T instanceof ZeroTerm) return S+"";
+  if (T instanceof ThreeTerm){
+    if (S instanceof ThreeTerm) return "0";
+    if (S instanceof SumTerm) return S.getNotLeft()+"";
+  }
+  if (T instanceof SumTerm){
+    if (S instanceof SumTerm) return S.slice(T.terms.length)+"";
+  }
+  throw Error("No rule to compute u such that "+S+"=add("+T+",u)");
+}
+/**
+ * @param {Term|string} S 
+ * @returns {boolean} ∃t,a,b.S=add(t,三_a(b))?
+ */
+function canSeparateRight(S){
+  if (!(S instanceof Term)) S=new Term(S);
+  if (!inT(S)) throw Error("Invalid argument: "+S);
+  return S instanceof ThreeTerm||S instanceof SumTerm;
+  throw Error("No rule to compute if there exists t,a,b such that "+S+"=add(t,三_a(b))");
+}
+/**
+ * @param {Term|string} S 
+ * @returns {[Term,Term,Term]} t,a,b.S=add(t,三_a(b))
+ */
+function separateRight(S){
+  if (!(S instanceof Term)) S=new Term(S);
+  if (!inT(S)) throw Error("Invalid argument: "+S);
+  if (!canSeparateRight(S)) throw Error("No t,a,b exists such that "+S+"=add(t,三_a(b))");
+  if (S instanceof ThreeTerm) return [Term.ZERO,S.inner1,S.inner2];
+  else if (S instanceof SumTerm){
+    var S_getRight=S.getRight();
+    if (!(S_getRight instanceof ThreeTerm)) throw Error("Unexpected error");
+    return [S.getNotRight(),S_getRight.inner1,S_getRight.inner2];
+  }
+  throw Error("No rule to compute t,a,b such that "+S+"=add(t,三_a(b))");
+}
+/**
+ * @param {Term|string} S 
  * @returns {string}
  */
 function succ(S){
   if (!(S instanceof Term)) S=new Term(S);
   if (!inT(S)) throw Error("Invalid argument: "+S);
-  if (S instanceof ZeroTerm) return Term.ONE+""; //1
-  else return S+"+"+Term.ONE; //2
+  return add(S,Term.ONE);
   throw Error("No rule to compute succ("+S+")");
 }
 /**
@@ -634,7 +741,7 @@ function pred(S){
   if (!isSucc(S)) throw Error("No t exists such that "+S+"=succ(t)");
   if (S instanceof SumTerm) return S.getNotRight()+"";
   if (S instanceof ThreeTerm) return "0";
-  throw Error("No rule to compute pred("+S+")");
+  throw Error("No rule to compute t such that "+S+"=succ(t)");
 }
 /**
  * @param {Term|string} S
@@ -665,6 +772,130 @@ function dom(S){
   throw Error("No rule to compute dom("+S+")");
 }
 /**
+ * @param {Term|string} S
+ * @param {Term|string} T
+ * @returns {string} sep_0(S,T)
+ */
+function sep0(S,T){
+  if (!(S instanceof Term)) S=new Term(S);
+  if (!(T instanceof Term)) T=new Term(T);
+  if (!inT(S)||!inT(T)) throw Error("Invalid argument: "+S+","+T);
+  if (inPT(S)&&lessThanOrEqual(T,S)) return S+"";
+  if (S instanceof SumTerm){
+    var i=0;
+    while (i<S.terms.length&&lessThanOrEqual(T,S.terms[i])) i++;
+    return S.terms.slice(0,i).reduce(add,"0"); //Note: Equivalent by associativity of add and 0 as identity of add
+  }
+  return "0";
+  throw Error("No rule to compute sep_0("+S+","+T+")");
+}
+/**
+ * @param {Term|string} S
+ * @param {Term|string} T
+ * @returns {string} sep_1(S,T)
+ */
+function sep1(S,T){
+  if (!(S instanceof Term)) S=new Term(S);
+  if (!(T instanceof Term)) T=new Term(T);
+  if (!inT(S)||!inT(T)) throw Error("Invalid argument: "+S+","+T);
+  if (inPT(S)&&lessThan(S,T)) return S+"";
+  if (S instanceof SumTerm){
+    var i=S.terms.length-1;
+    while (i>=0&&lessThan(S.terms[i],T)) i--;
+    return S.terms.slice(i+1).reduce(add,"0"); //Note: Equivalent by associativity of add and 0 as identity of add
+  }
+  return "0";
+  throw Error("No rule to compute sep_1("+S+","+T+")");
+}
+/**
+ * @param {Term|string} S
+ * @param {Term|string} T
+ * @param {Term|string} E
+ * @param {Term|string} EP
+ * @param {Term|string} F
+ * @returns {string} subst_0(S,T,E,EP,F)
+ */
+function subst0(S,T,E,EP,F){
+  if (!(S instanceof Term)) S=new Term(S);
+  if (!(T instanceof Term)) T=new Term(T);
+  if (!(E instanceof Term)) E=new Term(E);
+  if (!(EP instanceof Term)) EP=new Term(EP);
+  if (!(F instanceof Term)) F=new Term(F);
+  if (!inT(S)||!inT(T)||!inT(E)||!inT(EP)||!inT(F)) throw Error("Invalid argument: "+S+","+T+","+E+","+EP+","+F);
+  if (S instanceof ZeroTerm) return "0"; //1
+  if (S instanceof ThreeTerm){
+    var a=S.inner1;
+    if (equal(S.inner2,Term.ZERO)){ //2
+      if (equal(a,succ(E))) return "三("+E+","+T+")"; //2.1
+      else return "三("+subst0(a,T,E,EP,F)+",0)"; //2.2
+    }else if (canSeparateRight(S.inner2)){ //3
+      var separateRight_S_inner2=separateRight(S.inner2);
+      var b=separateRight_S_inner2[0];
+      var c=separateRight_S_inner2[1];
+      var d=separateRight_S_inner2[2];
+      if (equal(c,succ(E))&&equal(d,Term.ZERO)){ //3.1
+        var separateRight_T;
+        if (canSeparateRight(T)&&equal((separateRight_T=separateRight(T))[1],EP)&&canCancelAddLeft(separateRight_T[2],F)){ //3.1.1
+          var tp=separateRight_T[0];
+          var dp=cancelAddLeft(separateRight_T[2],F);
+          return add(subst0(S,tp,E,EP,F),"三("+a+","+add(b,dp)+")");
+        }else return "0"; //3.1.2
+      }else return "三("+a+","+subst0(add(b,"三("+c+","+d+")"),T,E,EP,F)+")"; //3.2
+    }
+  }
+  if (S instanceof SumTerm) return add(S.getNotRight(),subst0(S.getRight(),T,E,EP,F)); //4
+  throw Error("No rule to compute subst_0("+S+","+T+","+E+","+EP+","+F+")");
+}
+/**
+ * @param {Term|string} S 
+ * @param {Term|string} T 
+ * @param {Term|string} C 
+ * @returns {string} subst_1(S,T,C)
+ */
+function subst1(S,T,C){
+  if (!(S instanceof Term)) S=new Term(S);
+  if (!(T instanceof Term)) T=new Term(T);
+  if (!(C instanceof Term)) C=new Term(C);
+  if (!inT(S)||!inT(T)||!inT(C)) throw Error("Invalid argument: "+S+","+T+","+C);
+  if (canSeparateRight(S)&&canSeparateRight(T)){
+    var separateRight_S=separateRight(S);
+    var separateRight_T=separateRight(T);
+    if (equal(separateRight_S[0],separateRight_T[0])){
+      if (canSeparateRight(separateRight_S[1])&&equal(separateRight_S[2],Term.ZERO)&&canSeparateRight(separateRight_T[1])&&equal(separateRight_T[2],Term.ZERO)){ //1
+        var separateRight_separateRight_S_1=separateRight(separateRight_S[1]);
+        var separateRight_separateRight_T_1=separateRight(separateRight_T[1]);
+        if (equal(separateRight_separateRight_S_1[0],separateRight_separateRight_T_1[0])){ //1
+          var sp=separateRight_S[0];
+          var a=separateRight_separateRight_S_1[0];
+          var e=separateRight_separateRight_S_1[1];
+          var f=separateRight_separateRight_S_1[2];
+          var ep=separateRight_separateRight_T_1[1];
+          var fp=separateRight_separateRight_T_1[2];
+          if (equal(e,C)) return add(sp,"三("+add(a,"三("+C+","+fund(f,"三("+C+","+T+")")+")")+",0)"); //1.1
+          else return add(sp,"三("+subst1(add(a,"三("+e+","+f+")"),add(a,"三("+ep+","+fp+")"),C)+",0)"); //1.2
+        }
+      }
+      if (equal(separateRight_S[1],separateRight_T[1])&&canSeparateRight(separateRight_S[2])&&canSeparateRight(separateRight_T[2])){ //1
+        var separateRight_separateRight_S_2=separateRight(separateRight_S[2]);
+        var separateRight_separateRight_T_2=separateRight(separateRight_T[2]);
+        if (equal(separateRight_separateRight_S_2[0],separateRight_separateRight_T_2[0])){ //2
+          var sp=separateRight_S[0];
+          var a=separateRight_S[1];
+          var b=separateRight_separateRight_S_2[0];
+          var e=separateRight_separateRight_S_2[1];
+          var f=separateRight_separateRight_S_2[2];
+          var ep=separateRight_separateRight_T_2[1];
+          var fp=separateRight_separateRight_T_2[2];
+          if (equal(e,C)) return subst0(S,T,C,a,sep0(b,"三("+succ(C)+",0)")); //2.1
+          else return add(sp,"三("+a+","+subst1(add(b,"三("+e+","+f+")"),add(b,"三("+ep+","+fp+")"),C)+")"); //2.2
+        }
+      }
+    }
+  }
+  return "0"; //3
+  throw Error("No rule to compute subst_1("+S+","+T+","+C+")");
+}
+/**
  * @param {Term|string} S 
  * @param {Term|number|string} T 
  * @returns {string} S[T]
@@ -673,6 +904,7 @@ function fund(S,T){
   if (!(S instanceof Term)) S=new Term(S);
   if (typeof T=="number") T=String(T);
   if (!(T instanceof Term)) T=new Term(T);
+  if (!inT(S)||!inT(T)) throw Error("Invalid argument: "+S+","+T);
   if (S instanceof ZeroTerm) return "0"; //1
   if (S instanceof SumTerm){ //2
     var a=S.getLeft();
@@ -696,40 +928,29 @@ function fund(S,T){
       if (equal(T,(Term_fund_T_0=new Term(fund(T,Term.ZERO)))+"+"+Term.ONE)) return fund(S,Term_fund_T_0)+"+"+fund(S,Term.ONE); //3.2.1
       else return "三("+a+","+fund(b,Term.ZERO)+")"; //3.2.2
     }else{ //3.3
+      var c=null;
+      var d=null;
       if (lessThan(Term_dom_b,S)) return "三("+a+","+fund(b,T)+")"; //3.3.1
-      else if (!equal(Term_dom_b,"三("+succ(a)+",0)")){ //3.3.2
-        if (Term_dom_b instanceof ThreeTerm&&isSucc(Term_dom_b.inner1)&&equal(Term_dom_b.inner2,Term.ZERO)){ //3.3.2.1
-          var c=pred(Term_dom_b.inner1);
-          var Term_fund_T_0=null;
-          var Term_fund_S_fund_T_0=null;
-          if (equal(T,succ(Term_fund_T_0=new Term(fund(T,Term.ZERO))))&&(Term_fund_S_fund_T_0=new Term(fund(S,Term_fund_T_0))) instanceof ThreeTerm&&equal(Term_fund_S_fund_T_0.inner1,a)) return "三("+a+","+fund(b,"三("+c+","+Term_fund_S_fund_T_0.inner2+")")+")"; //3.3.2.1.1
-          else return "三("+a+","+fund(b,"三("+c+",0)")+")"; //3.3.2.1.2
-        }else if (Term_dom_b instanceof ThreeTerm){ //3.3.2.2
-          var c=Term_dom_b.inner1;
-          var d=Term_dom_b.inner2;
-          var dom_d=dom(d);
-          var Term_dom_d=new Term(dom_d);
-          if (!equal(Term_dom_d,"三("+succ(c)+",0)")) throw Error("Unexpected error");
-          var Term_fund_T_0=null;
-          var Term_fund_S_fund_T_0=null;
-          if (equal(T,succ(Term_fund_T_0=new Term(fund(T,Term.ZERO))))&&(Term_fund_S_fund_T_0=new Term(fund(S,Term_fund_T_0))) instanceof ThreeTerm&&equal(Term_fund_S_fund_T_0.inner1,a)){ //3.3.2.2.1
-            var bp=Term_fund_S_fund_T_0.inner2;
-            var beta; //3.3.2.2.1.1
-            if (bp instanceof SumTerm){
-              for (var k=bp.terms.length-1,i0=k-1;i0>=0&&!lessThanOrEqual(Term_dom_d,bp.terms[i0]);i0--);
-              if (i0>=0) beta=bp.slice(i0+1,k+1); //3.3.2.2.1.1.1
-              else beta=bp; //3.3.2.2.1.1.2
-            }else beta=bp; //3.3.2.2.1.1.2
-            var G; //3.3.2.2.1.2
-            if (lessThan(beta,Term_dom_d)) G="三("+c+","+fund(d,beta)+")"; //3.3.2.2.1.2.1
-            else G="三("+c+","+fund(d,"三("+c+","+beta+")")+")"; //3.3.2.2.1.2.2
-            return "三("+a+","+fund(b,G)+")"; //3.3.2.2.1.3
-          }else return "三("+a+","+fund(b,"三("+c+","+fund(d,Term.ZERO)+")")+")"; //3.3.2.2.2
-        }
-      }else return T+""; //3.3.3
+      else if (Term_dom_b instanceof ThreeTerm&&isSucc(Term_dom_b.inner1)&&equal(Term_dom_b.inner2,Term.ZERO)&&lessThan(a,c=pred(Term_dom_b.inner1))){ //3.3.2
+        var Term_fund_T_0=null;
+        var Term_fund_S_fund_T_0=null;
+        if (equal(T,succ(Term_fund_T_0=new Term(fund(T,Term.ZERO))))&&(Term_fund_S_fund_T_0=new Term(fund(S,Term_fund_T_0))) instanceof ThreeTerm&&equal(Term_fund_S_fund_T_0.inner1,a)) return "三("+a+","+fund(b,"三("+c+","+Term_fund_S_fund_T_0.inner2+")")+")"; //3.3.2.1
+        else return "三("+a+","+fund(b,"三("+c+",0)")+")"; //3.3.2.2
+      }else if (Term_dom_b instanceof ThreeTerm&&equal(dom(d=Term_dom_b.inner2),"三("+succ(c=Term_dom_b.inner1)+",0)")){ //3.3.3
+        var Term_fund_T_0=null;
+        var Term_fund_S_fund_T_0=null;
+        var Term_tail_bc=null;
+        if (equal(T,succ(Term_fund_T_0=new Term(fund(T,Term.ZERO))))&&(Term_fund_S_fund_T_0=new Term(fund(S,Term_fund_T_0))) instanceof ThreeTerm&&equal(Term_fund_S_fund_T_0.inner1,a)){ //3.3.3.1
+          var bp=Term_fund_S_fund_T_0.inner2;
+          var Term_tsucc_c0=new Term("三("+succ(c)+",0)");
+          var sep1_bp_Term_tsucc_c0=sep1(bp,Term_tsucc_c0);
+          var Term_sep1_bp_Term_tsucc_c0=new Term(sep1_bp_Term_tsucc_c0);
+          if (equal(Term_sep1_bp_Term_tsucc_c0,Term.ZERO)) return "三("+a+","+subst1(b,bp,c)+")"; //3.3.3.1.1
+          else return "三("+a+","+fund(b,"三("+c+","+fund(d,Term_sep1_bp_Term_tsucc_c0)+")")+")"; //3.3.3.1.2
+        }else return "三("+a+","+fund(b,"三("+c+","+fund(d,Term.ZERO)+")")+")"; //3.3.3.2
+      }else return T+""; //3.3.4
     }
   }
-  if (!inT(S)||!inT(T)) throw Error("Invalid argument: "+S+","+T);
   throw Error("No rule to compute "+S+"["+T+"]");
 }
 /**
@@ -838,11 +1059,12 @@ var testTermsPre=[
   ["三_0(三_0(三_1(0)+三_1(0))+三_0(三_1(0)))",3],
   ["三_0(三_0(三_1(0)+三_1(0))+三_0(三_1(0)+三_0(三_1(0)+三_1(0))))",3],
   ["三_0(三_0(三_1(0)+三_1(0))+三_0(三_1(0)+三_1(0)))",3],
-  ["三_0(三_0(三_1(0)+三_1(0)+1))",3],
+  ["三_0(三_0(三_1(0)+三_1(0)+1))",-1],
   ["三_0(三_0(三_1(0)+三_1(0)+三_0(三_1(0))))",3],
   ["三_0(三_0(三_1(0)+三_1(0)+三_0(三_1(0)+三_1(0))))",3],
   ["三_0(三_0(三_1(0)+三_1(0)+三_1(0)))",3],
   ["三_0(三_0(三_1(0)+三_1(0)+三_1(0))+三_0(三_1(0)+三_0(三_1(0)+三_1(0)+三_1(0))))",3],
+  ["三_0(三_0(三_1(0)+三_1(0)+三_1(0)+三_1(0)))",-1],
   ["三_0(三_0(三_1(1)))",3],
   ["三_0(三_0(三_1(ω)))",3],
   ["三_0(三_0(三_1(三_0(三_0(三_1(0))))))",3],
@@ -850,8 +1072,9 @@ var testTermsPre=[
   ["三_0(三_0(三_1(三_1(0))))",3],
   ["三_0(三_0(三_1(三_1(0)))+三_0(三_1(0)))",3],
   ["三_0(三_0(三_1(三_1(0)))+三_0(三_1(0)+三_0(三_1(三_1(0)))))",3],
-  ["三_0(三_0(三_1(三_1(0)))+三_0(三_1(三_0(三_0(三_1(三_1(0)))))))",3],
-  ["三_0(三_0(三_1(三_1(0)))+三_0(三_1(三_0(三_1(0)))))",3],
+  ["三_0(三_0(三_1(三_1(0)))+三_0(三_1(0)+三_1(0)))",-1],
+  ["三_0(三_0(三_1(三_1(0)))+三_0(三_1(三_0(三_0(三_1(三_1(0)))))))",-1],
+  ["三_0(三_0(三_1(三_1(0)))+三_0(三_1(三_0(三_1(0)))))",-1],
   ["三_0(三_0(三_1(三_1(0)))+三_0(三_1(三_0(三_1(三_1(0))))))",3],
   ["三_0(三_0(三_1(三_1(0)))+三_0(三_1(三_0(三_1(三_1(0))))+三_0(三_1(三_1(0)))))",3],
   ["三_0(三_0(三_1(三_1(0)))+三_0(三_1(三_0(三_1(三_1(0))))+三_1(0)))",3],
@@ -862,11 +1085,16 @@ var testTermsPre=[
   ["三_0(三_0(三_1(三_1(0))+三_0(三_1(三_0(三_1(三_1(0)))))))",3],
   ["三_0(三_0(三_1(三_1(0))+三_0(三_1(三_0(三_1(三_1(0))))+三_0(三_1(三_1(0))))))",3],
   ["三_0(三_0(三_1(三_1(0))+三_0(三_1(三_1(0)))))",3],
+  ["三_0(三_0(三_1(三_1(0))+三_0(三_1(三_1(0))))+三_0(三_1(三_0(三_1(三_1(0))+三_0(三_1(三_1(0)))))))",3],
   ["三_0(三_0(三_1(三_1(0))+三_0(三_1(三_1(0))+三_0(三_1(三_1(0))))))",3],
   ["三_0(三_0(三_1(三_1(0))+三_1(0)))",3],
+  ["三_0(三_0(三_1(三_1(0))+三_1(0))+三_0(三_1(三_0(三_1(三_1(0))+三_1(0)))))",3],
+  ["三_0(三_0(三_1(三_1(0))+三_1(0)+三_1(0)))",-1],
   ["三_0(三_0(三_1(三_1(0))+三_1(三_1(0))))",3],
+  ["三_0(三_0(三_1(三_1(0))+三_1(三_1(0)))+三_0(三_1(三_0(三_1(三_1(0))+三_0(三_1(三_1(0)))))))",3],
+  ["三_0(三_0(三_1(三_1(0))+三_1(三_1(0)))+三_0(三_1(三_0(三_1(三_1(0))+三_1(三_1(0))))))",3],
   ["三_0(三_0(三_1(三_1(0)+1)))",3],
-  ["三_0(三_0(三_1(三_1(0)+三_0(三_0(三_1(三_1(0)))))))",3],
+  ["三_0(三_0(三_1(三_1(0)+三_0(三_0(三_1(三_1(0)))))))",-1],
   ["三_0(三_0(三_1(三_1(0)+三_0(三_1(0)))))",3],
   ["三_0(三_0(三_1(三_1(0)+三_1(0))))",3],
   ["三_0(三_0(三_1(三_1(1))))",3],
@@ -874,51 +1102,109 @@ var testTermsPre=[
   ["三_0(三_0(三_1(三_1(三_0(三_1(三_0(三_1(三_1(0)))))))))",3],
   ["三_0(三_0(三_1(三_1(三_0(三_1(三_1(0)))))))",3],
   ["三_0(三_0(三_1(三_1(三_1(0)))))",3],
+  ["三_0(三_0(三_1(三_1(三_1(0))))+三_0(三_1(三_0(三_1(三_1(三_1(0)))))))",3],
+  ["三_0(三_0(三_1(三_1(三_1(0))))+三_0(三_1(三_1(三_0(三_1(三_1(三_1(0))))))))",3],
+  ["三_0(三_0(三_1(三_1(三_1(三_1(0))))))",-1],
   ["三_0(三_0(三_2(0)))",3],
   ["三_0(三_0(三_2(0))+三_0(三_0(三_2(0))))",3],
   ["三_0(三_0(三_2(0))+三_0(三_1(0)))",3],
   ["三_0(三_0(三_2(0))+三_0(三_2(0)))",3],
   ["三_0(三_0(三_2(0)+三_0(三_2(0))))",3],
   ["三_0(三_0(三_2(0)+三_1(0)))",3],
+  ["三_0(三_0(三_2(0)+三_1(0)+三_0(三_2(0)+三_0(三_2(0)+三_1(0)))))",3],
+  ["三_0(三_0(三_2(0)+三_1(0)+三_0(三_2(0)+三_1(0))))",3],
   ["三_0(三_0(三_2(0)+三_1(三_2(0))))",3],
+  ["三_0(三_0(三_2(0)+三_1(三_2(0)+三_1(三_1(三_2(0))))))",3],
+  ["三_0(三_0(三_2(0)+三_1(三_2(0)+三_1(三_2(0)))))",3],
   ["三_0(三_0(三_2(0)+三_2(0)))",3],
+  ["三_0(三_0(三_2(0)+三_2(0)+三_1(三_2(0)+三_2(0))))",-1],
+  ["三_0(三_0(三_2(0)+三_2(0)+三_1(三_2(0)+三_2(0)+三_1(三_1(三_2(0)+三_2(0))))))",3],
+  ["三_0(三_0(三_2(0)+三_2(0)+三_1(三_2(0)+三_2(0)+三_1(三_2(0)))))",-1],
+  ["三_0(三_0(三_2(0)+三_2(0)+三_1(三_2(0)+三_2(0)+三_1(三_2(0)+三_1(三_2(0))))))",3],
+  ["三_0(三_0(三_2(0)+三_2(0)+三_1(三_2(0)+三_2(0)+三_1(三_2(0)+三_1(三_2(0)+三_2(0))))))",3],
+  ["三_0(三_0(三_2(1)))",-1],
+  ["三_0(三_0(三_2(三_0(三_0(三_2(0))))))",-1],
+  ["三_0(三_0(三_2(三_0(三_1(0)))))",-1],
+  ["三_0(三_0(三_2(三_0(三_2(0)))))",-1],
   ["三_0(三_0(三_2(三_1(0))))",3],
   ["三_0(三_0(三_2(三_1(0)))+三_0(三_2(三_0(三_2(三_1(0))))))",3],
   ["三_0(三_0(三_2(三_1(0)))+三_0(三_2(三_1(0))))",3],
-  ["三_0(三_0(三_2(三_1(三_1(三_2(0))))))",3],
+  ["三_0(三_0(三_2(三_1(0))+三_1(0)))",-1],
+  ["三_0(三_0(三_2(三_1(0)+三_1(0))))",-1],
   ["三_0(三_0(三_2(三_1(三_2(0)))))",3],
   ["三_0(三_0(三_2(三_2(0))))",3],
+  ["三_0(三_0(三_2(三_2(0))+三_0(三_1(三_0(三_2(三_1(0)))))))",3],
+  ["三_0(三_0(三_2(三_2(0))+三_0(三_1(三_0(三_2(三_1(三_2(0))))))))",3],
+  ["三_0(三_0(三_2(三_2(0))+三_0(三_1(三_0(三_2(三_2(0)))))))",3],
+  ["三_0(三_0(三_2(三_2(0))+三_0(三_2(三_0(三_2(三_1(0)))))))",3],
+  ["三_0(三_0(三_2(三_2(0))+三_0(三_2(三_0(三_2(三_1(三_2(0))))))))",3],
+  ["三_0(三_0(三_2(三_2(0))+三_0(三_2(三_0(三_2(三_2(0)))))))",3],
   ["三_0(三_0(三_2(三_2(0))+三_0(三_2(三_2(0)))))",3],
+  ["三_0(三_0(三_2(三_2(0))+三_1(0)))",-1],
   ["三_0(三_0(三_2(三_2(0))+三_1(三_2(三_2(0)))))",3],
+  ["三_0(三_0(三_2(三_2(0))+三_1(三_2(三_2(0))+三_1(三_2(三_1(三_2(三_2(0))))))))",3],
+  ["三_0(三_0(三_2(三_2(0))+三_1(三_2(三_2(0))+三_1(三_2(三_1(三_2(三_2(0))))+三_2(三_1(三_2(三_2(0))))))))",3],
+  ["三_0(三_0(三_2(三_2(0))+三_1(三_2(三_2(0))+三_1(三_2(三_1(三_2(三_2(0)))+三_1(三_2(三_2(0))))))))",3],
   ["三_0(三_0(三_2(三_2(0))+三_2(0)))",3],
   ["三_0(三_0(三_3(0)))",3],
   ["三_0(三_0(三_ω(0)))",3],
+  ["三_0(三_0(三_ω(三_0(三_ω(0)))))",-1],
+  ["三_0(三_0(三_ω(三_1(0))))",-1],
+  ["三_0(三_0(三_ω(三_1(三_ω(0)))))",-1],
+  ["三_0(三_0(三_ω(三_ω(0))))",-1],
   ["三_0(三_0(三_{ω+1}(0)))",3],
   ["三_0(三_0(三_{ω+1}(0)+三_ω(三_{ω+1}(0))))",3],
   ["三_0(三_0(三_{ω+1}(0)+三_{ω+1}(0)))",3],
+  ["三_0(三_0(三_{ω+1}(三_1(0))))",-1],
   ["三_0(三_0(三_{ω+1}(三_1(三_{ω+1}(0)))))",3],
-  ["三_0(三_0(三_{ω+1}(三_ω(三_ω(三_{ω+1}(0))))))",3],
   ["三_0(三_0(三_{ω+1}(三_ω(三_{ω+1}(0)))))",3],
   ["三_0(三_0(三_{ω+1}(三_{ω+1}(0))))",3],
   ["三_0(三_0(三_三_0(三_0(三_1(0)))(0)))",3],
+  ["三_0(三_0(三_三_0(三_0(三_1(三_1(0))))(0)))",3],
   ["三_0(三_0(三_三_0(三_1(0))(0)))",3],
+  ["三_0(三_0(三_三_0(三_1(0))(0))+三_0(三_0(三_三_0(三_1(0))(0))))",3],
+  ["三_0(三_0(三_三_0(三_1(0))(0))+三_0(三_1(0)+三_0(三_三_0(三_1(0))(0))))",3],
+  ["三_0(三_0(三_三_0(三_1(0))(0))+三_0(三_三_0(三_1(0))(0)))",3],
   ["三_0(三_0(三_三_0(三_1(0))(0)+三_0(三_0(三_三_0(三_1(0))(0)))))",3],
-  ["三_0(三_0(三_三_0(三_1(0))(0)+三_0(三_1(0)+三_0(三_三_0(三_1(0))(0)))))",3],
   ["三_0(三_0(三_三_0(三_1(0))(0)+三_0(三_三_0(三_1(0))(0))))",3],
+  ["三_0(三_0(三_三_0(三_1(0))(0)+三_1(0)))",-1],
+  ["三_0(三_0(三_三_0(三_1(0))(1)))",-1],
   ["三_0(三_0(三_三_0(三_1(0)+三_1(0))(0)))",3],
-  ["三_0(三_0(三_三_0(三_1(0)+三_1(0))(0)+三_0(三_0(三_三_0(三_1(0)+三_1(0))(0)))))",3],
-  ["三_0(三_0(三_三_0(三_1(0)+三_1(0))(0)+三_0(三_1(0)+三_0(三_三_0(三_1(0)+三_1(0))(0)))))",3],
+  ["三_0(三_0(三_三_0(三_1(0)+三_1(0))(0))+三_0(三_0(三_三_0(三_1(0)+三_1(0))(0))))",3],
+  ["三_0(三_0(三_三_0(三_1(0)+三_1(0))(0))+三_0(三_1(0)+三_0(三_三_0(三_1(0)+三_1(0))(0))))",3],
+  ["三_0(三_0(三_三_0(三_1(0)+三_1(0))(0)+三_0(三_0(三_三_0(三_1(0)+三_1(0))(0)))))",-1],
+  ["三_0(三_0(三_三_0(三_1(0)+三_1(0))(0)+三_0(三_1(0)+三_0(三_三_0(三_1(0)+三_1(0))(0)))))",-1],
   ["三_0(三_0(三_三_0(三_1(0)+三_1(0)+三_1(0))(0)))",-1],
   ["三_0(三_0(三_三_0(三_1(1))(0)))",-1],
+  ["三_0(三_0(三_三_0(三_1(三_1(0)))(0)))",3],
+  ["三_0(三_0(三_三_0(三_2(0))(0)))",3],
+  ["三_0(三_0(三_三_0(三_2(0)+三_1(0))(0)))",3],
+  ["三_0(三_0(三_三_0(三_ω(0))(0)))",-1],
   ["三_0(三_0(三_三_1(0)(0)))",3],
+  ["三_0(三_0(三_三_1(0)(0))+三_0(三_0(三_三_1(0)(0))))",3],
+  ["三_0(三_0(三_三_1(0)(0))+三_0(三_1(0)+三_0(三_三_1(0)(0))))",3],
   ["三_0(三_0(三_三_1(0)(0))+三_0(三_三_1(0)(0)))",3],
-  ["三_0(三_0(三_三_1(三_1(三_2(0)))(0)))",3],
+  ["三_0(三_0(三_三_1(三_0(三_1(0)))(0)))",-1],
+  ["三_0(三_0(三_三_1(三_1(0))(0)))",-1],
   ["三_0(三_0(三_三_1(三_2(0))(0)))",3],
+  ["三_0(三_0(三_三_1(三_2(0))(0)+三_0(三_三_1(三_2(0))(0))))",3],
+  ["三_0(三_0(三_三_1(三_2(0))(0)+三_1(三_三_1(三_2(0))(0))))",3],
+  ["三_0(三_0(三_三_1(三_2(三_2(0)))(0)))",3],
   ["三_0(三_0(三_三_2(0)(0)))",3],
-  ["三_0(三_0(三_三_2(0)(0))+三_0(三_三_2(0)(0)))",3],
+  ["三_0(三_0(三_三_2(0)(0))+三_0(三_三_2(0)(0)))",-1],
+  ["三_0(三_0(三_三_2(0)(0)+三_0(三_三_2(0)(0))))",3],
   ["三_0(三_0(三_三_2(0)(0)+三_1(三_三_2(0)(0))))",3],
-  ["三_0(三_0(三_三_2(0)(三_1(三_1(三_三_2(0)(0))))))",3],
+  ["三_0(三_0(三_三_2(0)(0)+三_2(三_三_2(0)(0))))",3],
+  ["三_0(三_0(三_三_2(0)(0)+三_三_0(三_2(0))(0)))",-1],
+  ["三_0(三_0(三_三_2(0)(0)+三_三_0(三_三_2(0)(0))(0)))",3],
+  ["三_0(三_0(三_三_2(0)(0)+三_三_1(三_1(三_2(0)))(0)))",3],
+  ["三_0(三_0(三_三_2(0)(0)+三_三_1(三_2(0))(0)))",3],
+  ["三_0(三_0(三_三_2(0)(0)+三_三_1(三_三_1(三_三_2(0)(0))(0))(0)))",3],
+  ["三_0(三_0(三_三_2(0)(0)+三_三_1(三_三_2(0)(0))(0)))",3],
   ["三_0(三_0(三_三_2(0)(三_1(三_三_2(0)(0)))))",3],
+  ["三_0(三_0(三_三_2(三_1(三_三_2(0)(0)))(0)))",3],
+  ["三_0(三_0(三_三_3(0)(0)))",-1],
+  ["三_0(三_0(三_三_ω(0)(0)))",-1],
   ["三_0(三_0(三_三_三_1(0)(0)(0)))",3]
 ];
 /** @type {string[]}} */
@@ -1073,6 +1359,20 @@ function compute(){
           result=lessThanOrEqual(args[0],args[1]);
         }else if (cmd=="lessThan"||cmd=="<"){
           result=lessThan(args[0],args[1]);
+        }else if (cmd=="add"){
+          result=add(args[0],args[1]);
+        }else if (cmd=="canCancelAddRight"){
+          result=canCancelAddRight(args[0],args[1]);
+        }else if (cmd=="cancelAddRight"){
+          result=cancelAddRight(args[0],args[1]);
+        }else if (cmd=="canCancelAddLeft"){
+          result=canCancelAddLeft(args[0],args[1]);
+        }else if (cmd=="cancelAddLeft"){
+          result=cancelAddLeft(args[0],args[1]);
+        }else if (cmd=="canSeparateRight"){
+          result=canSeparateRight(args[0]);
+        }else if (cmd=="separateRight"){
+          result=separateRight(args[0]);
         }else if (cmd=="succ"){
           result=succ(args[0]);
         }else if (cmd=="isSucc"){
@@ -1081,6 +1381,14 @@ function compute(){
           result=pred(args[0]);
         }else if (cmd=="dom"){
           result=dom(args[0]);
+        }else if (cmd=="sep0"){
+          result=sep0(args[0],args[1]);
+        }else if (cmd=="sep1"){
+          result=sep1(args[0],args[1]);
+        }else if (cmd=="subst0"){
+          result=subst0(args[0],args[1],args[2],args[3],args[4]);
+        }else if (cmd=="subst1"){
+          result=subst1(args[0],args[1],args[2]);
         }else if (cmd=="fund"||cmd=="expand"){
           var t=normalizeAbbreviations(args[0]);
           result=[t];
@@ -1113,6 +1421,20 @@ function compute(){
       output+=result;
     }else if (cmd=="lessThan"||cmd=="<"){
       output+=result;
+    }else if (cmd=="add"){
+      output+=abbreviateIfEnabled(result);
+    }else if (cmd=="canCancelAddRight"){
+      output+=result;
+    }else if (cmd=="cancelAddRight"){
+      output+=abbreviateIfEnabled(result);
+    }else if (cmd=="canCancelAddLeft"){
+      output+=result;
+    }else if (cmd=="cancelAddLeft"){
+      output+=abbreviateIfEnabled(result);
+    }else if (cmd=="canSeparateRight"){
+      output+=result;
+    }else if (cmd=="separateRight"){
+      output+=abbreviateIfEnabled(result);
     }else if (cmd=="succ"){
       output+=abbreviateIfEnabled(result);
     }else if (cmd=="isSucc"){
@@ -1120,6 +1442,14 @@ function compute(){
     }else if (cmd=="pred"){
       output+=abbreviateIfEnabled(result);
     }else if (cmd=="dom"){
+      output+=abbreviateIfEnabled(result);
+    }else if (cmd=="sep0"){
+      output+=abbreviateIfEnabled(result);
+    }else if (cmd=="sep1"){
+      output+=abbreviateIfEnabled(result);
+    }else if (cmd=="subst0"){
+      output+=abbreviateIfEnabled(result);
+    }else if (cmd=="subst1"){
       output+=abbreviateIfEnabled(result);
     }else if (cmd=="fund"||cmd=="expand"){
       if (options.detail){
@@ -1147,5 +1477,3 @@ function compute(){
   document.getElementById("output").value=output;
 }
 var handlekey=function(e){}
-//console.log=function (s){alert(s)};
-window.onerror=function (e,s,l,c,o){alert(JSON.stringify(e+"\n"+s+":"+l+":"+c+"\n"+(o&&o.stack)))};
