@@ -102,7 +102,7 @@
 
 \renewcommand{\thefootnote}{$\diamondsuit$}
 
-このドキュメントはp進大好きbot氏が公開したブログ記事\href{https://googology.fandom.com/ja/wiki/User\_blog:P\%E9\%80\%B2\%E5\%A4\%A7\%E5\%A5\%BD\%E3\%81\%8Dbot/\%E3\%83\%9A\%E3\%82\%A2\%E6\%95\%B0\%E5\%88\%97\%E3\%81\%AE\%E5\%81\%9C\%E6\%AD\%A2\%E6\%80\%A7}{ペア数列の停止性}を\LaTeX{}に変換したものです\footnote[0]{原文は\href{https://www.fandom.com/ja/licensing-ja}{CC-BY-SA 3.0 非移植ライセンスのもとで提供されています}。}。\iffull\else{このバージョンは要約版であり、序文や証明などが省かれています。}\fi 使用した版は\href{https://googology.fandom.com/ja/wiki/User\_blog:P\%E9\%80\%B2\%E5\%A4\%A7\%E5\%A5\%BD\%E3\%81\%8Dbot/\%E3\%83\%9A\%E3\%82\%A2\%E6\%95\%B0\%E5\%88\%97\%E3\%81\%AE\%E5\%81\%9C\%E6\%AD\%A2\%E6\%80\%A7?oldid=47092}{2022年5月29日の版}です。\href{https://creativecommons.org/licenses/by-sa/3.0/}{CC-BY-SA 3.0 非移植ライセンス}のもとで公開します。
+このドキュメントはp進大好きbot氏が公開したブログ記事\href{https://googology.fandom.com/ja/wiki/User\_blog:P\%E9\%80\%B2\%E5\%A4\%A7\%E5\%A5\%BD\%E3\%81\%8Dbot/\%E3\%83\%9A\%E3\%82\%A2\%E6\%95\%B0\%E5\%88\%97\%E3\%81\%AE\%E5\%81\%9C\%E6\%AD\%A2\%E6\%80\%A7}{ペア数列の停止性}を\LaTeX{}に変換したものです\footnote[0]{原文は\href{https://www.fandom.com/ja/licensing-ja}{CC-BY-SA 3.0 非移植ライセンスのもとで提供されています}。}。\iffull\else{このバージョンは要約版であり、序文や証明などが省かれています。}\fi 使用した版は\href{https://googology.fandom.com/ja/wiki/User\_blog:P\%E9\%80\%B2\%E5\%A4\%A7\%E5\%A5\%BD\%E3\%81\%8Dbot/\%E3\%83\%9A\%E3\%82\%A2\%E6\%95\%B0\%E5\%88\%97\%E3\%81\%AE\%E5\%81\%9C\%E6\%AD\%A2\%E6\%80\%A7?oldid=49288}{2022年7月26日の版}です。\href{https://creativecommons.org/licenses/by-sa/3.0/}{CC-BY-SA 3.0 非移植ライセンス}のもとで公開します。
 
 \renewcommand{\thefootnote}{\arabic{footnote}}
 
@@ -319,14 +319,13 @@ M & \mapsto & \textrm{Pred}(M)
 
 写像
 \begin{eqnarray*}
-\textrm{Derp} \colon T_{\textrm{PS}} & \to & T_{\textrm{PS}} \\
-M & \mapsto & \textrm{Drep}(M)
+\textrm{Derp} \colon T_{\textrm{PS}} & \to & T_{\textrm{PS}} \cup \{()\} \\
+M & \mapsto & \textrm{Derp}(M)
 \end{eqnarray*}
 を以下のように定める：
 \begin{nenumerate}
 	\item \(j_1 := \textrm{Lng}(M)-1\)と置く。
-	\item \(j_1 = 0\)ならば\(\textrm{Drep}(M) := M\)である。
-	\item \(j_1 > 0\)ならば\(\textrm{Drep}(M) := (M_j)_{j=1}^{j_1}\)である。
+	\item \(\textrm{Derp}(M) := (M_j)_{j=1}^{j_1}\)である。
 \end{nenumerate}
 
 \(\textrm{Derp}\)には順序数の操作に関連する意味が特にないが、後に導入する\(\textrm{Red}\)という写像を定義するために便利なので一度だけ用いる。
@@ -355,7 +354,7 @@ M & \mapsto & \textrm{Drep}(M)
 				\item \(i < i_1\)を満たす各\(i \in \mathbb{N}\)に対し、\(\delta_i := M_{i,j_1} - M_{i,j_0}\)と置く。
 				\item \(i \geq i_1\)を満たす各\(i \in \mathbb{N}\)に対し、\(\delta_i := 0\)と置く。
 				\item \(G := (M_j)_{j=0}^{j_0-1} \in T_{\textrm{PS}}\)と置く。
-				\item \(B := ((M_{0,j} + k \delta_0, M_{1,j} + k \delta_1))_{j=j_0}^{j_1-1})_{k=0}^{n-1} \in T_{\textrm{PS}}^n\)と置く。
+				\item \(B := (((M_{0,j} + k \delta_0, M_{1,j} + k \delta_1))_{j=j_0}^{j_1-1})_{k=0}^{n-1} \in T_{\textrm{PS}}^n\)と置く。
 				\item \(M[n] := \left(G \oplus_{\mathbb{N}^2} \left( \bigoplus_{\mathbb{N}^2} B \right) \right)\)である。
 			\end{nenumerate}
 		\end{nenumerate}
@@ -570,7 +569,7 @@ M & \mapsto & P(M)
 		\end{indented}
 		\item \(j'_0-j_0 > 0\)とする。
 		\begin{indented}
-			\item 帰納法の仮定より\(P((M_j)_{j=0}^{j'_0-1} = P((M_j)_{j=0}^{j_0-1}) \oplus_{T_{\textrm{PS}}} P((M_j)_{j=j_0}^{j'_0-1})\)かつ\(P((M_j)_{j=j_0}^{j_1}) = P((M_j)_{j=j_0}^{j'_0-1}) \oplus_{T_{\textrm{PS}}} P((M_j)_{j=j'_0}^{j_1})\)であり、従って
+			\item 帰納法の仮定より\(P((M_j)_{j=0}^{j'_0-1}) = P((M_j)_{j=0}^{j_0-1}) \oplus_{T_{\textrm{PS}}} P((M_j)_{j=j_0}^{j'_0-1})\)かつ\(P((M_j)_{j=j_0}^{j_1}) = P((M_j)_{j=j_0}^{j'_0-1}) \oplus_{T_{\textrm{PS}}} P((M_j)_{j=j'_0}^{j_1})\)であり、従って
 			\begin{eqnarray*}
 			& & P(M) = P((M_j)_{j=0}^{j'_0-1}) \oplus_{\mathbb{N}^2} P((M_j)_{j=j'_0}^{j_1}) = P((M_j)_{j=0}^{j_0-1}) \oplus_{T_{\textrm{PS}}} P((M_j)_{j=j_0}^{j'_0-1}) \oplus_{\mathbb{N}^2} P((M_j)_{j=j'_0}^{j_1}) \\
 			& = & P((M_j)_{j=0}^{j_0-1}) \oplus_{\mathbb{N}^2} P((M_j)_{j=j_0}^{j_1})
@@ -584,7 +583,7 @@ M & \mapsto & P(M)
 	任意の\(M \in T_{\textrm{PS}}\)と\(n \in \mathbb{N}_{+}\)に対し、\(J_1 := \textrm{Lng}(P(M))-1\)と置くと以下が成り立つ：
 	\begin{penumerate}
 		\item \(\textrm{Lng}(P(M)_{J_1}) = 1\)ならば\(M[n] = \textrm{Pred}(M)\)であり、更に\(J_1 = 0\)か否かに従って\(P(M[n]) = (M[n])\)または\(P(M[n]) = (P(M)_J)_{J=0}^{J_1-1}\)である。
-		\item \(\textrm{Lng}(P(M)_{J_1}) > 1\)ならば\(M[n] = (\bigoplus_{\mathbb{N}^2} (P(M)_J)_{J=0}^{J_1-1}) \oplus_{\mathbb{N}^2} P(M)_{J_1}[n]\)かつ\(P(M[n]) = (P(M)_J)_{J=0}^{J_1-1}) \oplus_{\mathbb{N}^2} P(P(M)_{J_1}[n])\)である。
+		\item \(\textrm{Lng}(P(M)_{J_1}) > 1\)ならば\(M[n] = (\bigoplus_{\mathbb{N}^2} (P(M)_J)_{J=0}^{J_1-1}) \oplus_{\mathbb{N}^2} P(M)_{J_1}[n]\)かつ\(P(M[n]) = (P(M)_J)_{J=0}^{J_1-1} \oplus_{T_{\textrm{PS}}} P(P(M)_{J_1}[n])\)である。
 	\end{penumerate}
 \end{proposition}
 
@@ -663,7 +662,7 @@ M & \mapsto & P(M)
 		\item \(\textrm{Adm}_M(j_0) < \textrm{Adm}_N(j_0-j'_0)+j'_0\)と仮定し矛盾を導く。
 		\begin{indented}
 			\item \(\textrm{Adm}_M(j_0) < \textrm{Adm}_N(j_0-j'_0)+j'_0 \leq (j_0-j'_0)+j'_0 = j_0\)より\((1,\textrm{Adm}_N(j_0-j'_0)+j'_0-1) <_M^{\textrm{Next}} (1,\textrm{Adm}_N(j_0-j'_0)+j'_0)\)であり、\(j'_0 \leq \textrm{Adm}_M(j_0) < \textrm{Adm}_N(j_0-j'_0)+j'_0\)より\((1,\textrm{Adm}_N(j_0-j'_0)-1) <_N^{\textrm{Next}} (1,\textrm{Adm}_N(j_0-j'_0))\)となる。
-			\item 従って\(\textrm{Adm}_N(j_0-j'_0)\)の\(N\)許容性から\((1,\textrm{Adm}_N(j_0-j'_0)) <_N^{\textrm{Next}} (1,\textrm{Adm}_N(j_0-j'_0)+1)\)でなく、\((1,\textrm{Adm}_N(j_0-j'_0)+j'_0) <_M^{\textrm{Next}} (1,\textrm{Adm}_N(j_0-j'_0)+j'_0+1)\)でない。再度\(\textrm{Adm}_M(j_0) < \textrm{Adm}_N(j_0-j'_0)+j'_0 \leq j_0\)より\(\textrm{Adm}_N(j_0-j'_0)+j'_0) = j_0\)となる。
+			\item 従って\(\textrm{Adm}_N(j_0-j'_0)\)の\(N\)許容性から\((1,\textrm{Adm}_N(j_0-j'_0)) <_N^{\textrm{Next}} (1,\textrm{Adm}_N(j_0-j'_0)+1)\)でなく、\((1,\textrm{Adm}_N(j_0-j'_0)+j'_0) <_M^{\textrm{Next}} (1,\textrm{Adm}_N(j_0-j'_0)+j'_0+1)\)でない。再度\(\textrm{Adm}_M(j_0) < \textrm{Adm}_N(j_0-j'_0)+j'_0 \leq j_0\)より\(\textrm{Adm}_N(j_0-j'_0)+j'_0 = j_0\)となる。
 			\item すると\nameref{許容性の切片への遺伝性}と\(j_0 < j_1\)から\(j_0\)が\(M\)許容となるので\(\textrm{Adm}_M(j_0) = j_0\)であり、これは\(\textrm{Adm}_M(j_0) < \textrm{Adm}_N(j_0-j'_0)+j'_0 \leq j_0\)に反する。
 		\end{indented}
 		\item 以上より\(\textrm{Adm}_M(j_0) = \textrm{Adm}_N(j_0-j'_0)+j'_0\)である。
@@ -677,7 +676,7 @@ M & \mapsto & P(M)
 		\item \(m\)は\(M\)許容である。
 		\item \((0,m) \leq_M (0,j_1)\)である。
 	\end{nenumerate}
-	\item 基点付きペア数列全体の部分集合を\(T_{\textrm{PS}}^{\textrm{Marked}} \subset \times \mathbb{N}\)と置く。
+	\item 基点付きペア数列全体の部分集合を\(T_{\textrm{PS}}^{\textrm{Marked}} \subset T_{\textrm{PS}} \times \mathbb{N}\)と置く。
 	\item \(RT_{\textrm{PS}}^{\textrm{Marked}} := \{(M,m) \in T_{\textrm{PS}}^{\textrm{Marked}} \mid M \in RT_{\textrm{PS}}\}\)である。
 \end{nenumerate}
 
@@ -786,14 +785,14 @@ M & \mapsto & \textrm{Joints}(M)
 	\item \(j_1 := \textrm{Lng}(M) - 1\)と置く。
 	\item \(j'_1 := \textrm{TrMax}(M)\)と置く。
 	\item \(j'_1 = j_1\)ならば\(\textrm{Br}(M) := ()\)である。
-	\item \(j'_1 < j_1\)ならば\(\textrm{Br}(M) := P((M_j)_{j=j'_1+1}^{j_1}))\)である。
+	\item \(j'_1 < j_1\)ならば\(\textrm{Br}(M) := P((M_j)_{j=j'_1+1}^{j_1})\)である。
 	\item \(J_1 := \textrm{Lng}(\textrm{Br}(M))-1\)と置く。
 	\item \(\textrm{FirstNodes}(M) := (\textrm{TrMax}(M) + 1 + \textrm{IdxSum}(\textrm{Br}(M))_J)_{J=0}^{J_1+1}\)である。
 	\item \(J \leq J_1\)を満たす各\(J \in \mathbb{N}\)に対し、\((0,j) <_M^{\textrm{Next}} (0,\textrm{FirstNodes}(M)_J)\)を満たす一意な\(j \in \mathbb{N}\)を\(a_J\)と置く\footnote{\(M\)の単項性から\((0,0) \leq_M (0,\textrm{FirstNodes}(M)_J)\)であり、\(\textrm{FirstNodes}(M)_J > j'_1 \geq 0\)より\(j\)は存在する。}。
 	\item \(\textrm{Joints}(M) := (a_J)_{J=0}^{J_1}\)である。
 \end{nenumerate}
 
-\(\textrm{TrMax}\)の定義から\((1,\textrm{TrMax}(M)) <_M^{\textrm{Next}} (1,\textrm{TrMax}(M)+1)\)でなくかつ\(\textrm{TrMax}(M) < \textrm{Lng}(M)\)であるので、\(\textrm{TrMax}(M)\)は\(M\)許容である。また\(\textrm{FirstNodes}(M)\)の定義から、\(\textrm{Br}(M) = ((M_j)_{j = \textrm{FirstNodes}(M)_J}^{\textrm{FirstNodes}(M)_{J+1}})_{J=0}^{J_1}\)となる。
+\(\textrm{TrMax}\)の定義から\((1,\textrm{TrMax}(M)) <_M^{\textrm{Next}} (1,\textrm{TrMax}(M)+1)\)でなくかつ\(\textrm{TrMax}(M) < \textrm{Lng}(M)\)であるので、\(\textrm{TrMax}(M)\)は\(M\)許容である。また\(\textrm{FirstNodes}(M)\)の定義から、\(\textrm{Br}(M) = ((M_j)_{j = \textrm{FirstNodes}(M)_J}^{\textrm{FirstNodes}(M)_{J+1}-1})_{J=0}^{J_1}\)となる。
 
 \begin{proposition}[\(\textrm{FirstNodes}\)と\(\textrm{TrMax}\)と\(\textrm{Joints}\)の関係]\label{FirstNodesとTrMaxとJointsの関係}
 	任意の\(M \in PT_{\textrm{PS}}\)と\(J \in \mathbb{N}\)に対し、\(J_1 := \textrm{Lng}(\textrm{Br}(M))-1\)と置くと、\(J \leq J_1\)ならば\(\textrm{Joints}(M)_J \leq \textrm{TrMax}(M) < \textrm{FirstNodes}(M)_J\)である。
@@ -862,9 +861,9 @@ M & \mapsto & \textrm{Red}(M)
 			\item \(j'_1 = j_1\)ならば\(\textrm{Red}(M) := ((j,j))_{j=M_{1,0}}^{M_{1,0}+j_1}\)である。
 			\item \(j'_1 < j_1\)とする。
 			\item \(J_1 := \textrm{Lng}(\textrm{Br}(M)) - 1\)と置く。
-			\item \(J \leq J_1\)を満たす各\(J \in \mathbb{N}\)に対し、\(n_J \in \mathbb{N}\)と\(N_J \in PT_{\textrm{PS}}\)を以下のように定める：
+			\item \(J \leq J_1\)を満たす各\(J \in \mathbb{N}\)に対し、\(n_J \in \mathbb{N} \cup \{-1\}\)と\(N_J \in PT_{\textrm{PS}}\)を以下のように定める：
 			\begin{nenumerate}
-				\item \((\textrm{Br}(M)_J)_{1,0} = 0\)ならば\(n_J := 0\)である。
+				\item \((\textrm{Br}(M)_J)_{1,0} = 0\)ならば、\(n_J := -1\)である。
 				\item \((\textrm{Br}(M)_J)_{1,0} > 0\)ならば\((1,j) <_M^{\textrm{Next}} (1,\textrm{FirstNodes}(M)_J)\)を満たす一意な\(j \in \mathbb{N}\)を\(n_J\)と置く\footnote{\(M\)が単項より\((0,0) \leq_M (0,\textrm{FirstNodes}(M)_J)\)であり、\(M_{0,0} = 0 < (\textrm{Br}(M)_J)_{1,0} = M_{1,\textrm{FirstNode}(M)_J}\)と\nameref{親の存在の判定条件} (2)から\(j\)は存在する。}。
 				\item \(N_J := ((M_{0,0} + \textrm{Joints}(M)_J + 1,M_{1,0} + n_J + 1)) \oplus_{\mathbb{N}^2} \textrm{Derp}(\textrm{Br}(M)_J)\)である\footnote{\nameref{FirstNodesとTrMaxとJointsの関係}より\(\textrm{Joints}(M)_J \leq \textrm{TrMax}(M)\)なので\(M_{0,0} + \textrm{Joints}(M)_J \leq M_{0,\textrm{Joints}(M)}\)であり、\((0,\textrm{Joints}(M)_J) <_M^{\textrm{Next}} (0,\textrm{FirstNodes}(M)_J)\)より\(M_{0,\textrm{Joints}(M)_J} < M_{0,\textrm{FirstNodes}(M)_J}\)であるので\(M_{0,0} + \textrm{Joints}(M)_J + 1 \leq M_{0,\textrm{FirstNodes}(M)_J}\)となり、\(\textrm{Br}(M)_J\)が非複項であったので\(N_J\)も非複項となる。}。
 			\end{nenumerate}
@@ -882,7 +881,7 @@ M & \mapsto & \textrm{Red}(M)
 				\item \(N := \textrm{Red}(((j,j))_{j=0}^{M_{1,0}-1} \oplus_{\mathbb{N}^2} \textrm{IncrFirst}^{M_{1,0}}(M))\)と置く\footnote{\(N_0 = (0,0)\)であり、任意の\(j \in \mathbb{N}\)に対し\(j < M_{1,0} + \textrm{Lng}(M)\)ならば\(N_{1,j} > 0\)なので\(N\)は単項である。}。
 				\item \(j_1 := \textrm{Lng}(N) - 1\)と置く。
 				\begin{nenumerate}
-					\item \(M_{1,0} \leq j_1\)かつ\((N_j)_{j=M_{1,0}}^{j_1} \in PT_{\textrm{PS}}\)ならば\(\textrm{Red}(M) := ((N_{0,j}-N_{0,M_{1,0}},N_{1,j}))_{j=M_{1,0}}^{j_1}\)である\footnote{\((N_j)_{j=M_{1,0}}^{j_1} \in PT_{\textrm{PS}}\)より任意の\(j \in \mathbb{N}\)に対し\(M_{1,0} < j \leq j_1\)ならば\(N_{0,M_{1,0}} < N_{0,j}\)であるので\((N_{0,j}-N_{0,M_{1,0}},N_{1,j}) \in \mathbb{N}^2\)である。}。
+					\item \(M_{1,0} \leq j_1\)かつ\((N_j)_{j=M_{1,0}}^{j_1} \in PT_{\textrm{PS}}\)ならば\(\textrm{Red}(M) := ((N_{0,j}-N_{0,M_{1,0}}+N_{1,M_{1,0}},N_{1,j}))_{j=M_{1,0}}^{j_1}\)である\footnote{\((N_j)_{j=M_{1,0}}^{j_1} \in PT_{\textrm{PS}}\)より任意の\(j \in \mathbb{N}\)に対し\(M_{1,0} < j \leq j_1\)ならば\(N_{0,M_{1,0}} < N_{0,j}\)であるので\((N_{0,j}-N_{0,M_{1,0}}+N_{1,M_{1,0}},N_{1,j}) \in \mathbb{N}^2\)である。}。
 					\item \(M_{1,0} \leq j_1\)かつ\((N_j)_{j=M_{1,0}}^{j_1} \in T_{\textrm{PS}} \setminus PT_{\textrm{PS}}\)ならば\(\textrm{Red}(M) := M\)である\footnote{後で証明する\nameref{単項性とRedの関係}により、この分岐が生じないことが分かる。}。
 					\item \(M_{1,0} > j_1\)ならば\(\textrm{Red}(M) := M\)である\footnote{後で証明する\nameref{LngのRed不変性}により、この分岐が生じないことが分かる。}。
 				\end{nenumerate}
@@ -976,7 +975,7 @@ M & \mapsto & \textrm{Red}(M)
 \end{hideableproof}
 
 \begin{proposition}[単項性と\(\textrm{Red}\)の関係]\label{単項性とRedの関係}
-	任意の\(M \in PT_{\textrm{PS}}\)に対し、\(N := \textrm{Red}(((j,j))_{j=0}^{M_{1,0}-1} \oplus_{\mathbb{N}^2} \textrm{InclFirst}^{M_{1,0}}(M))\)と置き\(j_1 := \textrm{Lng}(N)-1\)と置くと、\((N_j)_{j=M_{1,0}}^{j_1} \in PT_{\textrm{PS}}\)である。
+	任意の\(M \in PT_{\textrm{PS}}\)に対し、\(N := \textrm{Red}(((j,j))_{j=0}^{M_{1,0}-1} \oplus_{\mathbb{N}^2} \textrm{IncrFirst}^{M_{1,0}}(M))\)と置き\(j_1 := \textrm{Lng}(N)-1\)と置くと、\((N_j)_{j=M_{1,0}}^{j_1} \in PT_{\textrm{PS}}\)である。
 \end{proposition}
 
 \begin{hideableproof}
@@ -1097,7 +1096,7 @@ M & \mapsto & \textrm{Red}(M)
 
 \begin{hideableproof}
 	\begin{indented}
-		\item \nameref{Redの冪等性}と[[Redと基本列の可換性|\(\textrm{Red}\)と基本列の可換性]]から即座に従う。
+		\item \nameref{Redの冪等性}と\nameref{Redと基本列の可換性}から即座に従う。
 	\end{indented}
 \end{hideableproof}
 
@@ -1191,7 +1190,7 @@ M & \mapsto & \textrm{Red}(M)
 			\begin{indented}
 				\item まず\(M\)が簡約とする。
 				\begin{indented}
-					\item \(j_0 := \max \{j \in \mathbb{N} \mid j \leq j_1 \wedge \forall j' \in \mathbb{N}, (j' < j) \to ((1,j') <_M^{\textrm{Next}} (1,j'+1)))\}\)と置く\footnote{\(j = 0\)が条件を満たすため\(\max\)は存在する。}。
+					\item \(j_0 := \max \{j \in \mathbb{N} \mid j \leq j_1 \wedge \forall j' \in \mathbb{N}, (j' < j) \to ((1,j') <_M^{\textrm{Next}} (1,j'+1))\}\)と置く\footnote{\(j = 0\)が条件を満たすため\(\max\)は存在する。}。
 					\item \(J_1 := \textrm{Lng}(P((M_j)_{j=j_0}^{j_1}))-1\)と置く。
 					\item \(\textrm{Red}\)の再帰的定義から\(((M_j)_{j=0}^{j_0})_0 = M_0 = (0,0)\)であり、任意の\(j \in \mathbb{N}\)に対し\(j \leq j_0\)ならば\((0,0) \leq_M (0,j)\)より\((0,0) \leq_{(M_j)_{j=0}^{j_0}} (0,j)\)であるので、\((M_j)_{j=0}^{j_0}\)は単項である。更に\nameref{簡約性の切片への遺伝性}より\((M_j)_{j=0}^{j_0}\)は簡約であり、\(\textrm{Red}\)の定義より\((M_j)_{j=0}^{j_0} = \textrm{Red}((M_j)_{j=0}^{j_0}) = ((j,j))_{j=0}^{j_0}\)である。
 					\item \(i \in \{0,1\}\)と\(j'_1 \in \mathbb{N}\)とし、\((i,j'_0) <_M^{\textrm{Next}} (i,j'_1)\)を満たす一意な\(j'_0 \in \mathbb{N}\)が存在するとする。この時\(j'_1 > j'_0 \geq 0\)である。
@@ -1222,7 +1221,11 @@ M & \mapsto & \textrm{Red}(M)
 						\item \(j'_1 = j_1\)かつ\(J_1 > 0\)とする。
 						\begin{indented}
 							\item \(m := j_1 - \textrm{Lng}(P(M)_{J_1}) + 1\)と置く。
-							\item \(J_1 > 0\)より\(j_0 < m\)であり、\(P\)の定義から\(M_{0,m} < j_0\)である。\nameref{簡約性と係数の基本性質}から\(M_{0,m}-M_{1,m} \geq 0\)であるので\(M_{1,m} \leq M_{0,m} < j_0 < m\)となる。\(P(M)_{J_1} \in PT_{\textrm{PS}}\)より\(((j,j))_{j=0}^{M_{1,m}} \oplus_{\mathbb{N}^2} (M_j)_{j=m+1}^{j_1} \in PT_{\textrm{PS}}\)となり、\(M\)の簡約性と\(\textrm{Red}\)の定義から\(P(M)_{J_1} = \textrm{IncrFirst}^{M_{0,m}-M_{1,m}}(\textrm{Red}((M_{0,m},M_{1,m}) \oplus_{\mathbb{N}^2} (M_j)_{j=m+1}^{j_1})) =  \textrm{IncrFirst}^{M_{0,m}-M_{1,m}}(\textrm{Red}(P(M)_{J_1})\)となる。
+							\item \(J_1 > 0\)より\(j_0 < m\)であり、\(P\)の定義から\(M_{0,m} < j_0\)である。\nameref{簡約性と係数の基本性質}から\(M_{0,m}-M_{1,m} \geq 0\)であるので\(M_{1,m} \leq M_{0,m} < j_0 < m\)となる。\(P(M)_{J_1} \in PT_{\textrm{PS}}\)より\(((j,j))_{j=0}^{M_{1,m}} \oplus_{\mathbb{N}^2} (M_j)_{j=m+1}^{j_1} \in PT_{\textrm{PS}}\)となり、\(M\)の簡約性と\(\textrm{Red}\)の定義から
+							\begin{eqnarray*}
+							P(M)_{J_1} = \textrm{IncrFirst}^{M_{0,m}-M_{1,m}}(\textrm{Red}((M_{0,m},M_{1,m}) \oplus_{\mathbb{N}^2} (M_j)_{j=m+1}^{j_1})) =  \textrm{IncrFirst}^{M_{0,m}-M_{1,m}}(\textrm{Red}(P(M)_{J_1}))
+							\end{eqnarray*}
+							\item となる。
 							\item \(N := ((j,j))_{j=0}^{M_{1,m}-1} \oplus_{\mathbb{N}^2} \textrm{Red}(P(M)_{J_1})\)と置く。
 							\item \nameref{簡約性と左端の関係}から\(N\)は簡約である。
 							\item \(M_{1,m}=0\)ならば、\nameref{Redと左端の関係} (2)と\(\textrm{Red}\)の再帰的定義から\(N_0 = \textrm{Red}(P(M)_{J_1})_0 = (0,0)\)となり、\(M_{1,m} \neq 0\)ならば\(N\)の定義から\(N_0 = (0,0)\)となる。従っていずれの場合も\(N_0 = (0,0)\)である。
@@ -1364,7 +1367,7 @@ M & \mapsto & \textrm{Red}(M)
 
 各\(k \in \mathbb{N}\)に対し、部分集合\(S_kT_{\textrm{PS}} \subset ST_{\textrm{PS}}\)を以下のように再帰的に定める：
 \begin{nenumerate}
-	\item \(k = 0\)ならば\(S_kT_{\textrm{PS}} := \{((j,j))_{j=0}^{n} \mid n \in \mathbb{N}\}\)である。
+	\item \(k = 0\)ならば\(S_kT_{\textrm{PS}} := \{((j,j))_{j=u}^{v} \mid (u,v) \in \mathbb{N}^2 \land u \leq v\}\)である。
 	\item \(k > 0\)ならば\(S_kT_{\textrm{PS}} := \{M[n] \mid M \in S_{k-1}T_{\textrm{PS}} \wedge n \in \mathbb{N}\}\)である。
 \end{nenumerate}
 
@@ -1472,13 +1475,13 @@ M & \mapsto & \textrm{Red}(M)
 					\item \(j_0^N-j'_0 \leq \textrm{TrMax}(N')\)とする。
 					\begin{indented}
 						\item \((0,j_0^N-j'_0) <_{N'}^{\textrm{Next}} (0,j_1^N-j'_0)\)と\nameref{Pの各成分の非複項性}より\(\textrm{FirstNodes}(N')_{J_1} = j_1^N-j'_0\)かつ\(\textrm{Br}(N')_{J_1} = (N_{j_1^N})\)であるので、\(\textrm{Br}(M') = (\textrm{Br}(N')_J)_{J=0}^{J_1-1} \oplus_{T_{\textrm{PS}}} ((N_j)_{j=j_0^N}^{j_1^N-1})_{k=1}^{n-2} \oplus_{T_{\textrm{PS}}} ((N_j)_{j=j_0^N}^{j_0^N+r})\)となる。
-						\item 従って\(\textrm{Lng}(\textrm{Br}(M')-1 = J_1+n-2\)かつ\(((\textrm{Br}(M')_J)_0)_{J=0}^{J_1+n-2} = ((\textrm{Br}(N')_J)_0)_{J=0}^{J_1-1} \oplus_{\mathbb{N}^2} (N_{j_0^N})_{k=0}^{n-1}\)となる。\(N_{0,j_0^N} < N_{0,j_1^N} = (\textrm{Br}(N')_{J_1})_{0,0}\)より、\(\textrm{Br}(M')\)は降順である。
+						\item 従って\(\textrm{Lng}(\textrm{Br}(M'))-1 = J_1+n-2\)かつ\(((\textrm{Br}(M')_J)_0)_{J=0}^{J_1+n-2} = ((\textrm{Br}(N')_J)_0)_{J=0}^{J_1-1} \oplus_{\mathbb{N}^2} (N_{j_0^N})_{k=0}^{n-1}\)となる。\(N_{0,j_0^N} < N_{0,j_1^N} = (\textrm{Br}(N')_{J_1})_{0,0}\)より、\(\textrm{Br}(M')\)は降順である。
 					\end{indented}
 					\item
 					\item \(j_{-1} \leq \textrm{TrMax}(N') < j_0^N-j'_1\)とする。
 					\begin{indented}
 						\item \((0,j_{-1}) <_{N'}^{\textrm{Next}} (0,j_0^N-j'_0)\)と\nameref{Pの各成分の非複項性}より\(\textrm{FirstNodes}(N')_{J_1} = j_0^N-j'_0\)かつ\(\textrm{Br}(N')_{J_1} = ((N_j)_{j=j_0^N}^{j_1^N})\)であるので、\(\textrm{Br}(M') = (\textrm{Br}(N')_J)_{J=0}^{J_1-1} \oplus_{T_{\textrm{PS}}} ((N_j)_{j=j_0^N}^{j_1^N-1})_{k=0}^{n-2} \oplus_{T_{\textrm{PS}}} ((N_j)_{j=j_0^N}^{j_0^N+r})\)となる。
-						\item 従って\(\textrm{Lng}(\textrm{Br}(M')-1 = J_1+n-1\)かつ\(((\textrm{Br}(M')_J)_0)_{J=0}^{J_1+n-1} = ((\textrm{Br}(N')_J)_0)_{J=0}^{J_1-1} \oplus_{\mathbb{N}^2} (N_{j_0^N})_{k=0}^{n-1}\)となる。\(N_{j_0^N} = N_{\textrm{FirstNodes}(N')_{J_1}+j'_0} = (\textrm{Br}(N')_{J_1})_0\)より、\(\textrm{Br}(M')\)は降順である。
+						\item 従って\(\textrm{Lng}(\textrm{Br}(M'))-1 = J_1+n-1\)かつ\(((\textrm{Br}(M')_J)_0)_{J=0}^{J_1+n-1} = ((\textrm{Br}(N')_J)_0)_{J=0}^{J_1-1} \oplus_{\mathbb{N}^2} (N_{j_0^N})_{k=0}^{n-1}\)となる。\(N_{j_0^N} = N_{\textrm{FirstNodes}(N')_{J_1}+j'_0} = (\textrm{Br}(N')_{J_1})_0\)より、\(\textrm{Br}(M')\)は降順である。
 					\end{indented}
 					\item
 					\item \(\textrm{TrMax}(N') < j_{-1}\)とする。
@@ -1507,16 +1510,16 @@ M & \mapsto & \textrm{Red}(M)
 					\item \(\delta := N_{0,j_1^N} - N_{0,j_{-2}^N}\)と置く。
 					\item \((1,j_{-2}^N) <_N^{\textrm{Next}} (1,j_1^N)\)より\(\delta > 0\)であり、\(M = (N_j)_{j=0}^{j_{-2}^N-1} \oplus_{\mathbb{N}^2} \bigoplus_{\mathbb{N}^2} (\textrm{IncrFirst}^{k \delta}((N_j)_{j=j_{-2}^N}^{j_1^N}))_{k=0}^{n-1}\)である。
 					\item
-					\item 任意の\(k \in \mathbb{N}\)に対し、\(k < n-1\)ならば\((0,j_{-2}^N+k(j_1^N-j_{-2}^N) \leq_M (0,j_{-2}^N+(k+1)(j_1^N-j_{-2}^N)\)であることを示す。
+					\item 任意の\(k \in \mathbb{N}\)に対し、\(k < n-1\)ならば\((0,j_{-2}^N+k(j_1^N-j_{-2}^N)) \leq_M (0,j_{-2}^N+(k+1)(j_1^N-j_{-2}^N))\)であることを示す。
 					\begin{indented}
 						\item \((M_j)_{j =j_{-2}^N+k(j_1^N-j_{-2}^N)}^{j_{-2}^N+(k+1)(j_1^N-j_{-2}^N)} = \textrm{IncrFirst}^{k \delta}((N_j)_{j=j_{-2}^N}^{j_1^N-1}) \oplus_{\mathbb{N}^2} \textrm{IncrFirst}^{(k+1)\delta}((N_{j=j_{-2}^N}))\)である。更に\(M_{0,j_1^N} = M_{0,j_{-2}^N}+\delta\)より\((M_{0,j})_{j =j_{-2}^N+k(j_1^N-j_{-2}^N)}^{j_{-2}^N+(k+1)(j_1^N-j_{-2}^N)} = ((N_{0,j}+k \delta)_{j=j_{-2}^N}^{j_1^N})\)である。
-						\item \((1,j_{-2}^N) <_N^{\textrm{Next}} (1,j_1^N)\)より\((0,j_{-2}^N) \leq_M (0,j_1^N)\)であるので、\((M_{0,j})_{j =j_{-2}^N+k(j_1^N-j_{-2}^N)}^{j_{-2}^N+(k+1)(j_1^N-j_{-2}^N)} = ((N_{0,j}+k \delta)_{j=j_{-2}^N}^{j_1^N})\)より\((0,j_{-2}^N+k(j_1^N-j_{-2}^N) \leq_M (0,j_{-2}^N+(k+1)(j_1^N-j_{-2}^N)\)である。
+						\item \((1,j_{-2}^N) <_N^{\textrm{Next}} (1,j_1^N)\)より\((0,j_{-2}^N) \leq_M (0,j_1^N)\)であるので、\((M_{0,j})_{j =j_{-2}^N+k(j_1^N-j_{-2}^N)}^{j_{-2}^N+(k+1)(j_1^N-j_{-2}^N)} = ((N_{0,j}+k \delta)_{j=j_{-2}^N}^{j_1^N})\)より\((0,j_{-2}^N+k(j_1^N-j_{-2}^N)) \leq_M (0,j_{-2}^N+(k+1)(j_1^N-j_{-2}^N))\)である。
 					\end{indented}
 					\item
-					\item \((0,j_{-2}^N+(n-1)(j_1^N-j_{-2}^N) \leq_M (0,j_1)\)であることを示す。
+					\item \((0,j_{-2}^N+(n-1)(j_1^N-j_{-2}^N)) \leq_M (0,j_1)\)であることを示す。
 					\begin{indented}
 						\item \((M_j)_{j =j_{-2}^N+(n-1)(j_1^N-j_{-2}^N)}^{j_1} = \textrm{IncrFirst}^{(n-1)\delta}((N_j)_{j=j_{-2}^N}^{j_1^N-1})\)であるので、\((M_{0,j})_{j =j_{-2}^N+(n-1)(j_1^N-j_{-2}^N)}^{j_1} = ((N_{0,j}+(n-1)\delta)_{j=j_{-2}^N}^{j_1^N-1})\)である。
-						\item \((1,j_{-2}^N) <_N^{\textrm{Next}} (1,j_1^N)\)より\((0,j_{-2}^N) \leq_M (0,j_1^N)\)であり、\nameref{直系先祖の木構造} (1)より\((0,j_{-2}^N) \leq_M (0,j_1^N-1)\)であるので、\((M_{0,j})_{j =j_{-2}^N+(n-1)(j_1^N-j_{-2}^N)}^{j_1} = ((N_{0,j}+(n-1)\delta)_{j=j_{-2}^N}^{j_1^N-1})\)より\((0,j_{-2}^N+(n-1)(j_1^N-j_{-2}^N) \leq_M (0,j_1)\)である。
+						\item \((1,j_{-2}^N) <_N^{\textrm{Next}} (1,j_1^N)\)より\((0,j_{-2}^N) \leq_M (0,j_1^N)\)であり、\nameref{直系先祖の木構造} (1)より\((0,j_{-2}^N) \leq_M (0,j_1^N-1)\)であるので、\((M_{0,j})_{j =j_{-2}^N+(n-1)(j_1^N-j_{-2}^N)}^{j_1} = ((N_{0,j}+(n-1)\delta)_{j=j_{-2}^N}^{j_1^N-1})\)より\((0,j_{-2}^N+(n-1)(j_1^N-j_{-2}^N)) \leq_M (0,j_1)\)である。
 					\end{indented}
 					\item 以上より、\((0,j_{-2}^N) \leq_M (0,j_1)\)である。
 					\item
@@ -1539,14 +1542,14 @@ M & \mapsto & \textrm{Red}(M)
 							\item \(j_{-2}^N-j'_0 \leq \textrm{TrMax}(N')\)とする。
 							\begin{indented}
 								\item \(j_{-1} := \textrm{FirstNodes}(N')_{J_1}\)と置く。
-								\item \((0,j_{-2}^N-j'_0) \leq_{N'} (0,j_1^N-j'_0)\)かつ\(j_{-2}^N-j'_0 \leq \textrm{TrMax}(N') < j_1^N-j'_0\)と\nameref{Pの各成分の非複項性}より\((0,j_{-2}^N-j'_0) <_{N'}^{\textrm{Next}} (0,j_{-1})\)であるので、\(\textrm{Br}(N')_{J_1} = (N_j)_{j=j_{-1}+j'_0}^{j_1^N})\)より\(\textrm{Br}(M') = (\textrm{Br}(N')_J)_{J=0}^{J_1-1} \oplus_{T_{\textrm{PS}}} ((M_j)_{j=j_{-1}+j'_0}^{j'_1})\)となる。
+								\item \((0,j_{-2}^N-j'_0) \leq_{N'} (0,j_1^N-j'_0)\)かつ\(j_{-2}^N-j'_0 \leq \textrm{TrMax}(N') < j_1^N-j'_0\)と\nameref{Pの各成分の非複項性}より\((0,j_{-2}^N-j'_0) <_{N'}^{\textrm{Next}} (0,j_{-1})\)であるので、\(\textrm{Br}(N')_{J_1} = (N_j)_{j=j_{-1}+j'_0}^{j_1^N}\)より\(\textrm{Br}(M') = (\textrm{Br}(N')_J)_{J=0}^{J_1-1} \oplus_{T_{\textrm{PS}}} ((M_j)_{j=j_{-1}+j'_0}^{j'_1})\)となる。
 								\item 従って\(\textrm{Lng}(\textrm{Br}(M'))-1 = J_1\)かつ\(((\textrm{Br}(M')_J)_0)_{J=0}^{J_1} = ((\textrm{Br}(N')_J)_0)_{J=0}^{J_1-1} \oplus_{\mathbb{N}^2} (M_{j_{-1}})\)となる。\nameref{FirstNodesとTrMaxとJointsの関係}から\(j_{-1}+j'_0 = \textrm{FirstNodes}(N')_{J_1}+j'_0 \leq \textrm{TrMax}(N')+j'_0 < j_1^N\)となるので\(M_{j_{-1}} = N_{j_{-1}} = (\textrm{Br}(N')_{J_1})_0\)である。よって\(\textrm{Br}(M')\)は降順である。
 							\end{indented}
 							\item
 							\item \(j_{-3} \leq \textrm{TrMax}(N') < j_{-2}^N-j'_0\)とする。
 							\begin{indented}
 								\item \((0,j_{-3}) <_{N'}^{\textrm{Next}} (0,j_{-2}^N-j'_0)\)と\nameref{Pの各成分の非複項性}より\(\textrm{FirstNodes}(N')_{J_1} = j_{-2}^N-j'_0\)かつ\(\textrm{Br}(N')_{J_1} = ((N_j)_{j=j_{-2}^N}^{j_1^N})\)であるので、\(\textrm{Br}(M') = (\textrm{Br}(N')_J)_{J=0}^{J_1-1} \oplus_{T_{\textrm{PS}}} ((N_j)_{j=j_0^N}^{j_1^N-1})_{k=1}^{n-2} \oplus_{T_{\textrm{PS}}} ((M_j)_{j=j_{-2}^N}^{j_1})\)となる。
-								\item 従って\(\textrm{Lng}(\textrm{Br}(M')-1 = J_1\)かつ\(((\textrm{Br}(M')_J)_0)_{J=0}^{J_1} = ((\textrm{Br}(N')_J)_0)_{J=0}^{J_1-1} \oplus_{\mathbb{N}^2} (N_{j_{-2}^N})\)となる。\(N_{j_{-2}^N} = (\textrm{Br}(N')_{J_1})_0\)より、\(\textrm{Br}(M')\)は降順である。
+								\item 従って\(\textrm{Lng}(\textrm{Br}(M'))-1 = J_1\)かつ\(((\textrm{Br}(M')_J)_0)_{J=0}^{J_1} = ((\textrm{Br}(N')_J)_0)_{J=0}^{J_1-1} \oplus_{\mathbb{N}^2} (N_{j_{-2}^N})\)となる。\(N_{j_{-2}^N} = (\textrm{Br}(N')_{J_1})_0\)より、\(\textrm{Br}(M')\)は降順である。
 							\end{indented}
 							\item
 							\item \(\textrm{TrMax}(N') < j_{-3}\)とする。
@@ -1648,25 +1651,24 @@ M & \mapsto & \textrm{Red}(M)
 
 以下では\(T_{\textrm{B}}\)は\(D_{\omega}\)を含まない項全体のなすBuchholozの表記系\(T\)\footnote{\cite{buc1} p. 200参照。}の部分集合を表す。\(T_{\textrm{B}}\)は順序数項\footnote{\cite{buc1} p. 201参照。}とは限らないことに注意する。最終的に用いるのは順序数項であるが、最初から順序数項に制限すると議論の過程で現れる各項が順序数項であるか否かを逐一判定する必要があるので非常に冗長となる。従って標準形ペアシステムの停止性を証明する直前の段階までは順序数項に制限せず議論する。
 
-\(T_{\textrm{B}}\)の要素間の関係\(<\)は通常の強順序\footnote{\cite{buc1} p. 200参照。}を表し、\(T_{\textrm{B}}\)の要素間の関係\(\leq\)は「\(<\)または\(=\)」の略記を表し、\(T_{\textrm{B}}\)の要素間の演算\(+\)は加法\footnote{\cite{buc1} p. 203参照。}を表し、\(n \in \mathbb
-{N}\)に対し\(T_{\textrm{B}}\)の要素への\(\times n\)は\(n\)倍\footnote{\cite{buc1} p. 203参照。}を表し、\(T_{\textrm{B}}\)の要素に対する\([]\)演算子は\cite{buc1} pp. 203--204の\([]\)演算子の再帰的定義のうち([].4) (ii)のみ\cite{buc2} p. 6のDefinitionの6の規則に変えたもの\footnote{すなわち\cite{buc1} ([].4) (ii)の場合分けにおいて、各\(i \in \mathbb{N}\)に対し\(x_i\)を「\(i = 0\)ならば\(x_i = D_u 0\)、\(i > 0\)ならば\(x_i = b[D_u x_{i-1}]\)」と定め、\(a[n]\)の定義を\(D_v b[x_n]\)に変えるということである。}として得られる基本列\footnote{\cite{buc1}の\([]\)演算子の再帰的定義は基本的に基本列を再帰的に翻訳したものだが、([].4) (ii)の場合分けは基本列の一部だけを再帰的に翻訳したものであるため、そこだけ変更する必要がある。}を表し、\(\textrm{dom}\)は各項ごとに\([]\)演算子の定義域\footnote{\cite{buc1} pp. 203--204参照。}を表す。
+\(T_{\textrm{B}}\)の要素間の関係\(<\)は通常の強順序\footnote{\cite{buc1} p. 200参照。}を表し、\(T_{\textrm{B}}\)の要素間の関係\(\leq\)は「\(<\)または\(=\)」の略記を表し、\(T_{\textrm{B}}\)の要素間の演算\(+\)は加法\footnote{\cite{buc1} p. 203参照。}を表し、\(n \in \mathbb{N}\)に対し\(T_{\textrm{B}}\)の要素への\(\times n\)は\(n\)倍\footnote{\cite{buc1} p. 203参照。}を表し、\(T_{\textrm{B}}\)の要素に対する\([]\)演算子は\cite{buc1} pp. 203--204の\([]\)演算子の再帰的定義のうち([].4) (ii)のみ\cite{buc2} p. 6のDefinitionの6の規則に変えたもの\footnote{すなわち\cite{buc1} ([].4) (ii)の場合分けにおいて、各\(i \in \mathbb{N}\)に対し\(x_i\)を「\(i = 0\)ならば\(x_i = D_u 0\)、\(i > 0\)ならば\(x_i = b[D_u x_{i-1}]\)」と定め、\(a[n]\)の定義を\(D_v b[x_n]\)に変えるということである。}として得られる基本列\footnote{\cite{buc1}の\([]\)演算子の再帰的定義は基本的に基本列を再帰的に翻訳したものだが、([].4) (ii)の場合分けは基本列の一部だけを再帰的に翻訳したものであるため、そこだけ変更する必要がある。}を表し、\(\textrm{dom}\)は各項ごとに\([]\)演算子の定義域\footnote{\cite{buc1} pp. 203--204参照。}を表す。
 
 \(0\)でも単項\footnote{\cite{buc1} p. 200 (T2)参照。}でもないBuchholzの表記系の項を複項と呼ぶ。\(PT_{\textrm{B}} \subset T_{\textrm{B}}\)で\(D_{\omega}\)を含まない単項全体のなす部分集合を表し、\(MT_{\textrm{B}} \subset T_{\textrm{B}}\)で\(D_{\omega}\)を含まない複項全体のなす部分集合を表す。
 
-\(\underline{(}\)で\(T_{\textrm{B}}\)における字母\(\textrm{(}\)を表し、\(\underline{,}\)で\(T_{\textrm{B}}\)における字母\(\textrm{,}\)を表し、\(\underline{)}\)で\(T_{\textrm{B}}\)における字母\(\textrm{)}\)を表す。
+\(\underline{(}\)で\(T_{\textrm{B}}\)における字母\(\textrm{(}\)を表し、\(\underline{,}\)で\(T_{\textrm{B}}\)における字母\(\textrm{,}\)を表し、\(\underline{)}\)で\(T_{\textrm{B}}\)における字母\(\textrm{)}\)を表す。\(T_{\textrm{B}}\)における字母\(\underline{(}\)と\(\underline{,}\)と\(\underline{)}\)と\(0\)と各\(u \in \omega+1\)に対する\(D_u\)全体の集合を\(\Sigma\)と置く。
 
 \(t \in PT_{\textrm{B}}^{< \omega}\)とする。
 \begin{nenumerate}
-	\item \(t = ()\)ならば\(t' := 0\)と置く。
+	\item \(t = ()\)ならば\(t' := 0 \in \Sigma\)と置く。
 	\item \(t \neq ()\)とする。
 	\begin{nenumerate}
 		\item \(j_1 := \textrm{Lng}(t)-1\)と置く。
 		\item \(s_0 := ()\)と置く。
 		\item \(0 < j < j_1\)を満たす各\(j \in \mathbb{N}\)に対して\(s_j := s_{j-1} t_{j-1} \underline{,}\)と置く。
-		\item \(t' := s_{j_1-1} t_{j_1} \underline{)}\)と置く。
+		\item \(t' := s_{j_1-1} t_{j_1} \underline{)} \in \Sigma\)と置く。
 	\end{nenumerate}
-	\item \(j_1 = -1\)ならば\(t' = 0 \in T_{\textrm{B}}\)である。\(j_1 = 0\)ならば\(t' = \underline{(} t_0 \underline{)}\)より縮約規則\(\{(p) = p \mid c \in PT_{\textrm{B}}\}\)の下で\(t'\)は\(t_0 \in PT_{\textrm{B}}\)と同一視される。\(j_1 > 0\)ならば\(t' \in T_{\textrm{B}} \setminus (\{0\} \cup PT_{\textrm{B}})\)である。従っていずれの場合も\(T_{\textrm{B}}\)の項を定め、それを\(\Sigma_{\textrm{B}} t\)と表記する。
 \end{nenumerate}
+\(j_1 = -1\)ならば\(t' = 0 \in T_{\textrm{B}}\)である。\(j_1 = 0\)ならば\(t' = \underline{(} t_0 \underline{)}\)より縮約規則\(\{(p) = p \mid c \in PT_{\textrm{B}}\}\)の下で\(t'\)は\(t_0 \in PT_{\textrm{B}}\)と同一視される。\(j_1 > 0\)ならば\(t' \in T_{\textrm{B}} \setminus (\{0\} \cup PT_{\textrm{B}})\)である。従っていずれの場合も\(T_{\textrm{B}}\)の項を定め、それを\(\Sigma_{\textrm{B}} t\)と表記する。
 
 写像
 \begin{eqnarray*}
@@ -1731,6 +1733,26 @@ t & \mapsto & P(t)
 
 
 \subsection{scb分解}
+
+写像
+\begin{eqnarray*}
+\textrm{RightNodes} \colon T_{\textrm{B}} & \to & \mathbb{N}^{< \omega} \\
+t & \mapsto & \textrm{RightNodes}(t)
+\end{eqnarray*}
+を以下のように再帰的に定める：
+\begin{nenumerate}
+	\item \(t = 0\)ならば\(\textrm{RightNodes}(t) := ()\)である。
+	\item \(t \in PT_{\textrm{B}}\)とする。
+	\begin{nenumerate}
+		\item \(u \in \mathbb{N}\)と\(t' \in T_{\textrm{B}}\)を用いて\(t = D_u t'\)と置く。
+		\item \(\textrm{RightNodes}(t) := (u) \oplus_{\mathbb{N}} \textrm{RightNodes}(t')\)である。
+	\end{nenumerate}
+	\item \(t \in T_{\textrm{B}} \setminus (\{0\} \cup PT_{\textrm{B}})\)とする。
+	\begin{nenumerate}
+		\item \(J_1 := \textrm{Lng}(P(t)) - 1\)と置く。
+		\item \(\textrm{RightNodes}(t) := \textrm{RightNodes}(P(t)_{J_1})\)である。
+	\end{nenumerate}
+\end{nenumerate}
 
 順序数項の不等式や加法や基本列の計算補助をするために、文字列の構文情報を与えるscb分解という概念を導入する。
 
@@ -1907,7 +1929,7 @@ t & \mapsto & P(t)
 			\item[(1-1)] \(t'_0 + D_v(t'_1 + D_0 0)[n] = t'_0 + (D_v t'_1) \times (n+1)\)である。
 			\item[(1-2)] 任意の\(t \in T_{\textrm{B}}\)と\(u \in \mathbb{N}\)と\((s,b) \in (\Sigma^{< \omega})^2\)に対し、\((s,D_u(t'_0 + D_v(t'_1+D_0 0)),b)\)が\(t\)のscb分解ならば、\((s,D_u(t'_0 + (D_v t'_1) \times (n+1)),b)\)は\(t[n]\)のscb分解である。
 		\end{indented}
-		\item 任意の\(t \in T_{\textrm{B}}\)と\(u \in \mathbb{N}\)と\(s_0,s_1,c_2,b_0,b_1) \in (\Sigma^{< \omega})^5\)に対し、\((s_1,c_2,b_1)\)が\(t\)の第\(1\)種scb分解でありかつ\((D_u s_0,D_v 0,b_0)\)が\(c_2\)のscb分解であるならば、\(v > u\)かつ\(t[n] = s_1 D_u (s_0 D_{v-1})^{n+1} 0 b_0^{n+1}b_1\)である。
+		\item 任意の\(t \in T_{\textrm{B}}\)と\(u \in \mathbb{N}\)と\((s_0,s_1,c_2,b_0,b_1) \in (\Sigma^{< \omega})^5\)に対し、\((s_1,c_2,b_1)\)が\(t\)の第\(1\)種scb分解でありかつ\((D_u s_0,D_v 0,b_0)\)が\(c_2\)のscb分解であるならば、\(v > u\)かつ\(t[n] = s_1 D_u (s_0 D_{v-1})^{n+1} 0 b_0^{n+1}b_1\)である。
 	\end{penumerate}
 \end{proposition}
 
@@ -1916,27 +1938,6 @@ t & \mapsto & P(t)
 		\item Buchholzの表記系における基本列と共終数の再帰的定義から、\([n]\)を取る項の長さに関する数学的帰納法により即座に従う。
 	\end{indented}
 \end{hideableproof}
-
-写像
-\begin{eqnarray*}
-\textrm{RightNodes} \colon T_{\textrm{B}} & \to & \mathbb{N}^{< \omega} \\
-t & \mapsto & \textrm{RightNodes}(t)
-\end{eqnarray*})
-を以下のように再帰的に定める：
-\begin{nenumerate}
-	\item \(t = 0\)ならば\(\textrm{RightNodes}(t) := ()\)である。
-	\item \(t \in PT_{\textrm{B}}\)とする。
-	\begin{nenumerate}
-		\item \(u \in \mathbb{N}\)と\(t' \in T_{\textrm{B}}\)を用いて\(t = D_u t'\)と置く。
-		\item \(\textrm{RightNodes}(t) := (u) \oplus_{\mathbb{N}} \textrm{RightNodes}(t')\)である。
-	\end{nenumerate}
-	\item \(t \in T_{\textrm{B}} \setminus (\{0\} \cup PT_{\textrm{B}})\)とする。
-	\begin{nenumerate}
-		\item \(J_1 := \textrm{Lng}(P(t)) - 1\)と置く。
-		\item \(\textrm{RightNodes}(t) := \textrm{RightNodes}(P(t)_{J_1})\)である。
-	\end{nenumerate}
-\end{nenumerate}
-
 \begin{proposition}[\(\textrm{RightNodes}\)と部分表現の関係]\label{RightNodesと部分表現の関係}
 	任意の\(s,b \in \Sigma^{< \omega}\)と\(v \in \mathbb{N}\)\(t \in PT_{\textrm{B}}\)に対し、\(b\)が\(\underline{)}\)のみからなりかつ\(s D_v 0 b \in T_{\textrm{B}}\)ならば、\(s D_v t b \in T_{\textrm{B}}\)かつ\(\textrm{Lng}(P(s D_v t b)) = \textrm{Lng}(P(s D_v 0 b))\)であり一意な\(a_0, a_1 \in \mathbb{N}^{< \omega}\)が存在して以下を満たす：
 	\begin{penumerate}
@@ -1977,15 +1978,15 @@ t & \mapsto & \textrm{RightNodes}(t)
 
 \subsection{翻訳写像}
 
-写像
+\((\textrm{Trans}(M),\textrm{Mark}(M,m)) \in T_{\textrm{B}}^{\textrm{Marked}}\)を満たす写像
 \begin{eqnarray*}
 \textrm{Trans} \colon T_{\textrm{PS}} & \to & T_{\textrm{B}} \\
 M & \mapsto & \textrm{Trans}(M)
 \end{eqnarray*}
-と\((\textrm{Trans}(M),\textrm{Mark}(M,m)) \in T_{\textrm{B}}^{\textrm{Marked}}\)を満たす写像
+と
 \begin{eqnarray*}
 \textrm{Mark} \colon T_{\textrm{PS}}^{\textrm{Marked}} & \to & T_{\textrm{B}} \\
-(M,m) & \mapsto & \textrm{Marked}(M,m)
+(M,m) & \mapsto & \textrm{Mark}(M,m)
 \end{eqnarray*}
 を以下のように再帰的に定める：
 \begin{nenumerate}
@@ -2033,7 +2034,7 @@ M & \mapsto & \textrm{Trans}(M)
 			\item 条件(I)か(III)か(V)を満たすならば\(c_2 := D_v(t_2 + D_{M_{1,j_1}} 0)\)と置く。
 			\item 条件(II)か(IV)を満たすとする。
 			\begin{nenumerate}
-				\item \(t_2 = 0\)ならば<ref >後で示す\nameref{条件(II)か(IV)の下でt_2が0でないこと}から、この分岐が結果的に生じないことが分かる。</ref>、\(c_2 := D_v D_{M_{1,j_0}} D_{M_{1,j_1}} 0\)と置く。
+				\item \(t_2 = 0\)ならば\footnote{後で示す\nameref{条件(II)か(IV)の下でt_2が0でないこと}から、この分岐が結果的に生じないことが分かる。}、\(c_2 := D_v D_{M_{1,j_0}} D_{M_{1,j_1}} 0\)と置く。
 				\item \(t_2 \neq 0\)とする。
 				\begin{nenumerate}
 					\item \(P(t_2)_{J_1}\)の左端が\(D_{M_{1,j_0}}\)であるとする。
@@ -2043,7 +2044,7 @@ M & \mapsto & \textrm{Trans}(M)
 					\end{nenumerate}
 					\item \(P(t_2)_{J_1}\)の左端が\(D_{M_{1,j_0}}\)でないとする。
 					\begin{nenumerate}
-						\item \(t_3 := t_2)\)と置く。
+						\item \(t_3 := t_2\)と置く。
 						\item \(t_4 := t_2\)と置く。
 					\end{nenumerate}
 					\item \(c_2 := D_v (t_3 + D_{M_{1,j_0}}(t_4 + D_{M_{1,j_1}} 0))\)と置く。
@@ -2072,18 +2073,18 @@ M & \mapsto & \textrm{Trans}(M)
 		\item \(P(M)_{J_1} = ((0,0))\)とする。
 		\begin{nenumerate}
 			\item \(\textrm{Trans}(M) := \textrm{Trans}((M_j)_{j=0}^{j_0-1}) + D_0 0\)である。
-			\item \(\textrm{Marked}(M,m) := D_0 0\)である。
+			\item \(\textrm{Mark}(M,m) := D_0 0\)である。
 		\end{nenumerate}
 		\item \(P(M)_{J_1} \neq ((0,0))\)とする。
 		\begin{nenumerate}
 			\item \(\textrm{Trans}(M) := \textrm{Trans}((M_j)_{j=0}^{j_0-1}) + \textrm{Trans}(P(M)_{J_1})\)である。
-			\item \(\textrm{Marked}(M,m) := \textrm{Marked}(P(M)_{J_1},m-j_0)\)である\footnote{\((0,m) \leq_M (0,j_1)\)より\(j_0 \leq m\)であり、\(P(M)_{J_1} = (M_j)_{j=j_0}^{j_1}\)より\((0,m-j_0) \leq_{P(M)_{J_1}} (0,j_1-j_0)\)である。従って\(P(M)_{J_1},m-j_0) \in T_{\textrm{PS}}^{\textrm{Marked}}\)である。}。
+			\item \(\textrm{Mark}(M,m) := \textrm{Mark}(P(M)_{J_1},m-j_0)\)である\footnote{\((0,m) \leq_M (0,j_1)\)より\(j_0 \leq m\)であり、\(P(M)_{J_1} = (M_j)_{j=j_0}^{j_1}\)より\((0,m-j_0) \leq_{P(M)_{J_1}} (0,j_1-j_0)\)である。従って\((P(M)_{J_1},m-j_0) \in T_{\textrm{PS}}^{\textrm{Marked}}\)である。}。
 		\end{nenumerate}
 	\end{nenumerate}
 	\item \(M\)が簡約でないとする。
 	\begin{nenumerate}
 		\item \(\textrm{Trans}(M) :=　\textrm{Trans}(\textrm{Red}(M))\)である。
-		\item \(\textrm{Marked}(M,m) := \textrm{Marked}(\textrm{Red}(M),m)\)である\footnote{\nameref{直系先祖のRed不変性}より\((\textrm{Red}(M),m) \in T_{\textrm{PS}}^{\textrm{Marked}}\)である。}。
+		\item \(\textrm{Mark}(M,m) := \textrm{Mark}(\textrm{Red}(M),m)\)である\footnote{\nameref{直系先祖のRed不変性}より\((\textrm{Red}(M),m) \in T_{\textrm{PS}}^{\textrm{Marked}}\)である。}。
 	\end{nenumerate}
 \end{nenumerate}
 
@@ -2130,7 +2131,7 @@ M & \mapsto & \textrm{Trans}(M)
 \begin{proposition}[\(\textrm{Trans}\)の\((\textrm{IncrFirst},\textrm{Red})\)不変\(P\)同変性]\label{Transの(IncrFirst,Red)不変P同変性}
 	任意の\(M \in T_{\textrm{PS}}\)に対し以下が成り立つ：
 	\begin{penumerate}
-		\item \(\textrm{Trans}(M) = \textrm{Trans}(\textrm{Red}(M)) = \textrm{Trans}(\textrm{InclFirst}(M))\)である。
+		\item \(\textrm{Trans}(M) = \textrm{Trans}(\textrm{Red}(M)) = \textrm{Trans}(\textrm{IncrFirst}(M))\)である。
 		\item \(M\)が複項とする。\(J_1 := \textrm{Lng}(P(M))\)と置く。\(J \leq J_1\)を満たす各\(J \in \mathbb{N}\)に対し、\(P(M)_J\)が零項ならば\(t_J : = D_0 0\)と置き\(P(M)_J\)が零項でないならば\(t_J := \textrm{Trans}(P(M)_J)\)と置く。この時\(\textrm{Trans}(M) = \Sigma_{\textrm{B}} (t_J)_{J=0}^{J_1}\)である。
 	\end{penumerate}
 \end{proposition}
@@ -2144,7 +2145,7 @@ M & \mapsto & \textrm{Trans}(M)
 \begin{proposition}[\(\textrm{Mark}\)の\((\textrm{IncrFirst},\textrm{Red},P)\)不変性]\label{Markの(IncrFirst,Red,P)不変性}
 	任意の\((M,m) \in T_{\textrm{PS}}^{\textrm{Marked}}\)に対し以下が成り立つ：
 	\begin{penumerate}
-		\item \(\textrm{Mark}(M,m) = \textrm{Mark}(\textrm{Red}(M),m) = \textrm{Mark}(\textrm{InclFirst}(M),m)\)である。
+		\item \(\textrm{Mark}(M,m) = \textrm{Mark}(\textrm{Red}(M),m) = \textrm{Mark}(\textrm{IncrFirst}(M),m)\)である。
 		\item \(M\)が複項とする。\(J_1 := \textrm{Lng}(P(M))\)と置き、\(j_0 := \textrm{Lng}(M) - \textrm{Lng}(P(M)_{J_1}) - 1\)と置く。\(P(M)_{J_1}\)が零項ならば\(\textrm{Mark}(M,m) = D_0 0\)であり、\(P(M)_{J_1}\)が零項でないならば\(\textrm{Mark}(M,m) = \textrm{Mark}(P(M)_{J_1},m-j_0)\)である。
 	\end{penumerate}
 \end{proposition}
@@ -2306,7 +2307,7 @@ M & \mapsto & \textrm{Trans}(M)
 			\item \(v > 0\)とする。
 			\begin{indented}
 				\item \(P(M)_0\)が零項であると仮定すると、\(M_0 = (0,0)\)であり\(P\)の定義より\(M_{0,1} = 0\)となり、\(M\)が条件(B)を満たすことから\(M_{1,1} = M_{0,1} = 0\)となるが、\nameref{Transの最左単項成分の左端の基本性質}より\(D_v 0 = \textrm{Trans}(M)\)の唯一の単項成分\(D_v 0\)の左端が\(D_{M_{1,1}} = D_0 \neq D_v\)となり矛盾する。従って\(P(M)_0\)は零項でない。
-				\item \(P(M)_0\)が零項でないことと[[Transが単項性を保つこと|\(\textrm{Trans}\)が単項性を保つこと]]から\(M\)は単項であり、\nameref{Transの最左単項成分の左端の基本性質}から\(\textrm{Trans}(M)\)の左端は\(D_{M_{1,0}}\)となるので、\(M_{1,0} = v > 0\)である。
+				\item \(P(M)_0\)が零項でないことと\nameref{Transが単項性を保つこと}から\(M\)は単項であり、\nameref{Transの最左単項成分の左端の基本性質}から\(\textrm{Trans}(M)\)の左端は\(D_{M_{1,0}}\)となるので、\(M_{1,0} = v > 0\)である。
 				\item \(\textrm{Trans}((M_0)) = D_{M_{1,0}} 0 = D_v 0 = \textrm{Trans}(M)\)となるので、\nameref{PredのTransに関する降下性}より\(M = (M_0) = ((M_{1,0},M_{1,0})) = ((v,v))\)である。
 			\end{indented}
 		\end{indented}
@@ -2333,7 +2334,7 @@ M & \mapsto & \textrm{Trans}(M)
 		\item \(j_1 > 1\)とする。
 		\begin{indented}
 			\item \(M\)は単項であるので\(M \neq ((0,0),(0,0))\)である。
-			\item \(m = j_1\)ならば\(m \neq 0\)であり、\nameref{右端第1基点のMarkの基本性質}より\(\textrm{Mark}(M,m) = D_{M_{1,j_1}} 0\)であり、\(j_1 > 1\)かつ[[Transと非可算基数の関係|\(\textrm{Trans}\)と非可算基数の関係]]より\(\textrm{Trans}(M) \neq D_{M_{1,j_1}} 0\)である。
+			\item \(m = j_1\)ならば\(m \neq 0\)であり、\nameref{右端第1基点のMarkの基本性質}より\(\textrm{Mark}(M,m) = D_{M_{1,j_1}} 0\)であり、\(j_1 > 1\)かつ\nameref{Transと非可算基数の関係}より\(\textrm{Trans}(M) \neq D_{M_{1,j_1}} 0\)である。
 			\item \(m < j_1\)とする。
 			\begin{indented}
 				\item \(\textrm{Lng}(\textrm{Pred}(M)) = j_1 > 1\)より\(\textrm{Pred}(M)\)は零項でなく、\nameref{Transが零項性を保つこと}より\(t_1 \neq 0\)である。
@@ -2437,7 +2438,7 @@ M & \mapsto & \textrm{Trans}(M)
 		\item \(M \in RT_{\textrm{PS}} \cap PT_{\textrm{PS}}\)の条件下で\(\textrm{Mark}(M,m) = \textrm{Trans}((M_j)_{j=m}^{j_1})\)となることを、\(j_1\)に関する数学的帰納法で示す。
 		\item \(j_1 = 2\)ならば\(j_1 > m > 0\)より\(m = 1\)であり\(j_1-m = 1\)となるので既に示した。
 		\item \(j_1 > 2\)とする。\(j_1 - m = 1\)ならば従うことは既に示したので、以下\(j_1-m > 1\)とする。
-		\item \(textrm{Red}(R)\)が簡約かつ単項であり、 \(\textrm{Lng}(N)-1 = j_1-m > 1\)と\nameref{Transが零項性を保つこと}より\(t_1^N \neq 0\)であるので、\(\textrm{Red}(N)\)に対して条件(I)～(VI)が意味を持つ。
+		\item \(\textrm{Red}(R)\)が簡約かつ単項であり、 \(\textrm{Lng}(N)-1 = j_1-m > 1\)と\nameref{Transが零項性を保つこと}より\(t_1^N \neq 0\)であるので、\(\textrm{Red}(N)\)に対して条件(I)～(VI)が意味を持つ。
 		\begin{indented}
 			\item \nameref{基点の切片への遺伝性}より\((\textrm{Pred}(M),m) \in T_{\textrm{PS}}^{\textrm{Marked}}\)であり\(\textrm{Lng}(\textrm{Pred}(M))-1 = j_1-1 < j_1\)であるので、\nameref{RedとPredの可換性}と帰納法の仮定より
 			\begin{eqnarray*}
@@ -2446,7 +2447,7 @@ M & \mapsto & \textrm{Trans}(M)
 			\end{eqnarray*}
 			\item である。また\(N\)が単項より\((N,0) \in T_{\textrm{PS}}^{\textrm{Marked}}\)であり、\nameref{基点の切片への遺伝性}より\((\textrm{Pred}(N),0) \in T_{\textrm{PS}}^{\textrm{Marked}}\)となる。\(\textrm{Lng}(\textrm{Pred}(N))-1 = j_1^N-1 = j_1-m-1 < j_1\)であるので、\nameref{Transの(IncrFirst,Red)不変P同変性}と帰納法の仮定より
 			\begin{eqnarray*}
-			c_0^N & = & \textrm{Mark}(\textrm{Pred}(N),0) = \textrm{Trans}(\textrm{Pred}(N)) = \textrm{Trans}((M_{0,j}-M_{0,m}+M_{1,m},M_{1,j})_{j=m}^{j_1-1}) = \textrm{Trans}((M_j)_{j=m}^{j_1-1})) = c_0^M \\
+			c_0^N & = & \textrm{Mark}(\textrm{Pred}(N),0) = \textrm{Trans}(\textrm{Pred}(N)) = \textrm{Trans}((M_{0,j}-M_{0,m}+M_{1,m},M_{1,j})_{j=m}^{j_1-1}) = \textrm{Trans}((M_j)_{j=m}^{j_1-1}) = c_0^M \\
 			c_1^N & = & \textrm{Mark}(\textrm{Pred}(N),j_{-1}^N) = \textrm{Trans}((\textrm{Pred}(N)_j)_{j=j_{-1}^N}^{j_1^N-1}) = \textrm{Trans}((M_{0,j}-M_{0,m}+M_{1,m},M_{1,j})_{j=j_{-1}^M}^{j_1-1}) = \textrm{Trans}((M_j)_{j=j_{-1}^M}^{j_1-1}) = c_1^M
 			\end{eqnarray*}
 			\item である。\(D_{v^M} t_2^M = c_1^M = c_1^N = D_{v^N} t_2^N\)となるので\(v^M = v^N\)かつ\(t_2^M = t_2^N\)であり、\(s_{-1}^M c_1^M b_{-1}^M = c_0^M = t_1^N = s_1^N c_1^N b1^N = s_1^N c_1^M b_1^N\)より\(s_{-1}^M = s_1^N\)かつ\(b_{-1}^M = b_1^N\)である。以上より
@@ -2470,7 +2471,7 @@ M & \mapsto & \textrm{Trans}(M)
 		\item \(j_0\)は\(M\)許容である。
 		\item 任意の\(j \in \mathbb{N}\)に対し、\(j_0 < j < j_1\)ならば以下のいずれかを満たす：
 		\begin{nenumerate}
-			\item \((i_0,j) \leq_M (1_1,j_1)\)でない。
+			\item \((i_0,j) \leq_M (i_1,j_1)\)でない。
 			\item \(j\)は非\(M\)許容である。
 		\end{nenumerate}
 	\end{nenumerate}
@@ -2806,27 +2807,22 @@ M & \mapsto & \textrm{RightAnces}(M)
 \begin{hideableproof}
 	\begin{indented}
 		\item (1)が成り立つことを示す。
-	\end{indented}
-	\(\textrm{Lng}(\textrm{Pred}(M))-1 = j_1 > 1\)より\(\textrm{Pred}(M)\)は零項でなく、従って\nameref{Transが零項性を保つこと}から\(t_1 \neq 0\)である。\(M_{1,j_0} \geq M_{1,j_1}\)かつ\(j_0\)が\(M\)許容より\(j_0 = j_{-1}\)であり\(M\)は条件(I)か(III)を満たす。
-	\begin{indented}
+		\item \(\textrm{Lng}(\textrm{Pred}(M))-1 = j_1 > 1\)より\(\textrm{Pred}(M)\)は零項でなく、従って\nameref{Transが零項性を保つこと}から\(t_1 \neq 0\)である。\(M_{1,j_0} \geq M_{1,j_1}\)かつ\(j_0\)が\(M\)許容より\(j_0 = j_{-1}\)であり\(M\)は条件(I)か(III)を満たす。
 		\item \(j_0\)が\(M\)許容より\(j_{-1} = j_0\)である。従って\(c_1 = \textrm{Mark}(\textrm{Pred}(M),j_{-1}) = \textrm{Trans}((\textrm{Pred}(M)_j)_{j=j_{-1}}^{j_1-1}) = \textrm{Trans}((M_j)_{j=j_0}^{j_1-1})\)である。また\(t_1 \neq 0\)かつ\((t_1,c_1) \in T_{\textrm{B}}^{\textrm{Marked}}\)から\(c_1 \in PT_{\textrm{B}}\)である。
 		\item
 		\item (2)が成り立つことを示す。
-	\end{indented}
-	\(j'_{-1} \leq j'_0 < j_0 < j_1\)より\(j'_{-1} \leq j_1-2\)である。\((0,j'_{-1})) \leq_M (0,j'_0) <_M^{\textrm{Next}} (0,j_0) <_M^{\textrm{Next}} (0,j_1)\)より\((M,j'_{-1}) \in T_{\textrm{PS}}^{\textrm{Marked}}\)である。従って\nameref{基点の切片への遺伝性}より\((\textrm{Pred}(M),j'_{-1}) \in T_{\textrm{PS}}^{\textrm{Marked}}\)である。\((M,j_0) \in T_{\textrm{PS}}^{\textrm{Marked}}\)と\nameref{基点の切片への遺伝性}より\(((M_j)_{j=j'_{-1}}^{j_1-1},j_0-j'_{-1}) \in T_{\textrm{PS}}^{\textrm{Marked}}\)である。
-	\begin{indented}
+		\item \(j'_{-1} \leq j'_0 < j_0 < j_1\)より\(j'_{-1} \leq j_1-2\)である。\((0,j'_{-1}) \leq_M (0,j'_0) <_M^{\textrm{Next}} (0,j_0) <_M^{\textrm{Next}} (0,j_1)\)より\((M,j'_{-1}) \in T_{\textrm{PS}}^{\textrm{Marked}}\)である。従って\nameref{基点の切片への遺伝性}より\((\textrm{Pred}(M),j'_{-1}) \in T_{\textrm{PS}}^{\textrm{Marked}}\)である。\((M,j_0) \in T_{\textrm{PS}}^{\textrm{Marked}}\)と\nameref{基点の切片への遺伝性}より\(((M_j)_{j=j'_{-1}}^{j_1-1},j_0-j'_{-1}) \in T_{\textrm{PS}}^{\textrm{Marked}}\)である。
 		\item
 		\item (3), (4)が成り立つことを示す。
-	\end{indented}
-	\(N := (M_j)_{j=j'_{-1}}^{j_0}\)と置く。\(\textrm{Red}(N)\)は簡約であるので\nameref{簡約性と係数の関係}より\(M\)と\(\textrm{Red}(N)\)は条件(A)と(B)を満たす。\(\textrm{Red}(N)\)が条件(A)と(B)を満たすことと\nameref{直系先祖による切片とRedとIncrFirstの関係}より
-	\begin{eqnarray*}
-	N & = & \textrm{IncrFirst}^{M_{0,j'_{-1}}-M_{1,j'_{-1}}}(\textrm{Red}(N)) \\
-	\textrm{Red}(N) & = & ((j,j))_{j=M_{1,j'_{-1}}}^{M_{1,j'_0}} \oplus_{\mathbb{N}^2} ((M_{0,j}-M_{0,j'_{-1}}+M_{1,j'_{-1}},M_{1,j}))_{j=j'_0+1}^{j_0-1} \oplus_{\mathbb{N}^2} ((M_{1,j'_0}+1,M_{1,j_0})) 
-	\end{eqnarray*}
-	\begin{indented}
+		\item \(N := (M_j)_{j=j'_{-1}}^{j_0}\)と置く。\(\textrm{Red}(N)\)は簡約であるので\nameref{簡約性と係数の関係}より\(M\)と\(\textrm{Red}(N)\)は条件(A)と(B)を満たす。\(\textrm{Red}(N)\)が条件(A)と(B)を満たすことと\nameref{直系先祖による切片とRedとIncrFirstの関係}より
+		\begin{eqnarray*}
+		N & = & \textrm{IncrFirst}^{M_{0,j'_{-1}}-M_{1,j'_{-1}}}(\textrm{Red}(N)) \\
+		\textrm{Red}(N) & = & ((j,j))_{j=M_{1,j'_{-1}}}^{M_{1,j'_0}} \oplus_{\mathbb{N}^2} ((M_{0,j}-M_{0,j'_{-1}}+M_{1,j'_{-1}},M_{1,j}))_{j=j'_0+1}^{j_0-1} \oplus_{\mathbb{N}^2} ((M_{1,j'_0}+1,M_{1,j_0}))
+		\end{eqnarray*}
 		\item となる。従って\nameref{Transの(IncrFirst,Red)不変P同変性}より
 		\begin{eqnarray*}
-		\textrm{Trans}(N) = \textrm{Trans}(\textrm{Red}(N)) = \textrm{Trans}(((j,j))_{j=M_{1,j'_{-1}}}^{M_{1,j'_0}} \oplus_{\mathbb{N}^2} ((M_{0,j}-M_{0,j'_{-1}}+M_{1,j'_{-1}},M_{1,j}))_{j=j'_0+1}^{j_0-1} \oplus_{\mathbb{N}^2} ((M_{1,j'_0}+1,M_{1,j_0})))
+		\textrm{Trans}(N) & = & \textrm{Trans}(\textrm{Red}(N)) \\
+		& = & \textrm{Trans}(((j,j))_{j=M_{1,j'_{-1}}}^{M_{1,j'_0}} \oplus_{\mathbb{N}^2} ((M_{0,j}-M_{0,j'_{-1}}+M_{1,j'_{-1}},M_{1,j}))_{j=j'_0+1}^{j_0-1} \oplus_{\mathbb{N}^2} ((M_{1,j'_0}+1,M_{1,j_0})))
 		\end{eqnarray*}
 		\item である。
 		\item
@@ -2849,11 +2845,13 @@ M & \mapsto & \textrm{RightAnces}(M)
 			\end{eqnarray*}
 			\item である。従って\nameref{MarkのTransによる表示}と\nameref{TransのMarkと切片による表示}より、\(j'_{-1} = j'_0\)または\(M_{1,j'_0}+1 = M_{1,j_0}\)ならば、
 			\begin{eqnarray*}
-			\textrm{Mark}(\textrm{Pred}(M),j'_{-1}) = \textrm{Trans}((M_j)_{j=j'_{-1}}^{j_1-1}) = D_{M_{1,j'_{-1}}} \textrm{Trans}((M_j)_{j=j_0}^{j_1-1}) = D_{M_{1,j'_{-1}}} \textrm{Mark}(\textrm{Pred}(M),j_{-1}) = D_{M_{1,j'_{-1}}} c_1
+			\textrm{Mark}(\textrm{Pred}(M),j'_{-1}) & = & \textrm{Trans}((M_j)_{j=j'_{-1}}^{j_1-1}) = D_{M_{1,j'_{-1}}} \textrm{Trans}((M_j)_{j=j_0}^{j_1-1}) \\
+			& = & D_{M_{1,j'_{-1}}} \textrm{Mark}(\textrm{Pred}(M),j_{-1}) = D_{M_{1,j'_{-1}}} c_1
 			\end{eqnarray*}
 			\item であり、\(j'_{-1} < j'_0\)かつ\(M_{1,j'_0}+1 = M_{1,j_0}\)ならば
 			\begin{eqnarray*}
-			\textrm{Mark}(\textrm{Pred}(M),j'_{-1}) = \textrm{Trans}((M_j)_{j=j'_{-1}}^{j_1-1}) = D_{M_{1,j'_{-1}}} D_{M_{1,j'_0}} \textrm{Trans}((M_j)_{j=j_0}^{j_1-1}) = D_{M_{1,j'_{-1}}} \textrm{Mark}(\textrm{Pred}(M),j_{-1}) = D_{M_{1,j'_{-1}}} D_{M_{1,j'_0}} c_1
+			\textrm{Mark}(\textrm{Pred}(M),j'_{-1}) & = & \textrm{Trans}((M_j)_{j=j'_{-1}}^{j_1-1}) = D_{M_{1,j'_{-1}}} D_{M_{1,j'_0}} \textrm{Trans}((M_j)_{j=j_0}^{j_1-1}) \\
+			& = & D_{M_{1,j'_{-1}}} \textrm{Mark}(\textrm{Pred}(M),j_{-1}) = D_{M_{1,j'_{-1}}} D_{M_{1,j'_0}} c_1
 			\end{eqnarray*}
 			\item である。
 		\end{indented}
@@ -2876,7 +2874,8 @@ M & \mapsto & \textrm{RightAnces}(M)
 				\end{eqnarray*}
 				\item である。従って\nameref{加法とscb分解の関係}と\nameref{MarkのTransによる表示}と\nameref{TransのMarkと切片による表示}より
 				\begin{eqnarray*}
-				\textrm{Mark}(\textrm{Pred}(M),j'_{-1}) & = & \textrm{Trans}((M_j)_{j=j'_{-1}}^{j_1-1}) = D_{M_{1,j'_{-1}}}(t'_2 + \textrm{Trans}((M_j)_{j=j_0}^{j_1-1}) = D_{M_{1,j'_{-1}}}(t'_2 + \textrm{Mark}(\textrm{Pred}(M),j_{-1})) = D_{M_{1,j'_{-1}}}(t'_2+c_1)
+				\textrm{Mark}(\textrm{Pred}(M),j'_{-1}) & = & \textrm{Trans}((M_j)_{j=j'_{-1}}^{j_1-1}) = D_{M_{1,j'_{-1}}}(t'_2 + \textrm{Trans}((M_j)_{j=j_0}^{j_1-1})) \\
+				& = & D_{M_{1,j'_{-1}}}(t'_2 + \textrm{Mark}(\textrm{Pred}(M),j_{-1})) = D_{M_{1,j'_{-1}}}(t'_2+c_1)
 				\end{eqnarray*}
 				\item である。
 			\end{indented}
@@ -2891,17 +2890,15 @@ M & \mapsto & \textrm{RightAnces}(M)
 				\end{eqnarray*}
 				\item である。従って\nameref{加法とscb分解の関係}と\nameref{MarkのTransによる表示}と\nameref{TransのMarkと切片による表示}より
 				\begin{eqnarray*}
-				\textrm{Mark}(\textrm{Pred}(M),j'_{-1}) & = & \textrm{Trans}((M_j)_{j=j'_{-1}}^{j_1-1}) = D_{M_{1,j'_{-1}}}(t'_3 + D_{M_{1,j'_0}}(t'_4 + \textrm{Trans}((M_j)_{j=j_0}^{j_1-1})) = D_{M_{1,j'_{-1}}}(t'_3 + D_{M_{1,j'_0}}(t'_4 + \textrm{Mark}(\textrm{Pred}(M),j_{-1}))) \\
-				& = & D_{M_{1,j'_{-1}}}(t'_3 + D_{M_{1,j'_0}}(t'_4+c_1))
+				\textrm{Mark}(\textrm{Pred}(M),j'_{-1}) & = & \textrm{Trans}((M_j)_{j=j'_{-1}}^{j_1-1}) = D_{M_{1,j'_{-1}}}(t'_3 + D_{M_{1,j'_0}}(t'_4 + \textrm{Trans}((M_j)_{j=j_0}^{j_1-1}))) \\
+				& = & D_{M_{1,j'_{-1}}}(t'_3 + D_{M_{1,j'_0}}(t'_4 + \textrm{Mark}(\textrm{Pred}(M),j_{-1}))) = D_{M_{1,j'_{-1}}}(t'_3 + D_{M_{1,j'_0}}(t'_4+c_1))
 				\end{eqnarray*}
 				\item である。
 			\end{indented}
 		\end{indented}
 		\item
 		\item (5)が成り立つことを示す。
-	\end{indented}
-	\((0,j_0) <_M^{\textrm{Next}} (0,j_1)\)と\nameref{親の基本性質} (1)より、任意の\(j \in \mathbb{N}\)に対し\(j_0 < j \leq j_1\)ならば\(M_{0,j} \geq M_{0,j_1} > M_{0,j_0}\)である。従って\nameref{親の存在の判定条件} (3)より\((0,j_0) \leq_M (0,j_1-1)\)である。更に\((M_j)_{j=j_0}^{j_1-1} = (M[n]_j)_{j=j_0+(n-1)(j_1-j_0)}^{j_0+n(j_1-j_0)-1}\)であるので、\((0,j_0+(n-1)(j_1-j_0)) \leq_{M[n]} (0,j_0+n(j_1-j_0)-1)\)である。
-	\begin{indented}
+		\item \((0,j_0) <_M^{\textrm{Next}} (0,j_1)\)と\nameref{親の基本性質} (1)より、任意の\(j \in \mathbb{N}\)に対し\(j_0 < j \leq j_1\)ならば\(M_{0,j} \geq M_{0,j_1} > M_{0,j_0}\)である。従って\nameref{親の存在の判定条件} (3)より\((0,j_0) \leq_M (0,j_1-1)\)である。更に\((M_j)_{j=j_0}^{j_1-1} = (M[n]_j)_{j=j_0+(n-1)(j_1-j_0)}^{j_0+n(j_1-j_0)-1}\)であるので、\((0,j_0+(n-1)(j_1-j_0)) \leq_{M[n]} (0,j_0+n(j_1-j_0)-1)\)である。
 		\item \(n > 1\)より\(M[n]_{0,j_0+(n-1)(j_1-j_0)-1} = M_{0,j_1-1} > M_{0,j_0} = M[n]_{0,j_0+(n-1)(j_1-j_0)}\)となるので、\((0,j_0+(n-1)(j_1-j_0)-1) <_{M[n]}^{\textrm{Next}} (0,j_0+(n-1)(j_1-j_0))\)でない。従って\(j_0+(n-1)(j_1-j_0)\)は\(M[n]\)許容である。以上より\((M[n],j_0+(n-1)(j_1-j_0)) \in T_{\textrm{PS}}^{\textrm{Marked}}\)である。
 		\item 任意の\(j \in \mathbb{N}\)に対し、\(j_0 \leq j < j_0+(n-1)(j_1-j_0)\)ならば、\(j-j_0\)を\(j_1-j_0 > 0\)で割った余りを\(r \in \mathbb{N}\)と置くと\(r < j_1-j_0\)であり、\(r = 0\)ならば\(M[n]_{0,j} = M_{0,j_0+r} = M_{0,j_0} = M[n]_{0,j_0+(n-1)(j_1-j_0)}\)となり\(r > 0\)ならば\(M[n]_{0,j} = M_{0,j_0+r} \geq M_{0,j_1} > M_{0,j_0} = M[n]_{0,j_0+(n-1)(j_1-j_0)}\)であるのでいずれの場合も\((0,j) \leq_{M[n]} (0,j_0+(n-1)(j_1-j_0))\)でない。
 		\item また任意の\(j \in \mathbb{N}\)に対し、\(j'_0 < j < j_0\)ならば、\((0,j'_0) <_M^{\textrm{Next}} (0,j_0)\)と\nameref{親の基本性質} (1)より\(M[n]_{0,j} = M_{0,j} \geq M_{0,j_0} = M[n]_{0,j_0+(n-1)(j_1-j_0)}\)であるので\((0,j) \leq_{M[n]} (0,j_0+(n-1)(j_1-j_0))\)でない。
@@ -2932,7 +2929,7 @@ M & \mapsto & \textrm{RightAnces}(M)
 			\item \(\textrm{Trans}(M[n]) = \textrm{Trans}(M)[n-1]\)となることを\(n\)に関する数学的帰納法で示す。
 			\begin{indented}
 				\item \(n = 1\)ならば\(\textrm{Trans}(M[n]) = s_1 c_1 b_1 =  c_1 = \textrm{Trans}(M)[n-1]\)である。
-				\item \(n > 1\)ならば、帰納法の仮定より\(\textrm{Trans}(M[n-1]) = \textrm{Trans}(M)[n-2]\)であり、\(\textrm{Lng}(\textrm{Pred}(M)) = j_1 > 1\)より\(\textrm{Pred}(M) \neq (0,0)\)であるので\(textrm{Trans}\)の再帰的定義より
+				\item \(n > 1\)ならば、帰納法の仮定より\(\textrm{Trans}(M[n-1]) = \textrm{Trans}(M)[n-2]\)であり、\(\textrm{Lng}(\textrm{Pred}(M)) = j_1 > 1\)より\(\textrm{Pred}(M) \neq (0,0)\)であるので\(\textrm{Trans}\)の再帰的定義より
 				\begin{eqnarray*}
 				\textrm{Trans}(M[n]) & = & \textrm{Trans}(\bigoplus_{\mathbb{N}^2} (\textrm{Pred}(M))_{k=0}^{n-2}) + \textrm{Trans}(\textrm{Pred}(M)) = \textrm{Trans}(M[n-1]) + t_1 = \textrm{Trans}(M)[n-2] + s_1 c_1 b_1 = c_1 \times (n-1) + c_1 \\
 				& = & c_1 \times n = \textrm{Trans}(M)[n-1]
@@ -3012,7 +3009,7 @@ M & \mapsto & \textrm{RightAnces}(M)
 				\begin{indented}
 					\item \nameref{条件(I)か(III)の下でのc_1前後の具体表示} (4-2)より一意な\((t'_3,t'_4) \in T_{\textrm{B}}^2\)が存在して\(\textrm{Mark}(\textrm{Pred}(M),j'_{-1}) = D_{M_{1,j'_{-1}}}(t'_3 + D_{M_{1,j'_0}}(t'_4+c_1))\)であり、\(s_1 c_1 b_1 = t_1 = \textrm{Trans}(\textrm{Pred}(M)) = s'_{-1} \textrm{Mark}(\textrm{Pred}(M),j'_{-1}) b'_{-1} = s'_{-1} D_{M_{1,j'_{-1}}}(t'_3 + D_{M_{1,j'_0}}(t'_4+c_1)) b'_{-1}\)である。
 					\item よって\nameref{加法とscb分解の関係}と\nameref{scb分解の合成則} (2)を反復して適用することで\((D_{M_{1,j'_0}}(t'_4+c_1),c_1), (D_{M_{1,j'_{-1}}}(t'_3 + D_{M_{1,j'_0}}(t'_4+c_1)),D_{M_{1,j'_0}}(t'_4+c_1)) \in T_{\textrm{B}}^{\textrm{Marked}}\)が従う。また\(\textrm{Mark}\)の定義より\((s_1 c_1 b_1,D_{M_{1,j'_{-1}}}(t'_3 + D_{M_{1,j'_0}}(t'_4+c_1))), (s_1 c_1 b_1,c_1) \in T_{\textrm{B}}^{\textrm{Marked}}\)である。
-					\item 更に\nameref{scb分解の合成則} (1)と\nameref{scb分解の置換可能性}を反復して適用することで\footnote{単に「\(c_1\)を\(c_2\)に置き換える」と述べたいところだが、\(t'_3\)と\(t'_4\)を用いて明示的に与えられている\(s_1 c_1 b_1\)の表示はscb分解ではなく加法を含む表記であるため、\nameref{scb分解の置換可能性}を繰り返し適用してscb分解を得る必要がある。そのために直前の段落で\nameref{加法とscb分解の関係}と\nameref{scb分解の合成則} (2)を反復して適用した。}\(\textrm{Trans}(M) = s_1 c_2 b_1 = s'_{-1} D_{M_{1,j'_{-1}}}(t'_3 + D_{M_{1,j'_0}}(t'_4 + D_{M_{1,j_0}}(t_2 + D_0 0))) b'_{-1}\)が従う。\nameref{scb分解と基本列の関係} (1-2)より\(\textrm{Trans}(M)[n-1] = s'_{-1} D_{M_{1,j'_{-1}}}(t'_3 + D_{M_{1,j'_0}}(t'_4 + (D_{M_{1,j_0}} t_2) \times n) b'_1 = s'_{-1} D_{M_{1,j'_{-1}}}(t'_3 + D_{M_{1,j'_0}}(t'_4 + c_1 \times n)) b'_{-1}\)である。
+					\item 更に\nameref{scb分解の合成則} (1)と\nameref{scb分解の置換可能性}を反復して適用することで\footnote{単に「\(c_1\)を\(c_2\)に置き換える」と述べたいところだが、\(t'_3\)と\(t'_4\)を用いて明示的に与えられている\(s_1 c_1 b_1\)の表示はscb分解ではなく加法を含む表記であるため、\nameref{scb分解の置換可能性}を繰り返し適用してscb分解を得る必要がある。そのために直前の段落で\nameref{加法とscb分解の関係}と\nameref{scb分解の合成則} (2)を反復して適用した。}\(\textrm{Trans}(M) = s_1 c_2 b_1 = s'_{-1} D_{M_{1,j'_{-1}}}(t'_3 + D_{M_{1,j'_0}}(t'_4 + D_{M_{1,j_0}}(t_2 + D_0 0))) b'_{-1}\)が従う。\nameref{scb分解と基本列の関係} (1-2)より\(\textrm{Trans}(M)[n-1] = s'_{-1} D_{M_{1,j'_{-1}}}(t'_3 + D_{M_{1,j'_0}}(t'_4 + (D_{M_{1,j_0}} t_2) \times n)) b'_1 = s'_{-1} D_{M_{1,j'_{-1}}}(t'_3 + D_{M_{1,j'_0}}(t'_4 + c_1 \times n)) b'_{-1}\)である。
 				\end{indented}
 				\item 従っていずれの場合も\(\textrm{Mark}(\textrm{Pred}(M),j'_{-1}) = D_{M_{1,j'_{-1}}}(t'_3 + D_{M_{1,j'_0}}(t'_4+c_1))\)かつ\(\textrm{Trans}(M)[n-1] = s'_{-1} D_{M_{1,j'_{-1}}}(t'_3 + D_{M_{1,j'_0}}(t'_4 + c_1 \times n)) b'_{-1}\)である。
 				\item \(\textrm{Mark}(M[n],j'_{-1}) = D_{M_{1,j'_{-1}}}(t'_3 + D_{M_{1,j'_0}}(t'_4 + c_1 \times n))\)かつ\(\textrm{Trans}(M[n]) = s'_{-1} \textrm{Mark}(M[n],j'_{-1}) b'_{-1}\)となることを\(n\)に関する数学的帰納法で示す。
@@ -3022,11 +3019,11 @@ M & \mapsto & \textrm{RightAnces}(M)
 					\item \nameref{条件(I)か(III)の下でのc_1前後の具体表示} (5)より\(j_1^N = j_0+(n-1)(j_1-j_0)\)かつ\(j_0^N = j'_0\)かつ\(j_{-1}^N = j'_{-1}\)かつ\(t_1^N \neq 0\)であり、\(N\)は条件(VI)を満たさない。
 					\item 帰納法の仮定より\(c_1^N = \textrm{Mark}(M[n-1],j'_{-1}) = D_{M_{1,j'_{-1}}}(t'_3 + D_{M_{1,j'_0}}(t'_4 + c_1 \times (n-1)))\)かつ\(s_1^N c_1^N b_1^N = t_1^N = \textrm{Trans}(M[n-1]) = s'_{-1} \textrm{Mark}(M[n-1],j'_{-1}) b'_{-1} = s'_{-1} c_1^N b'_{-1}\)である。従って\nameref{scb分解の一意性} (1)より\(s_1^N = s'_{-1}\)かつ\(b_1^N = b'_{-1}\)である。また\(D_{v^N} t_2^N = c_1^N = D_{M_{1,j'_{-1}}}(t'_3 + D_{M_{1,j'_0}}(t'_4 + c_1 \times (n-1)))\)より\(v^N = M_{1,j'_{-1}}\)かつ\(t_2^N = t'_3 + D_{M_{1,j'_0}}(t'_4 + c_1 \times (n-1))\)である。
 					\item \(j_{-1}^N = j'_{-1} < j'_0 = j_0^N\)より\(j_0^N\)は非\(N\)許容であるので\(N\)は条件(I)や(III)は満たさず、\(N_{1,j_0^N}+1 = M_{1,j'_0}+1 \geq M_{1,j_0} = N_{1,j_1^N}\)より\(N\)は条件(II)か(IV)を満たす。\(t_2^N\)の最右単項成分\(D_{M_{1,j'_0}}(t'_4 + c_1 \times (n-1))\)の左端は\(D_{M_{1,j'_0}} = D_{N_{1,j_0^N}}\)であるので、\(t_3^N = t'_3\)かつ\(D_{N_{1,j_0^N}} t_4^N = t_2^N = D_{M_{1,j'_0}}(t'_4 + c_1 \times (n-1))\)すなわち\(t_4^N = t'_4 + c_1 \times (n-1)\)である。
-					\item 従って\(c_2^N = D_{v^N}(t_3^N + D_{N_{1,j_0^N}}(t_4^N + D_{N_{1,j_1^N}} 0)) = D_{M_{1,j'_{-1}}}(t'_3 + D_{M_{1,j'_0}}(t'_4 + c_1 \times (n-1) + D_{M_{1,j_0}} 0)) = D_{M_{1,j'_{-1}}}(t'_3 + D_{M_{1,j'_0}}(t'_4 + c_1 \times (n-1) + D_{M_{1,j_0}} 0))\)となるので\(\textrm{Trans}(N) = s_1^N c_2^N b_1^N = s'_{-1} D_{M_{1,j'_{-1}}}(t'_3 +  D_{M_{1,j'_0}}(t'_4 + c_1 \times (n-1) + D_{M_{1,j_0}} 0) b'_{-1}\)である。
-					\item \nameref{加法とscb分解の関係}と\nameref{scb分解の合成則} (2)を反復して適用することで\((D_{M_{1,j'_0}}(t'_4 + c_1 \times (n-1) + D_{M_{1,j_0}} 0),D_{M_{1,j_0}} 0), (D_{M_{1,j'_{-1}}}(t'_3 +  D_{M_{1,j'_0}}(t'_4 + c_1 \times (n-1) + D_{M_{1,j_0}} 0)),D_{M_{1,j'_0}}(t'_4 + c_1 \times (n-1) + D_{M_{1,j_0}} 0))) \in T_{\textrm{B}}^{\textrm{Marked}}\)が従う。また\(\textrm{Mark}\)の定義より\((\textrm{Trans}(N),D_{M_{1,j'_{-1}}}(t'_3 +  D_{M_{1,j'_0}}(t'_4 + c_1 \times (n-1) + D_{M_{1,j_0}} 0))) \in T_{\textrm{B}}^{\textrm{Marked}}\)である。
+					\item 従って\(c_2^N = D_{v^N}(t_3^N + D_{N_{1,j_0^N}}(t_4^N + D_{N_{1,j_1^N}} 0)) = D_{M_{1,j'_{-1}}}(t'_3 + D_{M_{1,j'_0}}(t'_4 + c_1 \times (n-1) + D_{M_{1,j_0}} 0)) = D_{M_{1,j'_{-1}}}(t'_3 + D_{M_{1,j'_0}}(t'_4 + c_1 \times (n-1) + D_{M_{1,j_0}} 0))\)となるので\(\textrm{Trans}(N) = s_1^N c_2^N b_1^N = s'_{-1} D_{M_{1,j'_{-1}}}(t'_3 +  D_{M_{1,j'_0}}(t'_4 + c_1 \times (n-1) + D_{M_{1,j_0}} 0)) b'_{-1}\)である。
+					\item \nameref{加法とscb分解の関係}と\nameref{scb分解の合成則} (2)を反復して適用することで\((D_{M_{1,j'_0}}(t'_4 + c_1 \times (n-1) + D_{M_{1,j_0}} 0),D_{M_{1,j_0}} 0), (D_{M_{1,j'_{-1}}}(t'_3 +  D_{M_{1,j'_0}}(t'_4 + c_1 \times (n-1) + D_{M_{1,j_0}} 0)),D_{M_{1,j'_0}}(t'_4 + c_1 \times (n-1) + D_{M_{1,j_0}} 0)) \in T_{\textrm{B}}^{\textrm{Marked}}\)が従う。また\(\textrm{Mark}\)の定義より\((\textrm{Trans}(N),D_{M_{1,j'_{-1}}}(t'_3 +  D_{M_{1,j'_0}}(t'_4 + c_1 \times (n-1) + D_{M_{1,j_0}} 0))) \in T_{\textrm{B}}^{\textrm{Marked}}\)である。
 					\item 更に\nameref{scb分解の合成則} (1)と\nameref{scb分解の置換可能性}を反復して適用することで\footnote{単に「\(D_0 0\)を\(\textrm{Mark}(M[n],j_0+(n-1)(j_1-j_0))\)に置き換える」と述べたいところだが、\(t'_3\)と\(t'_4\)を用いて明示的に与えられている\(\textrm{Trans}(N)\)の表示はscb分解ではなく加法を含む表記であるため、\nameref{scb分解の置換可能性}を繰り返し適用してscb分解を得る必要がある。そのために直前の段落で\nameref{加法とscb分解の関係}と\nameref{scb分解の合成則} (2)を反復して適用した。}\nameref{TransのMarkと切片による表示}より
 					\begin{eqnarray*}
-					\textrm{Trans}(M[n]) & = & s'_{-1} D_{M_{1,j'_{-1}}}(t'_3 + D_{M_{1,j'_0}}(t'_4 + c_1 \times (n-1) + \textrm{Mark}(M[n],j_0+(n-1)(j_1-j_0)))) b'_{-1} = s'_{-1} D_{M_{1,j'_{-1}}}(t'_3 + D_{M_{1,j'_0}}(t'_4 + c_1 \times (n-1) + \textrm{Mark}(\textrm{Pred}(M),j_{-1})) b'_{-1} = s'_{-1} D_{M_{1,j'_{-1}}}(t'_3 + D_{M_{1,j'_0}}(t'_4 + c_1 \times (n-1) + c_1)) b'_{-1} \\
+					\textrm{Trans}(M[n]) & = & s'_{-1} D_{M_{1,j'_{-1}}}(t'_3 + D_{M_{1,j'_0}}(t'_4 + c_1 \times (n-1) + \textrm{Mark}(M[n],j_0+(n-1)(j_1-j_0)))) b'_{-1} = s'_{-1} D_{M_{1,j'_{-1}}}(t'_3 + D_{M_{1,j'_0}}(t'_4 + c_1 \times (n-1) + \textrm{Mark}(\textrm{Pred}(M),j_{-1}))) b'_{-1} = s'_{-1} D_{M_{1,j'_{-1}}}(t'_3 + D_{M_{1,j'_0}}(t'_4 + c_1 \times (n-1) + c_1)) b'_{-1} \\
 					& = & s'_{-1} D_{M_{1,j'_{-1}}}(t'_3 + D_{M_{1,j'_0}}(t'_4 + c_1 \times n)) b'_{-1}
 					\end{eqnarray*}
 					\item となり、更に\(\textrm{Trans}(N) = s'_{-1} \textrm{Mark}(N,j'_{-1}) b'_{-1}\)より
@@ -3085,7 +3082,7 @@ M & \mapsto & \textrm{LastStep}(M)
 \end{nenumerate}
 
 \begin{proposition}[条件(II)か(IV)の下での終切片と\(\textrm{Trans}\)の関係]\label{条件(II)か(IV)の下での終切片とTransの関係}
-	任意の\(M \in DT_{\textrm{PS}}\)に対し、\(j_1 := \textrm{Lng}(M)-1\)と置き、\(J_1 := \textrm{Lng}(\textrm{Br}(M)-1\)と置き、\(J_1 \geq 0\)として\(j'_0 := \textrm{Joints}(M)_{J_1}\)と置き、 \(j'_1 := \textrm{FirstNodes}(M)_{J_1}\)と置き、\(J_0 := \textrm{LastStep}(M)\)と置き、\(m_1 := \textrm{FirstNodes}(M)_{J_0}-1\)と置き、\(N := (M_j)_{j=0}^{m_1}\)と置き、\(N' := (M_j)_{j=j'_0}^{m_1}\)と置き\footnotemark{}、\(M' := (M_j)_{j=j'_0}^{j_1}\)と置くと、\(0 < j'_0 < \textrm{TrMax}(M)\)かつ\(M_{0,j'_1} > M_{1,j'_1}\)ならば一意な\(t_1,t_2 \in T_{\textrm{B}}\)が存在して以下を満たす：
+	任意の\(M \in DT_{\textrm{PS}}\)に対し、\(j_1 := \textrm{Lng}(M)-1\)と置き、\(J_1 := \textrm{Lng}(\textrm{Br}(M))-1\)と置き、\(J_1 \geq 0\)として\(j'_0 := \textrm{Joints}(M)_{J_1}\)と置き、 \(j'_1 := \textrm{FirstNodes}(M)_{J_1}\)と置き、\(J_0 := \textrm{LastStep}(M)\)と置き、\(m_1 := \textrm{FirstNodes}(M)_{J_0}-1\)と置き、\(N := (M_j)_{j=0}^{m_1}\)と置き、\(N' := (M_j)_{j=j'_0}^{m_1}\)と置き\footnotemark{}、\(M' := (M_j)_{j=j'_0}^{j_1}\)と置くと、\(0 < j'_0 < \textrm{TrMax}(M)\)かつ\(M_{0,j'_1} > M_{1,j'_1}\)ならば一意な\(t_1,t_2 \in T_{\textrm{B}}\)が存在して以下を満たす：
 	\begin{penumerate}
 		\item \(\textrm{Trans}(N) = D_{M_{1,0}} t_1\)である。
 		\item \(\textrm{Trans}(N') = D_{M_{1,j'_0}} t_1\)である。
@@ -3231,7 +3228,7 @@ M & \mapsto & \textrm{LastStep}(M)
 			\item \(J'_1 := \textrm{Lng}(\textrm{Br}(\textrm{Pred}(M)))-1\)と置く。
 			\item \(j'_1 = j_1\)ならば、\(j_1 - \textrm{TrMax}(M) > 1\)より\(J_1 > 0\)であり、\nameref{PとIdxSumの合成の特徴付け}から、\(J'_1 = J_1-1 \geq 0\)である。
 			\item \(j'_1 < j_1\)ならば、\nameref{PとIdxSumの合成の特徴付け}から、\(J'_1 = J_1 \geq 0\)である。
-			\item 以上よりいずれの場合も\(\textrm{Lng}(J'_1 \geq 0\)である。
+			\item 以上よりいずれの場合も\(\textrm{Lng}(J'_1) \geq 0\)である。
 			\item \(\textrm{Lng}(\textrm{Pred}(M))-1 = j_1-1\)かつ\(\textrm{TrMax}(\textrm{Pred}(M')) = \textrm{TrMax}(M)\)より\((\textrm{Lng}(\textrm{Pred}(M))-1) - \textrm{TrMax}(\textrm{Pred}(M')) = j_1-1 - \textrm{TrMax}(M) < j_1 - \textrm{TrMax}(M)\)であるので、帰納法の仮定から\footnote{上までの議論により、\(\textrm{Pred}(M)\)も\(M\)と同じ条件を満たすことが確認されたので\(\textrm{Pred}(M)\)に対し帰納法の仮定が適用可能である。}、一意な\(t \in T_{\textrm{B}}\)が存在して以下を満たす\footnote{\(0, \textrm{Joints}(\textrm{Pred}(M))_{J'_1}, \textrm{FirstNodes}(\textrm{Pred}(M))_{J'_1}\)はいずれも\(\textrm{Lng}(\textrm{Pred}(M))-1 = j_1-1\)以下であるので、\nameref{PとIdxSumの合成の特徴付け}から\(\textrm{Joints}(\textrm{Pred}(M))_{J'_1} = \textrm{Joints}(M)_{J'_1}\)かつ\(\textrm{FirstNodes}(\textrm{Pred}(M))_{J'_1} = \textrm{FirstNodes}(M)_{J'_1}\)であり、\(\textrm{Pred}(M)_0 = M_0\)かつ\(\textrm{Pred}(M)_{\textrm{Joints}(\textrm{Pred}(M))_{J'_1}} = M_{\textrm{Joints}(M)_{J'_1}}\)かつ\(\textrm{Pred}(M)_{\textrm{FirstNodes}(\textrm{Pred}(M))_{J'_1}} = M_{\textrm{FirstNodes}(M)_{J'_1}}\)であり、また\(\textrm{TrMax}(\textrm{Pred}(M)) = \textrm{TrMax}(M)\)であることに注意する。}：
 			\begin{penumerate}
 				\item \(\textrm{Trans}(\textrm{Pred}(M)) = D_{M_{1,0}} t\)である。
@@ -3312,7 +3309,7 @@ M & \mapsto & \textrm{LastStep}(M)
 \end{hideableproof}
 
 \begin{lemma}[条件(V)の下での右端の親の基本性質]\label{条件(V)の下での右端の親の基本性質}
-	任意の\(M \in RT_{\textrm{PS}} \cap PT_{\textrm{PS}}\)と\(m \in \mathbb{N}\)に対し、\(j_1 := \textrm{Lng}(M)-1\)と置き、\(J_1 := \textrm{Lng}(\textrm{Br}(M)-1\)と置き、\(J_1 \geq 0\)として\(j'_0 := \textrm{Joints}(M)_{J_1}\)と置き、\(j'_1 := \textrm{FirstNodes}(M)_{J_1}\)と置き、\(M' := (M_j)_{j=m}^{j_1}\)と置くと、「\(m < j'_0\)」または「\(m = j'_0\)かつ\(M_{0,j'_1} = M_{1,j'_1}\)かつ\(\textrm{Br}(M)\)が降順」ならば、一意な\(j_0 \in \mathbb{N}\)が存在して以下を満たす：
+	任意の\(M \in RT_{\textrm{PS}} \cap PT_{\textrm{PS}}\)と\(m \in \mathbb{N}\)に対し、\(j_1 := \textrm{Lng}(M)-1\)と置き、\(J_1 := \textrm{Lng}(\textrm{Br}(M))-1\)と置き、\(J_1 \geq 0\)として\(j'_0 := \textrm{Joints}(M)_{J_1}\)と置き、\(j'_1 := \textrm{FirstNodes}(M)_{J_1}\)と置き、\(M' := (M_j)_{j=m}^{j_1}\)と置くと、「\(m < j'_0\)」または「\(m = j'_0\)かつ\(M_{0,j'_1} = M_{1,j'_1}\)かつ\(\textrm{Br}(M)\)が降順」ならば、一意な\(j_0 \in \mathbb{N}\)が存在して以下を満たす：
 	\begin{penumerate}
 		\item \((0,j_0) <_M^{\textrm{Next}} (0,j_1)\)である。
 		\item \(j'_0 \leq j_0\)である。
@@ -3327,7 +3324,7 @@ M & \mapsto & \textrm{LastStep}(M)
 		\begin{indented}
 			\item \(j_0 := j'_0\)と置く。
 			\item \(m < j'_0\)ならば、\(m < j'_0 = j_0\)である。
-			\item \(m = j'_0)\)ならば、仮定より\(M_{0,j_1} = M_{0,j'_1} = M_{0,j'_0}+1 = M_{1,j'_0}+1 = M_{1,j'_1} = M_{1,j_1}\)である。
+			\item \(m = j'_0\)ならば、仮定より\(M_{0,j_1} = M_{0,j'_1} = M_{0,j'_0}+1 = M_{1,j'_0}+1 = M_{1,j'_1} = M_{1,j_1}\)である。
 			\item 以上より、いずれの場合も\(m < j_0\)または\(M_{0,j_1} = M_{1,j_1}\)である。
 		\end{indented}
 		\item \(j'_1 < j_1\)とする。
@@ -3347,13 +3344,13 @@ M & \mapsto & \textrm{LastStep}(M)
 			\item \((1,\textrm{TrMax}(M)) <_M^{\textrm{Next}} (1,\textrm{FirstNodes}(M)_0)\)でないので、\(M_{0,\textrm{TrMax}(M)} \geq M_{0,\textrm{FirstNodes}(M)_0}\)または\(M_{1,\textrm{TrMax}(M)} \geq M_{1,\textrm{FirstNodes}(M)_0}\)である。
 			\item \(M_{0,\textrm{TrMax}(M)} \geq M_{0,\textrm{FirstNodes}(M)_0}\)とする。
 			\begin{indented}
-				\item \nameref{Pの各成分の左端の単調性}より\(M_{0,\textrm{TrMax}(M)} \geq M_{0,\textrm{FirstNodes}(M)_0} \geq M_{0,j'_1}\)であるので、\((0,\textrm{TrMax}(M) \leq_M (0,j'_1)\)でなく、従って\(j'_0 < \textrm{TrMax}(M)\)である。
+				\item \nameref{Pの各成分の左端の単調性}より\(M_{0,\textrm{TrMax}(M)} \geq M_{0,\textrm{FirstNodes}(M)_0} \geq M_{0,j'_1}\)であるので、\((0,\textrm{TrMax}(M)) \leq_M (0,j'_1)\)でなく、従って\(j'_0 < \textrm{TrMax}(M)\)である。
 			\end{indented}
 			\item \(M_{0,\textrm{TrMax}(M)} = M_{0,\textrm{FirstNodes}(M)_0}\)かつ\(M_{1,\textrm{TrMax}(M)} \geq M_{1,\textrm{FirstNodes}(M)_0}\)とする。
 			\begin{indented}
 				\item \(\textrm{Br}(M)\)の降順性から、\(M_{0,\textrm{FirstNodes}(M)_0} > M_{0,j'_1}\)または\(M_{1,\textrm{FirstNodes}(M)_0} \geq M_{1,j'_1}\)である。
-				\item \(M_{0,\textrm{FirstNodes}(M)_0} > M_{0,j'_1}\)ならば\(M_{0,\textrm{TrMax}(M)} = M_{0,\textrm{FirstNodes}(M)_0} > M_{0,j'_1}\)であるので\((0,\textrm{TrMax}(M) \leq_M (0,j'_1)\)でなく、従って\(j'_0 < \textrm{TrMax}(M)\)である。
-				\item \(M_{1,\textrm{FirstNodes}(M)_0} \geq M_{1,j'_1}\)ならば\(M_{1,\textrm{TrMax}(M)} \geq M_{1,\textrm{FirstNodes}(M)_0} \geq M_{1,j'_1}\)であるので\((1,\textrm{TrMax}(M) \leq_M (1,j'_1)\)でなく、従って\(j'_0 < \textrm{TrMax}(M)\)である。
+				\item \(M_{0,\textrm{FirstNodes}(M)_0} > M_{0,j'_1}\)ならば\(M_{0,\textrm{TrMax}(M)} = M_{0,\textrm{FirstNodes}(M)_0} > M_{0,j'_1}\)であるので\((0,\textrm{TrMax}(M)) \leq_M (0,j'_1)\)でなく、従って\(j'_0 < \textrm{TrMax}(M)\)である。
+				\item \(M_{1,\textrm{FirstNodes}(M)_0} \geq M_{1,j'_1}\)ならば\(M_{1,\textrm{TrMax}(M)} \geq M_{1,\textrm{FirstNodes}(M)_0} \geq M_{1,j'_1}\)であるので\((1,\textrm{TrMax}(M)) \leq_M (1,j'_1)\)でなく、従って\(j'_0 < \textrm{TrMax}(M)\)である。
 				\item 以上より、いずれの場合も\(j'_0 < \textrm{TrMax}(M)\)である。
 			\end{indented}
 			\item 以上より、いずれの場合も\(j_0 = j'_0 < \textrm{TrMax}(M)\)である。
@@ -3362,7 +3359,7 @@ M & \mapsto & \textrm{LastStep}(M)
 \end{hideableproof}
 
 \begin{lemma}[条件(V)の下での終切片と\(\textrm{Trans}\)の関係]\label{条件(V)の下での終切片とTransの関係}
-	任意の\(M \in RT_{\textrm{PS}} \cap PT_{\textrm{PS}}\)と\(m \in \mathbb{N}\)に対し、\(j_1 := \textrm{Lng}(M)-1\)と置き、\(J_1 := \textrm{Lng}(\textrm{Br}(M)-1\)と置き、\(J_1 \geq 0\)として\(j'_0 := \textrm{Joints}(M)_{J_1}\)と置き、\(j'_1 := \textrm{FirstNodes}(M)_{J_1}\)と置き、\(M' := (M_j)_{j=m}^{j_1}\)と置くと、「\(m < j'_0\)」または「\(m = j'_0\)かつ\(M_{0,j'_1} = M_{1,j'_1}\)かつ\(\textrm{Br}(M)\)が降順」ならば、一意な\(t_1 \in T_{\textrm{B}}\)が存在して以下を満たす：
+	任意の\(M \in RT_{\textrm{PS}} \cap PT_{\textrm{PS}}\)と\(m \in \mathbb{N}\)に対し、\(j_1 := \textrm{Lng}(M)-1\)と置き、\(J_1 := \textrm{Lng}(\textrm{Br}(M))-1\)と置き、\(J_1 \geq 0\)として\(j'_0 := \textrm{Joints}(M)_{J_1}\)と置き、\(j'_1 := \textrm{FirstNodes}(M)_{J_1}\)と置き、\(M' := (M_j)_{j=m}^{j_1}\)と置くと、「\(m < j'_0\)」または「\(m = j'_0\)かつ\(M_{0,j'_1} = M_{1,j'_1}\)かつ\(\textrm{Br}(M)\)が降順」ならば、一意な\(t_1 \in T_{\textrm{B}}\)が存在して以下を満たす：
 	\begin{penumerate}
 		\item \(\textrm{Trans}(M) = D_{M_{1,0}} t_1\)である。
 		\item \(\textrm{Trans}(M') = D_{M_{1,m}} t_1\)である。
@@ -3388,7 +3385,7 @@ M & \mapsto & \textrm{LastStep}(M)
 		\item \(\textrm{Trans}(M') = D_{M_{1,m}} t_1\)となることを\(j_1 - \textrm{TrMax}(M)\)に関する数学的帰納法で示す。
 		\item \(j_1 - \textrm{TrMax}(M) = 1\)とする。
 		\begin{indented}
-			\item \(M = ((j,j))_{j=M_{1,0}}^{M_{1,0} + \textrm{TrMax}(M)} \oplus_{\mathbb{N}^2} M_{m_1})\)である。
+			\item \(M = ((j,j))_{j=M_{1,0}}^{M_{1,0} + \textrm{TrMax}(M)} \oplus_{\mathbb{N}^2} M_{m_1}\)である。
 			\item \(J_1 = 0\)かつ\(j'_1 = j_1\)かつ\(j'_0 = j_0\)である。従って\(M_{0,j_1} = M_{0,j'_1} = M_{1,0} + j'_0 + 1 \leq M_{1,0} + \textrm{TrMax}(M) + 1 = M_{0,\textrm{TrMax}(M)}+1\)である。
 			\item \(m < j_0\)ならば、\(M_{0,j_1} = M_{1,0} + j'_0 + 1 = M_{1,0} + j_0 + 1 > M_{1,0} + m + 1= M_{0,m} + 1\)であるので\nameref{Predが公差(1,1)のペア数列のTransの基本性質} (1)と(2)と(3)より\(\textrm{Trans}(M')\)は\(\textrm{Trans}(M) = D_{M_{1,0}} t_1\)の左端を\(D_{M_{1,m}}\)に置き換えたものである。
 			\item \(m = j_0\)かつ\(M_{0,j_1} = M_{1,j_1}\)とする。
@@ -3554,7 +3551,7 @@ M & \mapsto & \textrm{LastStep}(M)
 			\item \(j'_1 < j_1\)とする。
 			\begin{indented}
 				\item \nameref{PとIdxSumの合成の特徴付け}から\(J'_1 = J_1 \geq 0\)かつ\(M_{0,\textrm{FirstNodes}(M)_{J'_1}} = M_{0,\textrm{FirstNodes}(M)_{J_1}} > M_{1,\textrm{FirstNodes}(M)_{J_1}} = M_{1,\textrm{FirstNodes}(M)_{J'_1}}\)である。
-				\item \((\textrm{Pred}(M)_j)_{j=0}^{\textrm{FirstNodes}(\textrm{Pred}(M)_{J'_1}} = (M_j)_{j=0}^{\textrm{FirstNodes}(M){J_1}}\)より、\(\textrm{LastStep}(\textrm{Pred}(M)) = J_0\)である。
+				\item \((\textrm{Pred}(M)_j)_{j=0}^{\textrm{FirstNodes}(\textrm{Pred}(M))_{J'_1}} = (M_j)_{j=0}^{\textrm{FirstNodes}(M){J_1}}\)より、\(\textrm{LastStep}(\textrm{Pred}(M)) = J_0\)である。
 			\end{indented}
 			\item
 			\item 以上より、いずれの場合も\(J'_1 \geq J_0 \geq 0\)かつ\(\textrm{LastStep}(\textrm{Pred}(M)) = J_0\)かつ\(M_{0,\textrm{FirstNodes}(M)_{J'_1}} > M_{1,\textrm{FirstNodes}(M)_{J'_1}}\)である。
@@ -3655,7 +3652,7 @@ M & \mapsto & \textrm{LastStep}(M)
 	\begin{indented}
 		\item \nameref{標準形の簡約性}から\(M\)は簡約であり、\nameref{簡約性と係数の関係}より\(M\)は条件(A)と(B)を満たす。
 		\item \(M\)が条件(II)を満たすことから、\(M_{1,j_0} \geq M_{1,j_1}\)かつ\(j_0\)が非\(M\)許容すなわち\(j_{-1} < j_0\)である。
-		\item \nameref{Markの左端の基本性質}より\(v = M_{1,j_{-1}}\)である。\nameref{scb分解の置換可能性}より\((s_1,c_2,b_1) = (s_1,D_{M_{1,j_{-1}}}(t_3 + (D_{M_{1,j_0}}(t_4 + D_0 0)),b_1)\)は\(\textrm{Trans}(M)\)のscb分解であり、\nameref{scb分解と基本列の関係} (1-2)より
+		\item \nameref{Markの左端の基本性質}より\(v = M_{1,j_{-1}}\)である。\nameref{scb分解の置換可能性}より\((s_1,c_2,b_1) = (s_1,D_{M_{1,j_{-1}}}(t_3 + D_{M_{1,j_0}}(t_4 + D_0 0)),b_1)\)は\(\textrm{Trans}(M)\)のscb分解であり、\nameref{scb分解と基本列の関係} (1-2)より
 		\begin{eqnarray*}
 		\textrm{Trans}(M)[n] = s_1 D_{M_{1,j_{-1}}}(t_3 + (D_{M_{1,j_0}} t_4) \times (n+1)) b_1
 		\end{eqnarray*}
@@ -3984,19 +3981,12 @@ M & \mapsto & \textrm{LastStep}(M)
 		\begin{indented}
 			\item \(j_0\)が非\(M\)許容であることから\((1,j_0-1) <_M^{\textrm{Next}} (1,j_0) <_M^{\textrm{Next}} (1,j_0+1)\)である。
 			\item \(M_{1,j_1} > M_{1,j_{-2}} \geq 0\)より\(M\)は条件(I)と(II)のいずれも満たさない。従って\(M\)は条件(IV)か(V)を満たすので\(M_{1,j_0}+1 \geq M_{1,j_1}\)となり、\(L_{1,j_0} = M_{1,j_0} \geq M_{1,j_1}-1 = L_{1,j_1}\)となる。
-		\end{indented}
-	\end{indented}
-	\((1,j_0) <_M^{\textrm{Next}} (1,j_1)\)でない。従って\(j_0+1 < j_1\)となるので、\((1,j_0-1) <_{L_1}^{\textrm{Next}} (1,j_0) <_{L_1}^{\textrm{Next}} (1,j_0+1)\)である。従って\(j_0\)は非\(L_1\)許容である。
-	\begin{indented}
-		\item
-		\begin{indented}
+			\item \((1,j_0) <_M^{\textrm{Next}} (1,j_1)\)でない。従って\(j_0+1 < j_1\)となるので、\((1,j_0-1) <_{L_1}^{\textrm{Next}} (1,j_0) <_{L_1}^{\textrm{Next}} (1,j_0+1)\)である。従って\(j_0\)は非\(L_1\)許容である。
 			\item 以上より\(L_1\)は条件(II)か(IV)を満たす。\qedhere
 		\end{indented}
 		\item
 		\item (5)
-	\end{indented}
-	\(\textrm{Lng}(L_n)-1 = j_{-2}+n(j_1-j_{-2})\)である。
-	\begin{indented}
+		\item \(\textrm{Lng}(L_n)-1 = j_{-2}+n(j_1-j_{-2})\)である。
 		\item \(j_{-2}+(n-1)(j_1-j_{-2})\)が非\(L_n\)許容であると仮定し矛盾を導く。
 		\begin{indented}
 			\item \(j_{-2}+(n-1)(j_1-j_{-2})\)が非\(L_n\)許容より\((1,j_{-2}+(n-1)(j_1-j_{-2})-1) <_{L_n}^{\textrm{Next}} (1,j_{-2}+(n-1)(j_1-j_{-2}))\)であるので、
@@ -4051,7 +4041,7 @@ M & \mapsto & \textrm{LastStep}(M)
 			\item \(n_{J_1} = j_1-j'_{-2}\)である。
 		\end{indented}
 		\item 任意の\(J \in \mathbb{N}\)に対し、\(0 < J < J_1\)ならば、\(n_J+j'_{-2} > n_0+j'_{-2} = j'_{-2} \geq j_{-2}\)であり、\((0,n_J) \leq_{\textrm{Red}(N)} (0,n_{J_1}) = (0,j_1-j'_{-2})\)と\nameref{直系先祖のRed不変性}より\((0,n_J) \leq_N (0,j_1-j'_{-2})\)すなわち\((0,n_J+j'_{-2}) \leq_M (0,j_1)\)であるので、\((1,j_{-2}) <_M^{\textrm{Next}} (1,j_1)\)と\nameref{親の基本性質} (2)より\(M_{1,n_J+j'_{-2}} \geq M_{1,j_1}\)である。
-		\item \(J'_1 := \textrm{Lng}(\textrm{RightAnces}(N)-1\)と置く。
+		\item \(J'_1 := \textrm{Lng}(\textrm{RightAnces}(N))-1\)と置く。
 		\item \(\textrm{Red}(N)\)が単項であるので、\(\textrm{RightAnces}\)の再帰的定義より一意な\(n' \in \mathbb{N}\)が存在して以下が成り立つ：
 		\begin{indented}
 			\item \(\textrm{RightAnces}(N) = (\textrm{Red}(N)_{1,n'_{J'}})_{J'=0}^{J'_1}\)である。
@@ -4141,7 +4131,7 @@ M & \mapsto & \textrm{LastStep}(M)
 			\item \(\textrm{Red}(N)\)が強単項であることから、\(\textrm{Br}(\textrm{Red}(N))\)は降順である。
 		\end{indented}
 		\item 以上より、「\(j_{-2}-j_{-1} < \textrm{Joints}(\textrm{Red}(N))_{J_1}\)」または「\(j_{-2}-j_{-1} = \textrm{Joints}(\textrm{Red}(N))_{J_1}\)かつ\(\textrm{Red}(N)_{0,j_1-j_{-1}} = \textrm{Red}(N)_{1,j_1-j_{-1}}\)かつ\(\textrm{Br}(\textrm{Red}(N))\)が降順」である。
-		\item 従って\((D_{M_{1,j_{-1}}} s'_1,D_{M_{1,j_1}} 0,b'_1)\)が\(\textrm{Trans}(\textrm{Red}(N)) = c_2\)のscb分解であることと\nameref{Transの(IncrFirst,Red)不変P同変性}と\nameref{条件(V)の下での終切片とTransの関係}から\((D_{M_{1,j_{-2}}} s'_1,D_{M_{1,j_1}} 0,b'_1))\)は\(\textrm{Trans}(N')\)のscb分解である。
+		\item 従って\((D_{M_{1,j_{-1}}} s'_1,D_{M_{1,j_1}} 0,b'_1)\)が\(\textrm{Trans}(\textrm{Red}(N)) = c_2\)のscb分解であることと\nameref{Transの(IncrFirst,Red)不変P同変性}と\nameref{条件(V)の下での終切片とTransの関係}から\((D_{M_{1,j_{-2}}} s'_1,D_{M_{1,j_1}} 0,b'_1)\)は\(\textrm{Trans}(N')\)のscb分解である。
 		\item
 		\item (3)
 		\item \nameref{簡約性の切片への遺伝性}と\nameref{単項性の始切片への遺伝性}より\(\textrm{Pred}(\textrm{Red}(N))\)は簡約かつ単項である。また\nameref{RedとPredの可換性}より\(\textrm{Red}(\textrm{Pred}(N)) = \textrm{Pred}(\textrm{Red}(N))\)である。
@@ -4193,7 +4183,7 @@ M & \mapsto & \textrm{LastStep}(M)
 		\item 以上より(1)と(3)が従う。
 		\item
 		\item (2)
-		\item \(j_{-2} < j_0\)または\(j_0\)が\(M\)許容であるので、\(L'_{j_1-j_{-2}} = (M_{0,j_1},M_{1,j_{-2}}) = (N'_{0,j_1-j_{-2}},N'_{1,0})\)と\(j_0\)の\(M\)許容性と\nameref{条件(III)～(V)の下での右端の置き換えとTransの関係}より、\((D_{M_{1,j_{-2}}} s'_1,D_{M_{1,j_{-2}}} 0,b'_1))\)は\(\textrm{Trans}(L')\)のscb分解である。
+		\item \(j_{-2} < j_0\)または\(j_0\)が\(M\)許容であるので、\(L'_{j_1-j_{-2}} = (M_{0,j_1},M_{1,j_{-2}}) = (N'_{0,j_1-j_{-2}},N'_{1,0})\)と\(j_0\)の\(M\)許容性と\nameref{条件(III)～(V)の下での右端の置き換えとTransの関係}より、\((D_{M_{1,j_{-2}}} s'_1,D_{M_{1,j_{-2}}} 0,b'_1)\)は\(\textrm{Trans}(L')\)のscb分解である。
 		\item
 		\item (4)
 		\item \(M\)が条件(A)を満たしかつ\((1,j_{-2}) <_M^{\textrm{Next}} (1,j_1)\)であることから\(M_{1,j_{-2}} = M_{1,j_1}-1\)である。
@@ -4307,7 +4297,7 @@ M & \mapsto & \textrm{LastStep}(M)
 			\item となる。
 		\end{indented}
 		\item 以上より「\(j_{-2}-j_{-3} < m_0\)」または「\(j_{-2}-j_{-3} = m_0\)かつ\(\textrm{Red}(N)_{0,m_1} = \textrm{Red}(N)_{1,m_1}\)かつ\(\textrm{Br}(\textrm{Red}(N))\)が降順」である。
-		\item 従って\((D_{M_{1,j_{-3}}} s'_1,c_2,b'_1)\)が\(\textrm{Trans}(N)\)のscb分解であることと\nameref{Transの(IncrFirst,Red)不変P同変性}と\nameref{条件(V)の下での終切片とTransの関係}から\((D_{M_{1,j_{-2}}} s'_1,c_2,b'_1\)は\(\textrm{Trans}(N')\)のscb分解である。
+		\item 従って\((D_{M_{1,j_{-3}}} s'_1,c_2,b'_1)\)が\(\textrm{Trans}(N)\)のscb分解であることと\nameref{Transの(IncrFirst,Red)不変P同変性}と\nameref{条件(V)の下での終切片とTransの関係}から\((D_{M_{1,j_{-2}}} s'_1,c_2,b'_1)\)は\(\textrm{Trans}(N')\)のscb分解である。
 		\item
 		\item \((1,j_0) \leq_M (1,j_1)\)でなくかつ\((1,j_{-2}) <_M^{\textrm{Next}} (1,j_1)\)かつ\((0,j_0) <_M^{\textrm{Next}} (0,j_1)\)より\(j_{-2} < j_0 < j_1\)である。従って\(j_1-1-j_{-3} \geq j_0-j_{-3} > j_{-2}-j_{-3} \geq 0\)であるので、\(\textrm{Red}(N)\)の強単項性と\nameref{強単項性の切片への遺伝性}より\(\textrm{Pred}(\textrm{Red}(N))\)は強単項である。
 		\item \(\textrm{Adm}_{\textrm{Red}(N)}(j_{-2}-j_{-3}) = 0\)かつ\(j_{-2}-j_{-3} < j_1-1-j_{-3}\)より\(\textrm{Adm}_{\textrm{Pred}(\textrm{Red}(N))}(j_{-2}-j_{-3}) = 0\)である。従って\(j_{-2}-j_{-3} \leq \textrm{TrMax}(\textrm{Pred}(\textrm{Red}(N)))\)である。
@@ -4325,7 +4315,7 @@ M & \mapsto & \textrm{LastStep}(M)
 			\item
 			\item \(j_{-2}-j_{-3} = m'_0\)ならば、\(\textrm{Pred}(\textrm{Red}(N))_{0,m'_1} = \textrm{Pred}(\textrm{Red}(N))_{1,m'_1}\)かつ\(\textrm{Br}(\textrm{Pred}(\textrm{Red}(N)))\)が降順であることを示す。
 			\begin{indented}
-				\item \(\textrm{Pred}(\textrm{Red}(N))\)が強単項であるので、\(\textrm{Br}(\textrm{Pred}(\textrm{Red}(N))\)は降順である。
+				\item \(\textrm{Pred}(\textrm{Red}(N))\)が強単項であるので、\(\textrm{Br}(\textrm{Pred}(\textrm{Red}(N)))\)は降順である。
 				\item \nameref{Predが1で表されること}と\nameref{Pと基本列の関係}から\(J_1-1 \leq J_0 \leq J_1\)であるので、\nameref{FirstNodesとJointsの単調性}より
 				\begin{eqnarray*}
 				m_0 = \textrm{Joints}(\textrm{Red}(N))_{J_1} & \leq & \textrm{Joints}(\textrm{Red}(N))_{J_0} = \textrm{Joints}(\textrm{Pred}(\textrm{Red}(N)))_{J_0} =m'_0 \\
@@ -4336,7 +4326,7 @@ M & \mapsto & \textrm{LastStep}(M)
 				\item \(m'_1 \leq m_1\)と\(\textrm{Red}(N)_{0,m'_1} = \textrm{Red}(N)_{0,m_1}\)より、\(\textrm{Br}(\textrm{Red}(N))\)が降順であることから\(\textrm{Red}(N)_{1,m'_1} \geq \textrm{Red}(N)_{1,m_1} = \textrm{Red}(N)_{0,m_1} = \textrm{Red}(N)_{0,m'_1}\)である。一方で\nameref{簡約性と係数の基本性質}より\(\textrm{Red}(N)_{0,m'_1} \geq \textrm{Red}(N)_{1,m'_1}\)であるので、\(\textrm{Red}(N)_{0,m'_1} = \textrm{Red}(N)_{1,m'_1}\)すなわち\(\textrm{Pred}(\textrm{Red}(N))(N)_{0,m'_1} = \textrm{Pred}(\textrm{Red}(N))_{1,m'_1}\)である。
 			\end{indented}
 			\item 以上より「\(j_{-2}-j_{-3} < m'_0\)」または「\(j_{-2}-j_{-3} = m'_0\)かつ\(\textrm{Pred}(\textrm{Red}(N))_{0,m'_1} = \textrm{Pred}(\textrm{Red}(N))_{1,m'_1}\)かつ\(\textrm{Br}(\textrm{Pred}(\textrm{Red}(N)))\)が降順」である。
-			\item 従って\((D_{M_{1,j_{-3}}} s'_1,c_1,b'_1)\)が\(\textrm{Trans}(\textrm{Pred}(N))\)のscb分解であることと\nameref{Transの(IncrFirst,Red)不変P同変性}と\nameref{RedとPredの可換性}と\nameref{条件(V)の下での終切片とTransの関係}から\((D_{M_{1,j_{-2}}} s'_1,c_1,b'_1\)は\(\textrm{Trans}(\textrm{Pred}(N'))\)のscb分解である。
+			\item 従って\((D_{M_{1,j_{-3}}} s'_1,c_1,b'_1)\)が\(\textrm{Trans}(\textrm{Pred}(N))\)のscb分解であることと\nameref{Transの(IncrFirst,Red)不変P同変性}と\nameref{RedとPredの可換性}と\nameref{条件(V)の下での終切片とTransの関係}から\((D_{M_{1,j_{-2}}} s'_1,c_1,b'_1)\)は\(\textrm{Trans}(\textrm{Pred}(N'))\)のscb分解である。
 		\end{indented}
 		\item
 		\item \(\textrm{TrMax}(\textrm{Red}(N)) = j_1-1-j_{-3}\)とする。
@@ -4485,11 +4475,8 @@ M & \mapsto & \textrm{LastStep}(M)
 		\end{indented}
 		\item
 		\item \(j_{-3} < j_{-1}\)とする。
-	\end{indented}
-	\nameref{条件(III)か(IV)の下での各種scb分解}より、ある\((s'_0,s'_1,s'_2,b'_2,b'_1,b'_0) \in (\Sigma^{< \omega})^6\)が存在して以下を満たす：
-	\begin{indented}
-		\item
 		\begin{penumerate}
+			\item[] \nameref{条件(III)か(IV)の下での各種scb分解}より、ある\((s'_0,s'_1,s'_2,b'_2,b'_1,b'_0) \in (\Sigma^{< \omega})^6\)が存在して以下を満たす：
 			\item \((s'_0,\textrm{Trans}((M_j)_{j=j_{-3}}^{j_1}),b'_0)\)は\(\textrm{Trans}(M)\)のscb分解である。
 			\item \((D_{M_{1,j_{-3}}} s'_1,c_2,b'_1)\)は\(\textrm{Trans}((M_j)_{j=j_{-3}}^{j_1})\)のscb分解である。
 			\item \((s'_2,D_{M_{1,j_1}} 0,b'_2)\)は\(c_2\)のscb分解である。
@@ -4507,7 +4494,7 @@ M & \mapsto & \textrm{LastStep}(M)
 			\textrm{Trans}(M)[n-1] & = & s'_0 D_{M_{1,j_{-3}}} (s'_1 s'_2 D_{M_{1,j_1}-1})^n 0 (b'_2 b'_1)^n b'_0 = s'_0 D_{M_{1,j_{-3}}} (s'_1 s'_2 D_{M_{1,j_{-2}}})^n 0 (b'_2 b'_1)^n b'_0\\
 			& = & \textrm{Trans}(L_n) = \textrm{Trans}(M[n+1][1]^{j_1-1-j_{-2}})
 			\end{eqnarray*}
-			\item[] である。従って\((s',c'_2,b')\)は\(\textrm{Trans}(M)[n-1]\)のscb分解である。 \qedhere\NoEndMark
+			\item[] である。従って\((s',c'_2,b')\)は\(\textrm{Trans}(M)[n-1]\)のscb分解である。\qedhere\NoEndMark
 		\end{penumerate}
 	\end{indented}
 \end{hideableproof}
@@ -4555,7 +4542,7 @@ M & \mapsto & \textrm{LastStep}(M)
 		\item \nameref{標準形の直系先祖による切片の簡約化の強単項性}より\(\textrm{Red}(N)\)は強単項である。
 		\item \nameref{Transの(IncrFirst,Red)不変P同変性}と\nameref{右端第2基点のMarkの基本性質}と\nameref{MarkのTransによる表示}から
 		\begin{eqnarray*}
-		D_v(t_2 + D_{M_{1,j_1}} 0) = c_2 = \textrm{Mark}(M,j_{-1} = \textrm{Trans}(N) = \textrm{Trans}(\textrm{Red}(N))
+		D_v(t_2 + D_{M_{1,j_1}} 0) = c_2 = \textrm{Mark}(M,j_{-1}) = \textrm{Trans}(N) = \textrm{Trans}(\textrm{Red}(N))
 		\end{eqnarray*}
 		\item である。
 		\item \(J_1 := \textrm{Lng}(\textrm{Br}(\textrm{Red}(N)))-1\)と置く。
@@ -4793,7 +4780,7 @@ M & \mapsto & \textrm{LastStep}(M)
 
 \subsection{条件(VI)の下での展開規則}
 
-\begin{proposition}[条件(V)の下での\(\textrm{Trans}\)と基本列の交換関係]\label{条件(VI)の下でのTransと基本列の交換関係}
+\begin{proposition}[条件(VI)の下での\(\textrm{Trans}\)と基本列の交換関係]\label{条件(VI)の下でのTransと基本列の交換関係}
 	任意の\(M \in ST_{\textrm{PS}} \cap PT_{\textrm{PS}}\)と\(n \in \mathbb{N}_{+}\)に対し、\(\textrm{Trans}\)の再帰的定義中に導入した記号を用い、\(j_0\)が\(M\)許容ならば\(m_n := n-2\)と置き、\(j_0\)が非\(M\)許容ならば\(m_n := n-1\)と置くと、\(j_1 > 1\)かつ\(M\)が条件(VI)を満たすならば\footnotemark{}、以下が成り立つ：
 	\begin{penumerate}
 		\item \(m_n = -1\)ならば、ある\(k \in \mathbb{N}\)が存在して\(1 < k \leq M_{1,j_1}+1\)かつ\(\textrm{Trans}(M[n]) = \textrm{Trans}(M)[0]^k\)である。
@@ -5171,6 +5158,8 @@ M & \mapsto & \textrm{LastStep}(M)
 	\end{indented}
 \end{hideableproof}
 
+以下、\cite{buc1}における\(OT\)と\(T_{\textrm{B}}\)の共通部分を\(OT_{\textrm{B}}\)と置く。
+
 \begin{lemma}[順序数項の再帰構造]\label{順序数項の再帰構造}
 	任意の\(t \in OT_{\textrm{B}}\)と\(c \in T_{\textrm{B}}\)と\(s,b \in \Sigma^{< \omega}\)に対し、\((s,c,b\))が\(t\)のscb分解であるならば、\(c\)は順序数項である。
 	となる。
@@ -5331,7 +5320,7 @@ M & \mapsto & \textrm{LastStep}(M)
 	\begin{indented}
 		\item 以下では\nameref{順序数項の基本例}を断りなく用いる。
 		\item
-		\item \(k_0 := \min \{k \in \mathbb{N} \mid M \in S_kT_{\textrm{PS}}\)と置く\footnote{\(ST_{\textrm{PS}} = \bigcup_{k \in \mathbb{N}} S_kT_{\textrm{PS}}\)より\(\min\)は存在する。}。
+		\item \(k_0 := \min \{k \in \mathbb{N} \mid M \in S_kT_{\textrm{PS}}\}\)と置く\footnote{\(ST_{\textrm{PS}} = \bigcup_{k \in \mathbb{N}} S_kT_{\textrm{PS}}\)より\(\min\)は存在する。}。
 		\item \(k_0\)に関する数学的帰納法で示す。
 		\item \(k_0 = 0\)とする。
 		\begin{indented}
@@ -5416,7 +5405,7 @@ M & \mapsto & \textrm{LastStep}(M)
 			\item \(N\)が複項であるとする。
 			\begin{indented}
 				\item \(J_1 := \textrm{Lng}(P(N))-1\)と置く。
-				\item \nameref{Pの各成分の非複項性}から\(J_1 > 0\)である。\(\textrm{Pred}(N) \neq M = N[n]\)より\(\textrm{Lng}(P(N)_{J_1}) > 1\)である。従って\nameref{Pと基本列の関係} (2)から\(P(M) = P(N[n]) = (P(N)_J)_{J=0}^{J_1-1}) \oplus_{\mathbb{N}^2} P(P(N)_{J_1}[n])\)である。
+				\item \nameref{Pの各成分の非複項性}から\(J_1 > 0\)である。\(\textrm{Pred}(N) \neq M = N[n]\)より\(\textrm{Lng}(P(N)_{J_1}) > 1\)である。従って\nameref{Pと基本列の関係} (2)から\(P(M) = P(N[n]) = (P(N)_J)_{J=0}^{J_1-1} \oplus_{T_{\textrm{PS}}} P(P(N)_{J_1}[n])\)である。
 				\item \(J_0 := \textrm{Lng}(P(P(N)_{J_1}[n]))-1\)と置く。
 				\item 写像
 				\begin{eqnarray*}
@@ -5521,7 +5510,7 @@ M & \mapsto & \textrm{LastStep}(M)
 
 そんなこんなで休憩時間をほぼ全てペア数列の停止性の証明を書き切ることに費やし、もう2018年11月中旬に差し掛かってしまいました。途中で何度か「本当に自分の解析結果はあっているのだろうか？」と不安になることもありました。原始数列の時と違ってペア数列は書き切る前に多少先人の解析結果を参考にしようと思ってGoogology wikiを調べてみたのですが、驚くことにそれらは数学的な証明に全く役に立たないものばかりでした。びっくりです。解析に使っている「\(\psi\)」という記号の定義が書いていない。最初はBuchholzの\(\psi\)関数かと思いきや、自分の解析結果と全く違うものばかり。どうもUNOCFとかBashicu's OCFといった未定義なものを使っているようです。未定義なだけならまだしも、その性質を調べれば多少参考になるかと思って調べてみると、表記系と順序数崩壊関数を混同している人が海外には大量にいるということが分かっただけでした。
 
-そんな中、唯一参考になったのはKurohaKafkaさんの解析でした。Buchholzの\(\psi\)関数を用いており、解析結果も自分のものと大体あっていたので安心しました。ずれていたのは僕の解析が標準形でないペア数列を用いて書いていたためです。当時ペア数列が標準形か否かの判定方法を最初は知らなかったため、標準形に直す際にKurohaKafkaさんの解析結果やkoteitanさんとふぃっしゅっしゅさんからの教えをいただき、非常に助かりました。ここに名前を挙げた方々を始めとするお世話になった方々に、今一度感謝の意を表明します。
+そんな中、唯一参考になったのはKurohaKafkaさんの解析でした。Buchholzの\(\psi\)関数を用いており、解析結果も自分のものと大体あっていたので安心しました。ずれていたのは僕の解析が標準形でないペア数列を用いて書いていたためです。当時ペア数列が標準形か否かの判定方法を最初は知らなかったため、標準形に直す際にKurohaKafkaさんの解析結果やkoteitanさんとふぃっしゅっしゅさんからの教えをいただき、非常に助かりました。更にNaruyokoさんには大量のミスを直していただきました。ここに名前を挙げた方々を始めとするお世話になった方々に、今一度感謝の意を表明します。
 
 \fi
 

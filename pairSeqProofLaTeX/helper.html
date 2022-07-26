@@ -47,5 +47,8 @@
   <h2>Nameref</h2>
   <textarea id="namerefin" onchange="document.getElementById('namerefout').value=convertnameref(document.getElementById('namerefin').value)"></textarea>
   <textarea id="namerefout" readonly></textarea>
+  <h2>Mismatch check</h2>
+  <textarea id="mismatchin" onchange="document.getElementById('mismatchout').innerHTML=detectmismatch(document.getElementById('mismatchin').value)"></textarea>
+  <div id="mismatchout" style="border:1px black solid;padding:4px;white-space:nowrap;overflow-x:auto;"></div>
 </body>
 </html>

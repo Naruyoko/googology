@@ -241,3 +241,70 @@ function convertnameref(input){
   var [_,label]=/\[\[#([^|]+).+?\]\]/u.exec(input).map(removeLeadingAndTrailingWhitespace);
   return `\\nameref{${label}}`;
 }
+/**
+ * @param {string} s 
+ * @returns {string}
+ */
+function detectmismatch(s){
+  var ll=s
+  .split("\n")
+  .map((l,i)=>[l,i+1]);
+  var r="";
+  r+="<h3>Mismatches</h3>"+ll
+  .filter(([l,i])=>!["{| class=wikitable","|}"].includes(l))
+  .map(([l,i])=>
+    [l,i,[
+    [/\\\(/g,/\\\)/g,"\\(","\\)"],
+    [/\(/g,/\)/g,"(",")"],
+    [/\\underline\{\(\}/g,/\\underline\{\)\}/g,"u(","u)"],
+    [/\[/g,/\]/g,"[","]"],
+    [/\\\{/g,/\\\}/g,"\\{","\\}"],
+    [/\{/g,/\}/g,"{","}"]]
+    .map(([s,t,u,v])=>[u,v,(l.match(s)?.length||0)-(l.match(t)?.length||0)])
+    .filter(([u,v,n])=>n)
+    .map(([u,v,n])=>n>0?n+u:-n+v)
+    .join(",")])
+  .filter(([l,i,m])=>m)
+  .map(([l,i,m])=>`${i} ${m}: <input value="${l}" style="width:80%">`)
+  .join("<br>");
+  var m1=new Map();
+  s.match(/<span id=".+?">.+?<\/span>/g)
+  .forEach(e=>{var [a,b]=e.slice(10,-7).split("\">",2);m1.has(a)?m1.get(a).push(b):m1.set(a,[b])});
+  r+="<h3>Theorem declarations</h3>"+[...m1]
+  .map(([a,b])=>`<input value="${a}" style="width:40%">: `+
+    b.map(e=>`<input value="${e}" style="width:40%">`)
+    .join(""))
+  .join("<br>");
+  r+="<h3>Theorem declaration name mismatches</h3>"+[...m1]
+  .map(([a,b])=>[a,b.filter(e=>a!=e
+    .replaceAll("\\(","")
+    .replaceAll("\\)","")
+    .replaceAll("<_M^{\textrm{Next}}","Next")
+    .replaceAll("<_M^{\textrm{NextAdm}}","NextAdm")
+    .replace(/\\textrm\{(.+?)\}/g,"$1"))])
+  .filter(([a,b])=>b.length)
+  .map(([a,b])=>`<input value="${a}" style="width:40%">: `+
+    b.map(e=>`<input value="${e}" style="width:40%">`)
+    .join(""))
+  .join("<br>");
+  var m2=new Map();
+  s.match(/\[\[#.+?\|.+?\]\]/g)
+  .forEach(e=>{var [a,b]=e.slice(3,-2).split("|",2);m2.has(a)?m2.get(a).add(b):m2.set(a,new Set([b]))});
+  r+="<h3>Theorem references</h3>"+[...m2]
+  .map(([a,b])=>`<input value="${a}" style="width:40%">: `+
+    [...b].map(e=>`<input value="${e}" style="width:40%">`)
+    .join(""))
+  .join("<br>");
+  r+="<h3>Theorem reference mismatches</h3>"+[...m2]
+  .map(([a,b])=>[a,[...b].filter(e=>!m1.has(a)||!m1.get(a).includes(e))])
+  .filter(([a,b])=>b.length)
+  .map(([a,b])=>`<input value="${a}" style="width:40%">: `+
+    b.map(e=>`<input value="${e}" style="width:40%">@`+ll
+      .filter(([l,i])=>l.indexOf(`[[#${a}|${e}]]`)!=-1)
+      .map(([l,i])=>i)
+      .join(",")
+    )
+    .join(""))
+  .join("<br>");
+  return r;
+}
