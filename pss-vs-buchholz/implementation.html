@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Pair Sequence System &rarr; Buchholz's ordinal notation Implementation</title>
+  <script src="./implementation.js"></script>
+  <style>
+    .iobox {
+      width:calc(100% - 8px);
+      text-align:left;
+      white-space:pre;
+      margin:0;
+      font-family: 'Courier New', Courier, monospace;
+      resize:both;
+      font-family:monospace;
+      font-size:13.5px;
+      padding:4px;
+    }
+    #input {
+      height:100px;
+    }
+    #output {
+      height:200px;
+    }
+    kbd {
+      font-family: 'Courier New', Courier, monospace;
+    }
+    var {
+      font-weight: bold;
+      font-style: italic;
+      font-family: 'Courier New', Courier, monospace;
+    }
+  </style>
+</head>
+<body>
+  <h1>Pair Sequence System &rarr; Buchholz's ordinal notation Implementation</h1>
+  <form name="form">
+    <div id="options">
+      <label for="writeCommonPair">Use common form for PSS</label><input id="writeCommonPair" type="checkbox" oninput="requestCompute()" checked>
+      <label for="writeCommonBuchholz">Use common form for Buchholz</label><input id="writeCommonBuchholz" type="checkbox" oninput="requestCompute()" checked>
+    </div>
+    <textarea id="input" class="iobox" oninput="requestCompute()"></textarea>
+  </form>
+  <textarea id="output" class="iobox" readonly></textarea>
+  <h2>How to use</h2>
+  <div>
+    A matrix can be written in the following formats:
+    <ul>
+      <li><kbd>(<var>a</var>,<var>b</var>)(<var>c</var>,<var>d</var>)&ctdot;(<var>y</var>,<var>z</var>)</kbd></li>
+      <li><kbd>((<var>a</var>,<var>b</var>),(<var>c</var>,<var>d</var>),&ctdot;,(<var>y</var>,<var>z</var>))</kbd></li>
+    </ul>
+    A term in Buchholz's ordinal notation can be written as follows:
+    <ul>
+      <li><kbd>0</kbd></li>
+      <li>A principal term as: <kbd>D_<var>u</var> <var>a</var></kbd>; <kbd>D</kbd> may be replaced with <kbd>p</kbd>, <kbd>_</kbd> is optional, and the space is also optional if not immediately followed by a number.</li>
+      <li>A sum as: <kbd>(<var>a<sub>0</sub></var>,&ctdot;,<var>a<sub>k</sub></var>)</kbd></li>
+      <li><kbd>1</kbd> as abbreviation of <kbd>D_0 0</kbd>, natural number <kbd><var>n</var></kbd> for <kbd>(1,&ctdot;,1)</kbd> with <var>n</var> <kbd>1</kbd>s, and <kbd>w</kbd> or <kbd>&omega;</kbd> for <kbd>D_0 1</kbd></li>
+      <li><kbd>&Omega;_<var>n</var></kbd> for positive integer <var>n</var> as abbreviation of <kbd>D_<var>n</var> 0</kbd> and <kbd>&Omega;</kbd> with no number immediately following it for <kbd>&Omega;_1</kbd>; <kbd>&Omega;</kbd> may be replaced with <kbd>W</kbd> and <kbd>_</kbd> is optional.</li>
+      <li><kbd>&oplus;</kbd> (or <kbd>+</kbd>) and <kbd>&times;</kbd> (or <kbd>*</kbd>) for the corresponding operations; <kbd>&times;</kbd> taking precedence over <kbd>&oplus;</kbd> and both operations break out of <kbd>D_<var>u</var> <var>a</var></kbd></li>
+      <li><kbd>()</kbd> to group a term, to write terms such as <kbd>D_0 (D_1 0,D_1 0)</kbd> as <kbd>D_0(&Omega;&times;2)</kbd></li>
+    </ul>
+    Write <var>i</var>, <var>j</var>, <var>k</var>, <var>m</var>, <var>n</var> for integers; <var>a</var>=<kbd><var>a<sub>0</sub></var>;&ctdot;;<var>a<sub>l</sub></var></kbd> for a sequence of integers; <var>M</var> for a matrix; <var>Q</var>=<kbd><var>Q<sub>0</sub></var>;&ctdot;;<var>Q<sub>k</sub></var></kbd> for a sequence of matrices; <var>t</var> for a term in Buchholz's ordinal notation; <var>s</var>, <var>c</var>, <var>b</var> for strings.<br>
+    Each line in the input is written as <kbd><var>operation</var> <var>var1</var>;<var>var2</var>;&ctdot;</kbd>, <var>operation</var> case insensitive. Following operations are implemented:
+    <ul>
+      <li><kbd>Parent <var>M</var>;<var>i</var>;<var>j</var></kbd> - Outputs the integer <var>k</var> such that (<var>i</var>,<var>k</var>)&lt;<sup>Next</sup><sub><var>M</var></sub>(<var>i</var>,<var>j</var>)</li>
+      <li><kbd>Parent <var>M</var>;<var>i</var>;<var>j</var>;<var>k</var></kbd> - Outputs whether (<var>i</var>,<var>k</var>)&lt;<sup>Next</sup><sub><var>M</var></sub>(<var>i</var>,<var>j</var>)</li>
+      <li><kbd>Ancestor <var>M</var>;<var>i</var>;<var>j</var></kbd> - Outputs the integers <var>k<sub>0</sub></var>&gt;<var>k<sub>1</sub></var>&gt;&ctdot; such that (<var>i</var>,<var>k<sub>l</sub></var>)&leq;<sub><var>M</var></sub>(<var>i</var>,<var>j</var>)</li>
+      <li><kbd>Ancestor <var>M</var>;<var>i</var>;<var>j</var>;<var>k</var></kbd> - Outputs whether (<var>i</var>,<var>k</var>)&leq;<sub><var>M</var></sub>(<var>i</var>,<var>j</var>)</li>
+      <li><kbd>Pred <var>M</var></kbd> - Outputs Pred(<var>M</var>)</li>
+      <li><kbd>Derp <var>M</var></kbd> - Outputs Derp(<var>M</var>)</li>
+      <li><kbd>[] <var>M</var>;<var>a</var></kbd> - Outputs <var>M</var>[<var>a<sub>0</sub></var>];&ctdot;;[<var>a<sub>l</sub></var>]</li>
+      <li><kbd>IncrFirst <var>M</var></kbd> - Outputs IncrFirst(<var>M</var>)</li>
+      <li><kbd>Classify <var>M</var></kbd> - Outputs <var>M</var> is in which of <i>ZT</i><sub>PS</sub>, <i>PT</i><sub>PS</sub>, or <i>MT</i><sub>PS</sub></li>
+      <li><kbd>P <var>M</var></kbd> - Outputs <i>P</i>(<var>M</var>)</li>
+      <li><kbd>Unadmit <var>M</var>;<var>j</var></kbd> - Outputs whether <var>M</var> unadmits <var>j</var></li>
+      <li><kbd>Admit <var>M</var>;<var>j</var></kbd> - Outputs whether <var>M</var> admits <var>j</var></li>
+      <li><kbd>Admitted <var>M</var></kbd> - Outputs &#8469;<sub><var>M</var></sub></li>
+      <li><kbd>Adm <var>M</var>;<var>j</var></kbd> - Outputs Adm<sub><var>M</var></sub>(<var>j</var>)</li>
+      <li><kbd>Marked <var>M</var>;<var>m</var></kbd> - Outputs whether (<var>M</var>,<var>m</var>)&in;<i>T</i><sub>PS</sub><sup>Marked</sup></li>
+      <li><kbd>MarkedReduced <var>M</var>;<var>m</var></kbd> - Outputs whether (<var>M</var>,<var>m</var>)&in;<i>RT</i><sub>PS</sub><sup>Marked</sup></li>
+      <li><kbd>IdxSum <var>Q</var></kbd> - Outputs IdxSum(<var>Q</var>)</li>
+      <li><kbd>TrMax <var>M</var></kbd> - Outputs TrMax(<var>M</var>)</li>
+      <li><kbd>Br <var>M</var></kbd> - Outputs Br(<var>M</var>)</li>
+      <li><kbd>FirstNodes <var>M</var></kbd> - Outputs FirstNodes(<var>M</var>)</li>
+      <li><kbd>Joints <var>M</var></kbd> - Outputs Joints(<var>M</var>)</li>
+      <li><kbd>Red <var>M</var></kbd> - Outputs Red(<var>M</var>)</li>
+      <li><kbd>Reduced <var>M</var></kbd> - Outputs whether <var>M</var>&in;<i>RT</i><sub>PS</sub></li>
+      <li><kbd>Standard <var>M</var></kbd> - Outputs whether <var>M</var>&in;<i>ST</i><sub>PS</sub></li>
+      <li><kbd>Standard <var>M</var>;<var>k</var></kbd> - Outputs whether <var>M</var>&in;<i>S</i><sub><var>k</var></sub><i>T</i><sub>PS</sub></li>
+      <li><kbd>Descending <var>Q</var></kbd> - Outputs whether <var>Q</var> is descending</li>
+      <li><kbd>Classify <var>t</var></kbd> - Outputs <var>t</var> is in which of {0}, <i>PT</i><sub>B</sub>, or <i>MT</i><sub>B</sub></li>
+      <li><kbd>Standard <var>t</var></kbd> - Outputs whether <var>t</var>&in;<i>OT</i><sub>B</sub></li>
+      <li><kbd>[] <var>t</var>;<var>a</var></kbd> - Outputs <var>t</var>[<var>a<sub>0</sub></var>];&ctdot;;[<var>a<sub>l</sub></var>]</li>
+      <li><kbd>P <var>t</var></kbd> - Outputs <i>P</i>(<var>t</var>)</li>
+      <li><kbd>RightNodes <var>t</var></kbd> - Outputs RightNodes(<var>t</var>)</li>
+      <li><kbd>scb <var>t</var>;<var>c</var></kbd> - Outputs <var>s</var> and <var>b</var> such that (<var>s</var>,<var>c</var>,<var>b</var>) is a scb decomposition of <var>t</var> and if they are either type 0 scb decomposition, type 1 scb decomposition, or neither, if one exists</li>
+      <li><kbd>scb <var>t</var>;<var>s</var>;<var>c</var>;<var>b</var></kbd> - Outputs whether (<var>s</var>,<var>c</var>,<var>b</var>) is the scb decomposition of <var>t</var> and if they are either type 0 scb decomposition, type 1 scb decomposition, or neither</li>
+      <li><kbd>scb? <var>t</var></kbd> - Outputs <var>t</var> is either type 0 scb decomposable, type 1 scb decomposable, or neither</li>
+      <li><kbd>scb! <var>t</var></kbd> - Outputs <var>s</var>, <var>c</var>, and <var>b</var> such that (<var>s</var>,<var>c</var>,<var>b</var>) is either the type 0 or the type 1 scb decomposition of <var>t</var> and which, if one exists</li>
+      <li><kbd>Marked <var>t</var>;<var>c</var></kbd> - Outputs whether (<var>t</var>,<var>c</var>)&in;<i>T</i><sub>B</sub><sup>Marked</sup></li>
+      <li><kbd>Trans <var>M</var></kbd> - Outputs Trans(<var>M</var>)</li>
+      <li><kbd>Mark <var>M</var>;<var>m</var></kbd> - Outputs Mark(<var>M</var>,<var>m</var>)</li>
+      <li><kbd>TransType <var>M</var></kbd> - Outputs <var>M</var> satisfies which of "<var>M</var>&in;<i>RT</i><sub>PS</sub> and <var>j<sub>1</sub></var>=0", "<var>M</var>&in;<i>RT</i><sub>PS</sub> and <var>M</var>&in;<i>PT</i><sub>PS</sub> and <var>j<sub>1</sub></var>&gt;0 and condition [(I)-(VI)]", "<var>M</var>&in;<i>RT</i><sub>PS</sub> and <var>M</var>&in;<i>MT</i><sub>PS</sub> and <var>j<sub>1</sub></var>&gt;0", and "not <var>M</var>&in;<i>RT</i><sub>PS</sub>"</li>
+      <li><kbd>NextAdm <var>M</var>;<var>i</var>;<var>j</var></kbd> - Outputs the integer <var>k</var> such that (<var>i</var>,<var>k</var>)&lt;<sup>NextAdm</sup><sub><var>M</var></sub>(<var>i</var>,<var>j</var>)</li>
+      <li><kbd>NextAdm <var>M</var>;<var>i</var>;<var>j</var>;<var>k</var></kbd> - Outputs whether (<var>i</var>,<var>k</var>)&lt;<sup>NextAdm</sup><sub><var>M</var></sub>(<var>i</var>,<var>j</var>)</li>
+      <li><kbd>RightAnces <var>M</var></kbd> - Outputs RightAnces(<var>M</var>)</li>
+      <li><kbd>StronglyPrincipal <var>M</var></kbd> - Outputs whether <var>M</var>&in;<i>DT</i><sub>PS</sub></li>
+      <li><kbd>LastStep <var>M</var></kbd> - Outputs LastStep(<var>M</var>)</li>
+      <li><kbd>Trans-1 <var>t</var></kbd> - Outputs Trans<sup>-1</sup>(<var>t</var>)</li>
+      <li><kbd>? <var>M</var></kbd> - Outputs <var>M</var></li>
+      <li><kbd>? <var>t</var></kbd> - Outputs <var>t</var></li>
+      <li><kbd>! <var>M</var></kbd> - Outputs Trans(<var>M</var>)</li>
+      <li><kbd>! <var>t</var></kbd> - Outputs Trans<sup>-1</sup>(<var>t</var>)</li>
+    </ul>
+  </div>
+  <div>
+    <a href="https://googology.fandom.com/ja/wiki/User_blog:P%E9%80%B2%E5%A4%A7%E5%A5%BD%E3%81%8Dbot/%E3%83%9A%E3%82%A2%E6%95%B0%E5%88%97%E3%81%AE%E5%81%9C%E6%AD%A2%E6%80%A7?action=raw" target="_blank">Definition of map <b>Trans</b> and others</a> by p進大好きbot, Retrieved 2022/07/26<br>
+    The program (implementation.js) and the site (implementation.html) under https://naruyoko.github.io/googology/pss-vs-buchholz is licensed by <a href="https://creativecommons.org/licenses/by-sa/3.0/legalcode" rel="license" target="_blank">Creative Commons Attribution-ShareAlike 3.0 Unported License</a>.
+  </div>
+  <div>Last updated: 2022/07/26</div>
+</body>
+</html>
