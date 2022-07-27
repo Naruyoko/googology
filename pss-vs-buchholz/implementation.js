@@ -1508,8 +1508,8 @@ var operations=[
   ["Trans-1","B","P",TransRev],
   ["?","P","P",function(M){return M;}],
   ["?","B","B",function(t){return t;}],
-  ["!","P","P",Trans],
-  ["!","B","B",TransRev]
+  ["!","P","B",Trans],
+  ["!","B","P",TransRev]
 ];
 var input="";
 var writeCommonPair=true;
