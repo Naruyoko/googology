@@ -170,7 +170,7 @@ Term.build=function (s,context){
         subterms.push(Term.build(scanner,PSITERMINNER));
         var nextnext=scanner.next();
         if (nextnext==","){
-          if (subterms.length>=3) throw Error("Too many terms in 三 term at position "+scanpos+" in expression "+scanner.s);
+          if (subterms.length>=3) throw Error("Too many terms in ψ term at position "+scanpos+" in expression "+scanner.s);
         }else if (nextnext==")") break;
         else throw Error("Expected a comma or closing ) at position "+(scanner.pos-1)+", instead got "+nextnext+" in expression "+scanner.s);
       }
