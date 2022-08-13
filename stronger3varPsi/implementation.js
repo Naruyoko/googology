@@ -366,7 +366,7 @@ PsiTerm.prototype.toString=function (abbreviate){
     if ((abbreviate===true||abbreviate["1"])&&this.equal(Term.ONE)) return "1";
     else if ((abbreviate===true||abbreviate["ω"])&&this.equal(Term.SMALLOMEGA)) return "ω";
     else if ((abbreviate===true||abbreviate["2ψ"])&&this.inner1.equal(Term.ZERO)){
-      if ((abbreviate===true||abbreviate["1ψ"])&&this.inner1.equal(Term.ZERO)) return "ψ("+this.inner3.toString(abbreviate)+")";
+      if ((abbreviate===true||abbreviate["1ψ"])&&this.inner2.equal(Term.ZERO)) return "ψ("+this.inner3.toString(abbreviate)+")";
       else return "ψ("+this.inner2.toString(abbreviate)+","+this.inner3.toString(abbreviate)+")";
     }else if ((abbreviate===true||abbreviate["3ψ"])) return "ψ_"+this.inner1.toStringWithImplicitBrace(abbreviate)+"("+this.inner2.toString(abbreviate)+","+this.inner3.toString(abbreviate)+")";
   }
