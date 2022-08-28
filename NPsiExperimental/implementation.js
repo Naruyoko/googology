@@ -729,10 +729,13 @@ function fund(S,T){
       else{ //4.4.2
         if (!(Term_dom_S_inner instanceof PsiTerm)) throw Error("Unexpected error");
         var c=Term_dom_S_inner.sub;
+        var d=Term_dom_S_inner.inner;
         if (equal(dom(c),Term.N)){ //4.4.2.1
           var Term_fund_S_fund_T_0=null;
-          if (isNat(T)&&(Term_fund_S_fund_T_0=new Term(fund(S,fund(T,Term.ZERO)))) instanceof PsiTerm&&equal(Term_fund_S_fund_T_0.sub,S.sub)) return "ψ("+S.sub+","+fund(S.inner,"ψ("+Term_fund_S_fund_T_0.inner+",0)")+")"; //4.4.2.1.1
-          else return "ψ("+S.sub+","+fund(S.inner,"ψ(0,0)")+")"; //4.4.2.1.2
+          if (isNat(T)&&(Term_fund_S_fund_T_0=new Term(fund(S,fund(T,Term.ZERO)))) instanceof PsiTerm&&equal(Term_fund_S_fund_T_0.sub,S.sub)){ //4.4.2.1.1
+            if (lessThan(S.inner,dom(d))) return "ψ("+S.sub+","+fund(S.inner,Term_fund_S_fund_T_0.inner)+")"; //4.4.2.1.1.1
+            else return "ψ("+S.sub+","+fund(S.inner,"ψ("+Term_fund_S_fund_T_0.inner+",0)")+")"; //4.4.2.1.1.2
+          }else return "ψ("+S.sub+","+fund(S.inner,"ψ(0,0)")+")"; //4.4.2.1.2
         }else{ //4.4.2.2
           var Term_fund_S_fund_T_0=null;
           if (isNat(T)&&(Term_fund_S_fund_T_0=new Term(fund(S,fund(T,Term.ZERO)))) instanceof PsiTerm&&equal(Term_fund_S_fund_T_0.sub,S.sub)) return "ψ("+S.sub+","+fund(S.inner,"ψ("+fund(c,Term.ZERO)+","+Term_fund_S_fund_T_0.inner+")")+")"; //4.4.2.2.1
@@ -846,6 +849,9 @@ var testTermsPre=[
   ["ψ_0(N+ψ_N(ψ_N(0)))",-1],
   ["ψ_0(N+ψ_N(ψ_{N+1}(0)))",3],
   ["ψ_0(N+ψ_N(N))",3],
+  ["ψ_0(N+ψ_N(N)+ψ_1(N))",-1],
+  ["ψ_0(N+ψ_N(N)+ψ_N(ψ_{N+ψ_N(N)}(0)))",3],
+  ["ψ_0(N+ψ_N(N)+ψ_N(N))",3],
   ["ψ_0(N+ψ_{N+1}(0))",3],
   ["ψ_0(N+ψ_{N+1}(N))",3],
   ["ψ_0(N+N)",3],
@@ -857,6 +863,14 @@ var testTermsPre=[
   ["ψ_0(N+N+ψ_N(N+N))",3],
   ["ψ_0(N+N+ψ_{N+N}(0))",3],
   ["ψ_0(N+N+ψ_{N+N}(N))",3],
+  ["ψ_0(N+N+ψ_{N+N}(N)+ψ_{N+N}(ψ_{N+ψ_N+N(N)}(0)))",3],
+  ["ψ_0(N+N+ψ_{N+N}(N)+ψ_{N+N}(ψ_{N+N+ψ_N(N)}(0)))",3],
+  ["ψ_0(N+N+ψ_{N+N}(N)+ψ_{N+N}(ψ_{N+N+ψ_N+N(N)}(0)))",3],
+  ["ψ_0(N+N+ψ_{N+N}(N)+ψ_{N+N}(N))",3],
+  ["ψ_0(N+N+ψ_{N+N}(N+N))",3],
+  ["ψ_0(N+N+ψ_{N+N}(N+N)+ψ_{N+N}(N+ψ_{N+N+ψ_N(N)}(0)))",3],
+  ["ψ_0(N+N+ψ_{N+N}(N+N)+ψ_{N+N}(N+ψ_{N+N+ψ_N+N(N)}(0)))",3],
+  ["ψ_0(N+N+ψ_{N+N}(N+N)+ψ_{N+N}(N+N))",3],
   ["ψ_0(N+N+ψ_{N+N+1}(N))",3],
   ["ψ_0(N+N+ψ_{N+N+1}(N+N))",3],
   ["ψ_0(N+N+N)",3]
