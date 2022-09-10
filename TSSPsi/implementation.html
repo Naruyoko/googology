@@ -9,10 +9,20 @@
 </head>
 <body>
   <h1>TSS-Psi Function Implementation</h1>
+  <div><a href="../index.html">Back</a></div>
   <form name=form>
-    <textarea id="input" class="inputbox" contentEditable>expand ω 2&#13;&#10;expand ψ(ψ_1^1(ψ^1(0))) 2&#13;&#10;expand ψ(ψ_1^1(ψ^2(0))) 2&#13;&#10;expand ψ(ψ_1^1(ψ^1(0))+ψ_1^1(0)) 2&#13;&#10;expand ψ(ψ_1^1(ψ^1(0))+ψ^1(ψ_1^2(ψ^1(0))+ψ_1^2(0))) 2&#13;&#10;trans ψ(ψ_1^1(ψ_2^2(ψ_1^1(0))))</textarea>
-    <ul>
-      <li>Abbreviate: <input id="abbreviate" type="checkbox" checked></li>
+    <textarea id="input" class="inputbox" contentEditable></textarea>
+    <input type="button" value="Options" onclick="toggleOptions()">
+    <ul id="options" style="display:none;">
+      <li>Abbreviate: <input id="abbreviate" type="checkbox" checked>
+        <ul>
+          <li>ψ_0^0(0)→1 <input id="abbreviate1" type="checkbox" checked></li>
+          <li>1+...+1→n <input id="abbreviaten" type="checkbox" checked></li>
+          <li>ψ_0^0(1)→ω <input id="abbreviateω" type="checkbox" checked></li>
+          <li>ψ_0^b(c)→ψ^b(c) <input id="abbreviate2ψ" type="checkbox"></li>
+          <li>ψ^0(c)→ψ(c) <input id="abbreviate1ψ" type="checkbox"></li>
+        </ul>
+      </li>
       <li>Details: <input id="detail" type="checkbox"></li>
     </ul>
     <input type="button" value="Compute" onclick="compute()">
@@ -20,9 +30,9 @@
   <textarea id="output" class="outputbox" readonly>...</textarea>
   <input type="text" id="copyarea" style="display:none"><br>
   <div>
-    <a href="https://googology.wikia.org/ja/wiki/%E3%83%A6%E3%83%BC%E3%82%B6%E3%83%BC%E3%83%96%E3%83%AD%E3%82%B0:Kanrokoti/TSS-%CF%88%E9%96%A2%E6%95%B0" target="_blank">Definition of "TSS-ψ Function"</a> (<a href="https://googology.wikia.org/wiki/User_blog:Kanrokoti/TSS-%CF%88_Function" target="_blank">en</a>) by Kanrokoti, Retrieved 2021/11/20<br>
+    <a href="https://googology.wikia.org/ja/wiki/%E3%83%A6%E3%83%BC%E3%82%B6%E3%83%BC%E3%83%96%E3%83%AD%E3%82%B0:Kanrokoti/TSS-%CF%88%E9%96%A2%E6%95%B0" target="_blank">Definition of "TSS-ψ Function"</a> (<a href="https://googology.wikia.org/wiki/User_blog:Kanrokoti/TSS-%CF%88_Function" target="_blank">en</a>) by Kanrokoti, Retrieved 2022/09/10<br>
     The program (implementation.js) and the site (implementation.html) under https://naruyoko.github.io/googology/TSSPsi is licensed by <a href="https://creativecommons.org/licenses/by-sa/3.0/legalcode" rel="license" target="_blank">Creative Commons Attribution-ShareAlike 3.0 Unported License</a>.
   </div>
-  <div>Last updated: 2021/11/20</div>
+  <div>Last updated: 2022/09/10</div>
 </body>
 </html>

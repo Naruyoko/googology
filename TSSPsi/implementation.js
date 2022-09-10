@@ -2,19 +2,17 @@ var lineBreakRegex=/\r?\n/g;
 var itemSeparatorRegex=/[\t ,]/g;
 window.onload=function (){
   console.clear();
-  dg('input').onkeydown=handlekey;
-  dg('input').onfocus=handlekey;
-  dg('input').onmousedown=handlekey;
-}
-function dg(s){
-  return document.getElementById(s);
+  setupTestTerms();
+  document.getElementById('input').onkeydown=handlekey;
+  document.getElementById('input').onfocus=handlekey;
+  document.getElementById('input').onmousedown=handlekey;
 }
 
 function normalizeAbbreviations(s){
-  return new Term(s+"")+"";
+  return (s instanceof Term?s:new Term(s+""))+"";
 }
-function abbreviate(s){
-  return new Term(s+"").toString(true);
+function abbreviate(s,abbreviate){
+  return (s instanceof Term?s:new Term(s+"")).toString(typeof abbreviate=="object"?abbreviate:true);
 }
 
 function Scanner(s){
@@ -90,11 +88,17 @@ Term.build=function (s,context){
     else throw Error("Wrong state when attempting to append as sum");
     state=CLOSEDTERM;
   }
-  var nums="0123456789";
   var scanner;
   if (typeof s=="string") scanner=new Scanner(s);
   else if (s instanceof Scanner) scanner=s;
   else throw Error("Invalid expression: "+s);
+  var nums="0123456789";
+  var symbols="+(){}_^";
+  var notword=nums+symbols;
+  var NUMBER=0;
+  var SYMBOL=1;
+  var WORD=2;
+  var symbolTypes=["NUMBER","SYMBOL","WORD"];
   /** @type {Term} */
   var r=null;
   var startpos=scanner.pos;
@@ -114,22 +118,34 @@ Term.build=function (s,context){
   while (scanner.hasNext()&&state!=EXIT){
     var scanpos=scanner.pos;
     var next=scanner.next();
-    if (nums.indexOf(next)!=-1){
+    var nextWord=next;
+    var symbolType;
+    if (nums.indexOf(nextWord)!=-1){
+      while (scanner.hasNext()&&nums.indexOf(scanner.peek())!=-1){
+        nextWord+=scanner.next();
+      }
+      symbolType=NUMBER;
+    }else if (symbols.indexOf(nextWord)!=-1){
+      symbolType=SYMBOL;
+    }else{
+      while (scanner.hasNext()&&notword.indexOf(scanner.peek())==-1){
+        nextWord+=scanner.next();
+      }
+      symbolType=WORD;
+    }
+    if (symbolType==NUMBER){
       if (state!=START&&state!=PLUS) throw Error("Unexpected character "+next+" at position "+scanpos+" in expression "+scanner.s);
-      scanner.move(-1);
-      var num=scanner.nextNumber();
+      var num=+nextWord;
       if (num==0){
         appendToRSum(ZeroTerm.build());
       }else if (num==1){
         appendToRSum(Term.ONE.clone());
       }else{
-        var decomposed;
-        if (state==START) decomposed=[];
-        else if (state==PLUS) decomposed=[r];
+        var decomposed=[];
         for (var i=0;i<num;i++){
           decomposed.push(Term.ONE.clone());
         }
-        r=SumTerm.buildNoClone(decomposed);
+        appendToRSum(SumTerm.buildNoClone(decomposed));
         state=CLOSEDTERM;
       }
     }else if (next=="ω"||next=="w"){
@@ -193,12 +209,12 @@ Term.build=function (s,context){
     if (scanner.hasNext()) throw Error("Something went wrong");
     if (state==START) r=ZeroTerm.build();
     else if (state==PLUS) throw Error("Unexpected end of input");
-    else if (state==CLOSEDTERM);
+    else if (state==CLOSEDTERM){}
   }else{
     if (!scanner.hasNext()) throw Error("Unexpected end of input");
     if (state==START) r=ZeroTerm.build();
     else if (state==PLUS) throw Error("Something went wrong");
-    else if (state==CLOSEDTERM);
+    else if (state==CLOSEDTERM){}
   }
   return r;
 }
@@ -209,13 +225,6 @@ Term.buildNoClone=function (){
 /** @returns {Term} */
 Term.prototype.clone=function (){
   throw Error("Cloning undefined for this term type.");
-}
-/**
- * @param {Term} x 
- * @returns {Term}
- */
-Term.clone=function (x){
-  return x.clone();
 }
 /**
  * @param {boolean} abbreviate
@@ -234,13 +243,6 @@ Term.prototype.toStringWithImplicitBrace=function (abbreviate){
 /** @returns {boolean} */
 Term.prototype.equal=function (other){
   throw Error("Equality undefined for this term type.");
-}
-/**
- * @returns {boolean}
- */
-Term.equal=function (x,y){
-  if (!(x instanceof Term)) x=new Term(x);
-  return x.equal(y);
 }
 Object.defineProperty(Term.prototype,"constructor",{
   value:Term,
@@ -376,12 +378,15 @@ PsiTerm.prototype.clone=function (){
 }
 /** @param {boolean} abbreviate */
 PsiTerm.prototype.toString=function (abbreviate){
-  if (abbreviate&&this.equal(Term.ONE)) return "1";
-  else if (abbreviate&&this.equal(Term.SMALLOMEGA)) return "ω";
-  else if (abbreviate&&this.sub.equal(Term.ZERO)){
-    if (this.sup.equal(Term.ZERO)) return "ψ("+this.inner.toString(abbreviate)+")";
-    else return "ψ^"+this.sup.toString(abbreviate)+"("+this.inner.toString(abbreviate)+")";
-  }else return "ψ_"+this.sub.toStringWithImplicitBrace(abbreviate)+"^"+this.sup.toString(abbreviate)+"("+this.inner.toString(abbreviate)+")";
+  if (abbreviate){
+    if ((abbreviate===true||abbreviate["1"])&&this.equal(Term.ONE)) return "1";
+    else if ((abbreviate===true||abbreviate["ω"])&&this.equal(Term.SMALLOMEGA)) return "ω";
+    else if ((abbreviate===true||abbreviate["2ψ"])&&this.sub.equal(Term.ZERO)){
+      if ((abbreviate===true||abbreviate["1ψ"])&&this.sup.equal(Term.ZERO)) return "ψ("+this.inner.toString(abbreviate)+")";
+      else return "ψ^"+this.sup.toString(abbreviate)+"("+this.inner.toString(abbreviate)+")";
+    }
+  }
+  return "ψ_"+this.sub.toStringWithImplicitBrace(abbreviate)+"^"+this.sup.toString(abbreviate)+"("+this.inner.toString(abbreviate)+")";
 }
 PsiTerm.prototype.equal=function (other){
   if (!(other instanceof Term)) other=new Term(other);
@@ -443,10 +448,12 @@ SumTerm.prototype.clone=function (){
 SumTerm.prototype.toString=function (abbreviate){
   if (abbreviate){
     var strterms=this.terms.map(function (t){return t.toString(abbreviate);});
-    for (var i=0;i<strterms.length;i++){
-      if (strterms[i]=="1"){
-        for (var j=i;j<strterms.length&&strterms[j]=="1";j++);
-        strterms.splice(i,j-i,(j-i)+"");
+    if (abbreviate===true||abbreviate["1"]&&abbreviate["n"]){
+      for (var i=0;i<strterms.length;i++){
+        if (strterms[i]=="1"){
+          for (var j=i;j<strterms.length&&strterms[j]=="1";j++);
+          strterms.splice(i,j-i,(j-i)+"");
+        }
       }
     }
     return strterms.join("+");
@@ -456,8 +463,10 @@ SumTerm.prototype.toString=function (abbreviate){
 }
 /** @param {boolean} abbreviate */
 SumTerm.prototype.toStringWithImplicitBrace=function (abbreviate){
-  if (abbreviate&&isNat(this)) return this.toString(abbreviate);
-  else return "{"+this.toString(abbreviate)+"}";
+  if (abbreviate){
+    if ((abbreviate===true||abbreviate["1"]&&abbreviate["n"])&&isSumAndTermsSatisfy(this,equalFunc(Term.ONE))) return this.toString(abbreviate);
+  }
+  return "{"+this.toString(abbreviate)+"}";
 }
 SumTerm.prototype.equal=function (other){
   if (!(other instanceof Term)) other=new Term(other);
@@ -466,32 +475,35 @@ SumTerm.prototype.equal=function (other){
     :this.terms.length==1&&this.terms[0].equal(other);
 }
 SumTerm.prototype.getLeft=function (){
-  return new Term(this.terms[0]);
+  return this.terms[0];
 }
+/** @returns {Term} */
 SumTerm.prototype.getNotLeft=function (){
   if (this.terms.length<2) return ZeroTerm.build();
-  else if (this.terms.length<=2) return new Term(this.terms[1]);
-  else return SumTerm.build(this.terms.slice(1));
+  else if (this.terms.length<=2) return this.terms[1];
+  else return SumTerm.buildNoClone(this.terms.slice(1));
 }
 SumTerm.prototype.getRight=function (){
-  return new Term(this.terms[this.terms.length-1]);
+  return this.terms[this.terms.length-1];
 }
+/** @returns {Term} */
 SumTerm.prototype.getNotRight=function (){
   if (this.terms.length<2) return ZeroTerm.build();
-  else if (this.terms.length<=2) return new Term(this.terms[0]);
-  else return SumTerm.build(this.terms.slice(0,-1));
+  else if (this.terms.length<=2) return this.terms[0];
+  else return SumTerm.buildNoClone(this.terms.slice(0,-1));
 }
 /**
  * @param {number} start 
  * @param {number} end 
+ * @returns {Term}
  */
 SumTerm.prototype.slice=function (start,end){
   if (start<0) start=this.terms.length+start;
   if (end===undefined) end=this.terms.length;
   if (end<0) end=this.terms.length+end;
   if (start>=end) return NullTerm.build();
-  else if (end-start==1) return new Term(this.terms[start]);
-  else return SumTerm.build(this.terms.slice(start,end));
+  else if (end-start==1) return this.terms[start];
+  else return SumTerm.buildNoClone(this.terms.slice(start,end));
 }
 Object.defineProperty(SumTerm.prototype,"constructor",{
   value:SumTerm,
@@ -510,9 +522,9 @@ function inT(t){
   }catch(e){
     return false;
   }
-  if (t instanceof ZeroTerm) return true;
-  if (t instanceof PsiTerm) return inT(t.sub)&&inT(t.sup)&&inT(t.inner);
-  if (t instanceof SumTerm) return t.terms.every(function (t){return !t.equal("0")&&inPT(t);});
+  if (t instanceof ZeroTerm) return true; //1
+  if (t instanceof SumTerm) return t.terms.every(inPT); //2
+  if (t instanceof PsiTerm) return inT(t.sub)&&inT(t.sup)&&inT(t.inner); //3
   return false;
 }
 function inPT(t){
@@ -521,7 +533,7 @@ function inPT(t){
   }catch(e){
     return false;
   }
-  if (t instanceof PsiTerm) return inT(t.sub)&&inT(t.sup)&&inT(t.inner);
+  if (t instanceof PsiTerm) return inT(t.sub)&&inT(t.sup)&&inT(t.inner); //3
   return false;
 }
 /** @returns {boolean} */
@@ -531,9 +543,9 @@ function inRT(t){
   }catch(e){
     return false;
   }
-  if (t instanceof ZeroTerm) return true;
-  if (t instanceof PsiTerm) return isNat(t.sub)&&isNat(t.sup)&&inRT(t.inner);
-  if (t instanceof SumTerm) return t.terms.every(function (t){return !t.equal("0")&&inRPT(t);});
+  if (t instanceof ZeroTerm) return true; //1
+  if (t instanceof PsiTerm) return isNat(t.sub)&&isNat(t.sup)&&inRT(t.inner); //2
+  if (t instanceof SumTerm) return t.terms.every(inRPT);
   return false;
 }
 function inRPT(t){
@@ -542,7 +554,7 @@ function inRPT(t){
   }catch(e){
     return false;
   }
-  if (t instanceof PsiTerm) return isNat(t.sub)&&isNat(t.sup)&&inRT(t.inner);
+  if (t instanceof PsiTerm) return isNat(t.sub)&&isNat(t.sup)&&inRT(t.inner); //2
   return false;
 }
 /**
@@ -558,7 +570,7 @@ function isNat(t){
   }catch(e){
     return false;
   }
-  return t instanceof Term&&(t.equal("0")||t.equal("1")||isSumAndTermsSatisfy(t,equal("1")));
+  return t instanceof Term&&(t instanceof ZeroTerm||t.equal(Term.ONE)||isSumAndTermsSatisfy(t,equalFunc(Term.ONE)));
 }
 function toNat(X){
   if (!(X instanceof Term)) X=new Term(X);
@@ -568,16 +580,35 @@ function toNat(X){
   if (X instanceof SumTerm) return X.terms.length;
   throw Error("This should be unreachable");
 }
-/** @return {boolean|(t:any)=>boolean} */
+/**
+ * @param {Term|string} X 
+ * @param {Term|string} Y 
+ */
 function equal(X,Y){
   if (!(X instanceof Term)) X=new Term(X);
-  if (arguments.length==1) return function(t){return equal(t,X);};
   if (!(Y instanceof Term)) Y=new Term(Y);
   return X.equal(Y);
 }
+/**
+ * @param {Term|string} X 
+ */
+function equalFunc(X){
+  if (!(X instanceof Term)) X=new Term(X);
+  return function(t){return equal(t,X);};
+}
+/**
+ * @param {Term|string} X 
+ * @param {Term|string} Y 
+ */
 function notEqual(X,Y){
-  if (arguments.length==1) return function(t){return notEqual(t,X);};
   return !equal(X,Y);
+}
+/**
+ * @param {Term|string} X 
+ */
+function notEqualFunc(X){
+  if (!(X instanceof Term)) X=new Term(X);
+  return function(t){return notEqual(t,X);};
 }
 /**
  * @param {Term|string} S
@@ -619,7 +650,7 @@ function cp(S){
     var c=S.inner;
     var cp_c=cp(c);
     var Term_cp_c=new Term(cp_c);
-    if (equal(Term_cp_c,"0")) return S+""; //3.1
+    if (equal(Term_cp_c,Term.ZERO)) return S+""; //3.1
     else return cp_c; //3.2
   }
   throw Error("No rule to compute cp("+S+")");
@@ -639,21 +670,24 @@ function dom(S){
     var c=S.inner;
     var dom_c=dom(c);
     var Term_dom_c=new Term(dom_c);
-    if (equal(Term_dom_c,"0")) return S+""; //3.1
-    else if (equal(Term_dom_c,"1")||equal(Term_dom_c,"ω")) return normalizeAbbreviations("ω"); //3.2
+    if (equal(Term_dom_c,Term.ZERO)) return S+""; //3.1
+    else if (equal(Term_dom_c,Term.ONE)||equal(Term_dom_c,Term.SMALLOMEGA)) return Term.SMALLOMEGA+""; //3.2
     else{ //3.3
       if (!(Term_dom_c instanceof PsiTerm)) throw Error("Unexpected error");
       var d=toNat(Term_dom_c.sub);
       var e=toNat(Term_dom_c.sup);
       var f=Term_dom_c.inner;
       if (d==0){ //3.3.1
-        if (b<e) return normalizeAbbreviations("ω"); //3.3.1.1
+        if (b<e) return Term.SMALLOMEGA+""; //3.3.1.1
         else return dom_c; //3.3.1.2
       }else{ //3.3.2
-        if (b<e){ //3.3.2.1
-          if (a<d) return normalizeAbbreviations("ω"); //3.3.2.1.1
-          else return S+""; //3.3.2.1.2
-        }else return dom_c; //3.3.2.2
+        if (a<d){ //3.3.2.1
+          if (b<e) return Term.SMALLOMEGA+""; //3.3.2.1.1
+          else return dom_c; //3.3.2.1.2
+        }else if (a==d){ //3.3.2.2
+          if (b<e) return S+""; //3.3.2.2.1
+          else return dom_c; //3.3.2.2.2
+        }else return dom_c; //3.3.2.3
       }
     }
   }
@@ -672,7 +706,7 @@ function fund(S,T){
   if (S instanceof ZeroTerm) return "0"; // 1
   if (S instanceof SumTerm){ //2
     var bp=fund(S.getRight(),T);
-    if (equal(bp,"0")) return S.getNotRight()+""; //2.1
+    if (equal(bp,Term.ZERO)) return S.getNotRight()+""; //2.1
     else return S.getNotRight()+"+"+bp; //2.2
   }
   if (S instanceof PsiTerm){ //3
@@ -681,12 +715,12 @@ function fund(S,T){
     var c=S.inner;
     var dom_c=dom(c);
     var Term_dom_c=new Term(dom_c);
-    if (equal(Term_dom_c,"0")) return T+""; //3.1
-    else if (equal(Term_dom_c,"1")){ //3.2
-      var Term_fund_T_0=new Term(fund(T,"0"));
-      if (equal(T,Term_fund_T_0+"+1")) return fund(S,Term_fund_T_0)+"+"+fund(S,"1"); //3.2.1
-      else return "ψ_{"+normalizeAbbreviations(a)+"}^{"+normalizeAbbreviations(b)+"}("+fund(c,"0")+")"; //3.2.2
-    }else if (equal(Term_dom_c,"ω")) return "ψ_{"+normalizeAbbreviations(a)+"}^{"+normalizeAbbreviations(b)+"}("+fund(c,T)+")"; //3.3
+    if (equal(Term_dom_c,Term.ZERO)) return T+""; //3.1
+    else if (equal(Term_dom_c,Term.ONE)){ //3.2
+      var Term_fund_T_0=null;
+      if (equal(T,(Term_fund_T_0=new Term(fund(T,Term.ZERO)))+"+"+Term.ONE)) return fund(S,Term_fund_T_0)+"+"+fund(S,Term.ONE); //3.2.1
+      else return "ψ_{"+normalizeAbbreviations(a)+"}^{"+normalizeAbbreviations(b)+"}("+fund(c,Term.ZERO)+")"; //3.2.2
+    }else if (equal(Term_dom_c,Term.SMALLOMEGA)) return "ψ_{"+normalizeAbbreviations(a)+"}^{"+normalizeAbbreviations(b)+"}("+fund(c,T)+")"; //3.3
     else{ //3.4
       if (!(Term_dom_c instanceof PsiTerm)) throw Error("Unexpected error");
       var d=toNat(Term_dom_c.sub);
@@ -694,26 +728,44 @@ function fund(S,T){
       var f=Term_dom_c.inner;
       if (d==0){ //3.4.1
         if (b<e){ //3.4.1.1
-          if (isNat(T)&&notEqual(T,"0")) return "ψ_{"+normalizeAbbreviations(a)+"}^{"+normalizeAbbreviations(b)+"}("+fund(c,fund(S,fund(T,"0")))+")"; //3.4.1.1.1
-          else return "ψ_{"+normalizeAbbreviations(a)+"}^{"+normalizeAbbreviations(b)+"}("+fund(c,"0")+")"; //3.4.1.1.2
+          if (isNat(T)&&notEqual(T,Term.ZERO)) return "ψ_{"+normalizeAbbreviations(a)+"}^{"+normalizeAbbreviations(b)+"}("+fund(c,fund(S,fund(T,Term.ZERO)))+")"; //3.4.1.1.1
+          else return "ψ_{"+normalizeAbbreviations(a)+"}^{"+normalizeAbbreviations(b)+"}("+fund(c,Term.ZERO)+")"; //3.4.1.1.2
         }else return "ψ_{"+normalizeAbbreviations(a)+"}^{"+normalizeAbbreviations(b)+"}("+fund(c,T)+")"; //3.4.1.2
       }else{ //3.4.2
-        if (b<e){ //3.4.2.1
-          if (a<d){ //3.4.2.1.1
+        if (a<d){ //3.4.2.1
+          if (b<e){ //3.4.2.1.1
             var cp_c=cp(c);
             var Term_cp_c=new Term(cp_c);
             if (!(Term_cp_c instanceof PsiTerm)) throw Error("Unexpected error");
             var g=toNat(Term_cp_c.sub);
             var h=toNat(Term_cp_c.sup);
             var del=h-b;
-            if (isNat(T)&&notEqual(T,"0")) return "ψ_{"+normalizeAbbreviations(a)+"}^{"+normalizeAbbreviations(b)+"}("+fund(c,ascend(fund(S,fund(T,"0")),del,b,0))+")"; //3.4.2.1.1.1
-            else return "ψ_{"+normalizeAbbreviations(a)+"}^{"+normalizeAbbreviations(b)+"}("+fund(c,"0")+")"; //3.4.2.1.1.2
+            if (isNat(T)&&notEqual(T,Term.ZERO)) return "ψ_{"+normalizeAbbreviations(a)+"}^{"+normalizeAbbreviations(b)+"}("+fund(c,ascend(fund(S,fund(T,Term.ZERO)),del,b,0))+")"; //3.4.2.1.1.1
+            else return "ψ_{"+normalizeAbbreviations(a)+"}^{"+normalizeAbbreviations(b)+"}("+fund(c,Term.ZERO)+")"; //3.4.2.1.1.2
           }else return "ψ_{"+normalizeAbbreviations(a)+"}^{"+normalizeAbbreviations(b)+"}("+fund(c,T)+")"; //3.4.2.1.2
         }else return "ψ_{"+normalizeAbbreviations(a)+"}^{"+normalizeAbbreviations(b)+"}("+fund(c,T)+")"; //3.4.2.2
       }
     }
   }
   throw Error("No rule to compute fund of "+S+","+T);
+}
+/**
+ * @param {Term|string} S 
+ * @param {number} m 
+ * @param {number} n 
+ * @returns {number}
+ */
+function FGH(S,m,n){
+  if (!(S instanceof Term)) S=new Term(S);
+  if (!inT(S)||typeof m!="number"||typeof n!="number") throw Error("Invalid argument: "+S+","+m+","+n);
+  if (m==0) return n; //1
+  else if (m==1){ //2
+    var dom_S=dom(S);
+    var Term_dom_S=new Term(dom_S);
+    if (equal(Term_dom_S,Term.ZERO)) return n+1; //2.1
+    else if (equal(Term_dom_S,Term.ONE)) return FGH(fund(S,Term.ZERO),n,n); //2.2
+    else return FGH(fund(S,n),1,n); //2.3
+  }else return FGH(S,1,FGH(S,m-1,n)); //3
 }
 /**
  * @param {number} n 
@@ -728,28 +780,12 @@ function limitOrd(n){
   return r;
 }
 /**
- * @param {string} S 
- * @param {number} n 
- * @returns {number}
- */
-function FGH(S,n){
-  S=normalizeAbbreviations(S);
-  if (typeof n!="number") throw Error("Invalid argument: "+S);
-  if (equal(S,"0")) return n+1;
-  else if (equal(dom(S),"1")){
-    var r=n;
-    var X0=fund(S,"0");
-    for (var i=0;i<n;i++) r=FGH(X0,r);
-    return r;
-  }else return FGH(fund(S,n),n);
-}
-/**
  * @param {number} n 
  * @returns {number}
  */
 function largeFunction(n){
   if (typeof n!="number") throw Error("Invalid argument");
-  return FGH(limitOrd(n),n);
+  return FGH(limitOrd(n),1,n);
 }
 function calculateN(){
   var r=1e100;
@@ -772,10 +808,57 @@ function trans(S,T){
     var c=S.inner;
     /** @type {[number,number,number]} */
     var col=[T,b,a];
-    if (equal(c,"0")) return [col]; //3.1
+    if (equal(c,Term.ZERO)) return [col]; //3.1
     else return [col].concat(trans(c,T+1)); //3.2
   }
   throw Error("No rule to translate "+S+","+T);
+}
+
+/** @type {[string,number][]} */
+var testTermsPre=[
+  ["ω",3],
+  ["ψ_0^0(2)",3],
+  ["ψ_0^0(ω)",3],
+  ["ψ_0^0(ψ_0^1(0))",3],
+  ["ψ_0^0(ψ_0^1(0)+ψ_0^0(ψ_0^1(0)))",3],
+  ["ψ_0^0(ψ_0^1(0)+ψ_0^1(0))",3],
+  ["ψ_0^0(ψ_0^1(ψ_0^0(ψ_0^1(0))))",3],
+  ["ψ_0^0(ψ_0^1(ψ_0^1(0)))",3],
+  ["ψ_0^0(ψ_0^1(ψ_0^2(0)))",3],
+  ["ψ_0^0(ψ_1^1(0))",3],
+  ["ψ_0^0(ψ_1^1(0)+ψ_0^0(ψ_1^1(0)))",3],
+  ["ψ_0^0(ψ_1^1(0)+ψ_0^1(0))",3],
+  ["ψ_0^0(ψ_1^1(0)+ψ_0^1(ψ_1^2(0)))",3],
+  ["ψ_0^0(ψ_1^1(0)+ψ_1^1(0))",3],
+  ["ψ_0^0(ψ_1^1(ψ_0^1(0))+ψ_0^1(ψ_1^2(ψ_0^1(0))+ψ_1^2(0)))",3],
+  ["ψ_0^0(ψ_1^1(ψ_0^1(0))+ψ_1^1(0))",3],
+  ["ψ_0^0(ψ_1^1(ψ_0^1(0)))",3],
+  ["ψ_0^0(ψ_1^1(ψ_0^2(0)))",3],
+  ["ψ_0^0(ψ_1^1(ψ_1^1(0)))",3],
+  ["ψ_0^0(ψ_1^1(ψ_1^2(0)))",3],
+  ["ψ_0^0(ψ_1^1(ψ_2^2(0)))",3],
+  ["ψ_0^0(ψ_1^1(ψ_2^2(0))+ψ_1^1(ψ_1^2(0)))",3],
+  ["ψ_0^0(ψ_1^1(ψ_2^2(0))+ψ_1^1(ψ_2^2(0)))",3],
+  ["ψ_0^0(ψ_1^1(ψ_2^2(0)+ψ_1^1(0)))",3],
+  ["ψ_0^0(ψ_1^1(ψ_2^2(0)+ψ_2^2(0)))",3],
+  ["ψ_0^0(ψ_1^1(ψ_2^2(ψ_0^1(ψ_1^2(0)))))",3],
+  ["ψ_0^0(ψ_1^1(ψ_2^2(ψ_1^1(0))))",3],
+  ["ψ_0^0(ψ_1^1(ψ_2^2(ψ_1^1(ψ_2^2(0)))))",3],
+  ["ψ_0^0(ψ_1^1(ψ_2^2(ψ_0^2(0))))",3],
+  ["ψ_0^0(ψ_1^1(ψ_2^2(ψ_0^2(ψ_1^3(0)))))",3],
+  ["ψ_0^0(ψ_1^1(ψ_2^2(ψ_1^2(0))))",3],
+  ["ψ_0^0(ψ_1^1(ψ_2^2(ψ_1^2(ψ_2^3(0)))))",3],
+  ["ψ_0^0(ψ_1^1(ψ_2^2(ψ_2^2(0))))",3],
+  ["ψ_0^0(ψ_1^1(ψ_2^2(ψ_0^3(0))))",3],
+  ["ψ_0^0(ψ_1^1(ψ_2^2(ψ_1^3(0))))",3],
+  ["ψ_0^0(ψ_1^1(ψ_2^2(ψ_2^3(0))))",3],
+  ["ψ_0^0(ψ_1^1(ψ_2^2(ψ_3^3(0))))",3],
+];
+/** @type {string[]}} */
+var testTerms;
+function setupTestTerms(){
+  document.getElementById('input').value=testTermsPre.filter(function (t){return t[1]>=0;}).map(function(t){return "fund "+t[0]+" "+t[1];}).join("\n");
+  testTerms=testTermsPre.map(function (t){return t[0];});
 }
 
 var input="";
@@ -783,19 +866,44 @@ var options={
   abbreviate:undefined,
   detail:undefined
 }
+var optionList=[
+  "abbreviate",
+  "detail"
+];
+var abbreviateOptionList=[
+  "1",
+  "n",
+  "ω",
+  "2ψ",
+  "1ψ"
+];
+function toggleOptions(){
+  document.getElementById("options").style.display=document.getElementById("options").style.display=="none"?"block":"none";
+}
 var last=null;
 function compute(){
-  if (input==dg("input").value&&options.abbreviate==dg("abbreviate").checked&&options.detail==dg("detail").checked) return;
+  var inputChanged=false;
   var oldinput=input;
-  input=dg("input").value;
-  options.abbreviate=dg("abbreviate").checked;
-  options.detail=dg("detail").checked;
+  inputChanged||=input!=document.getElementById("input").value;
+  input=document.getElementById("input").value;
+  inputChanged||=!!options.abbreviate!=document.getElementById("abbreviate").checked;
+  options.abbreviate=document.getElementById("abbreviate").checked&&(options.abbreviate||{});
+  inputChanged||=options.detail!=document.getElementById("detail").checked;
+  options.detail=document.getElementById("detail").checked;
+  if (options.abbreviate){
+    abbreviateOptionList.forEach(function(option){
+      var elem=document.getElementById("abbreviate"+option);
+      inputChanged||=options.abbreviate[option]!=elem.checked;
+      options.abbreviate[option]=elem.checked;
+    });
+  }
+  if (!inputChanged) return;
   if (oldinput!=input) last=[];
   var output="";
   var lines=input.split(lineBreakRegex);
   function abbreviateIfEnabled(x){
-    if (options.abbreviate) return abbreviate(x);
-    else return x;
+    if (options.abbreviate) return abbreviate(x,options.abbreviate);
+    else return normalizeAbbreviations(x);
   }
   for (var l=0;l<lines.length;l++){
     var line=lines[l];
@@ -804,18 +912,27 @@ function compute(){
     output+=line+"\n";
     var result;
     if (oldinput!=input){
+      console.time(line);
       try{
         if (cmd=="normalize"||cmd=="norm"){
           result=normalizeAbbreviations(args[0]);
         }else if (cmd=="abbreviate"||cmd=="abbr"){
-          result=abbreviate(args[0]);
+          result=null;
+        }else if (cmd=="inT"){
+          result=inT(args[0]);
+        }else if (cmd=="inPT"){
+          result=inPT(args[0]);
+        }else if (cmd=="inRT"){
+          result=inRT(args[0]);
+        }else if (cmd=="inRPT"){
+          result=inRPT(args[0]);
         }else if (cmd=="ascend"||cmd=="delta"){
-          result=ascend(args[0],+args[1],+args[2],+args[3]);
+          result=ascend(args[0],+args[1],+args[2],+args[3]?1:0);
         }else if (cmd=="cp"){
           result=cp(args[0]);
         }else if (cmd=="dom"){
           result=dom(args[0]);
-        }else if (cmd=="expand"){
+        }else if (cmd=="fund"||cmd=="expand"){
           var t=normalizeAbbreviations(args[0]);
           result=[t];
           for (var i=1;i<args.length;i++){
@@ -831,12 +948,21 @@ function compute(){
         console.error(e);
       }
       last[l]=result;
+      console.timeEnd(line);
     }else result=last[l];
     if (result instanceof Error){
       output+=result.stack?result.stack:result;
     }else if (cmd=="normalize"||cmd=="norm"){
       output+=result;
     }else if (cmd=="abbreviate"||cmd=="abbr"){
+      output+=abbreviate(args[0],options.abbreviate||true);
+    }else if (cmd=="inT"){
+      output+=result;
+    }else if (cmd=="inPT"){
+      output+=result;
+    }else if (cmd=="inRT"){
+      output+=result;
+    }else if (cmd=="inRPT"){
       output+=result;
     }else if (cmd=="ascend"||cmd=="delta"){
       output+=abbreviateIfEnabled(result);
@@ -844,7 +970,7 @@ function compute(){
       output+=abbreviateIfEnabled(result);
     }else if (cmd=="dom"){
       output+=abbreviateIfEnabled(result);
-    }else if (cmd=="expand"){
+    }else if (cmd=="fund"||cmd=="expand"){
       if (options.detail){
         for (var i=1;i<result.length;i++){
           output+=abbreviateIfEnabled(result[i-1])+"["+args[i]+"]="+abbreviateIfEnabled(result[i])+(i==result.length-1?"":"\n");
@@ -863,11 +989,6 @@ function compute(){
     }
     output+="\n\n";
   }
-  dg("output").value=output;
-}
-window.onpopstate=function (e){
-  compute();
+  document.getElementById("output").value=output;
 }
 var handlekey=function(e){}
-//console.log=function (s){alert(s)};
-window.onerror=function (e,s,l,c,o){alert(JSON.stringify(e+"\n"+s+":"+l+":"+c+"\n"+(o&&o.stack)))};
