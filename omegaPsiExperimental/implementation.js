@@ -1038,6 +1038,8 @@ function compute(){
           result=lessThan(args[0],args[1]);
         }else if (cmd=="dom"){
           result=dom(args[0]);
+        }else if (cmd=="level"){
+          result=level(args[0]);
         }else if (cmd=="fund"||cmd=="expand"){
           var t=normalizeAbbreviations(args[0]);
           result=[t];
@@ -1071,6 +1073,8 @@ function compute(){
     }else if (cmd=="lessThan"||cmd=="<"){
       output+=result;
     }else if (cmd=="dom"){
+      output+=abbreviateIfEnabled(result);
+    }else if (cmd=="level"){
       output+=abbreviateIfEnabled(result);
     }else if (cmd=="fund"||cmd=="expand"){
       if (options.detail){
