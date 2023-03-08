@@ -769,8 +769,8 @@ function dom(S){
       }
     }else if (equal(Term_dom_S_inner,Term.ONE)) return Term.SMALLOMEGA+""; //4.2
     else{ //4.3
-      if (lessThan(Term_dom_S_inner,S)) return dom_S_inner; //4.4.1
-      else return Term.SMALLOMEGA+""; //4.4.2
+      if (lessThan(Term_dom_S_inner,S)) return dom_S_inner; //4.3.1
+      else return Term.SMALLOMEGA+""; //4.3.2
     }
   }
   throw Error("No rule to compute dom("+S+")");
