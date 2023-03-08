@@ -162,7 +162,7 @@ Term.build=function (s,context){
       var nextnext=scanner.next();
       if (nextnext!="}") throw Error("Expected closing } at position "+(scanner.pos-1)+", instead got "+nextnext+" in expression "+scanner.s);
       appendToRSum(subterm);
-    }else if (nextWord=="θ"){
+    }else if (nextWord=="θ"||nextWord=="t"||nextWord=="theta"){
       if (state!=START&&state!=PLUS) throw Error("Unexpected character "+next+" at position "+scanpos+" in expression "+scanner.s);
       var subterms=[];
       var nextnext=scanner.next();
