@@ -355,7 +355,6 @@ function findOTPath(x,limit){
     t=limitNotation(n);
     var r={isStandard:false,path:[t],funds:[n]};
     while (!equal(x,t)){
-      if (r.path.length>=100) debugger;
       n=1;
       var nt;
       while (n<=limit&&lessThan(nt=fund(t,n),x)) n++;
