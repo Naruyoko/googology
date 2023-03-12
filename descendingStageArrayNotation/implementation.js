@@ -262,7 +262,14 @@ function newInSState(){
  * @returns {boolean} If we replace the last summed term in the trace with "k", is it in S_α?
  */
 function nestingTraceInS(alpha,trace,state){
-  for (var i=trace.length-1-(state?state[0]:0);i>=0;i--) if (lessThan([lastSummedTerm(trace[i][0])],alpha)) return false;
+  if (state&&state[0]==-1) return false;
+  for (var i=trace.length-1-(state?state[0]:0);i>=0;i--){
+    var principalWithBeta=lastSummedTerm(trace[i][0]);
+    if (!isZeroS(principalWithBeta[1])&&lessThan(principalWithBeta[0],alpha)){
+      if (state) state[0]=-1;
+      return false;
+    }
+  }
   if (state) state[0]=trace.length;
   return true;
 }
@@ -291,7 +298,7 @@ function fund(alpha,n){
   for (var deltaPos=alphaTrace.length-1;deltaPos>=1;deltaPos--){
     var principalWithDelta=lastSummedTerm(alphaTrace[deltaPos][0]);
     if (inD(principalWithDelta[0])&&isZeroS(principalWithDelta[1]))
-      for (var gammaPos=deltaPos-1,state=newInSState();gammaPos>=0;gammaPos--){
+      for (var gammaPos=deltaPos-1,state=newInSState();gammaPos>=0&&state[0]!=-1;gammaPos--){
         var principalWithGamma=lastSummedTerm(alphaTrace[gammaPos][0]);
         if (!isZeroS(principalWithGamma[1])&&lessThan(principalWithGamma[0],principalWithDelta[0])&&nestingTraceInS(principalWithDelta[0],epsilonTrace=alphaTrace.slice(gammaPos+1,deltaPos+1),state))
           return fromNestingTrace(alphaTrace.slice(0,gammaPos+1),repeatNestingTrace(replaceInnermostTraceWithAppendable(epsilonTrace,[[pred(principalWithDelta[0]),ZERO_S]],1),[],n));
