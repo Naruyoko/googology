@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>横ネスト段階配列表記 Implementation</title>
+  <script src="./implementation.js"></script>
+  <link rel="stylesheet" type="text/css" href="./style.css">
+</head>
+<body>
+  <h1>横ネスト段階配列表記 Implementation</h1>
+  <div><a href="../index.html">Back</a></div>
+  <form name=form>
+    <textarea id="input" class="inputbox" contentEditable></textarea>
+    <input type="button" value="Options" onclick="toggleOptions()">
+    <ul id="options" style="display:none;">
+      <li>Abbreviate: <input id="abbreviate" type="checkbox" checked>
+        <ul>
+          <li>(0,0)→1 <input id="abbreviate1" type="checkbox" checked></li>
+          <li>1+...+1→n <input id="abbreviaten" type="checkbox" checked></li>
+        </ul>
+      </li>
+      <li>Details: <input id="detail" type="checkbox"></li>
+    </ul>
+    <input type="button" value="Compute" onclick="compute()">
+  </form>
+  <textarea id="output" class="outputbox" readonly>...</textarea>
+  <input type="text" id="copyarea" style="display:none"><br>
+  <div>
+    <a href="https://docs.google.com/document/d/1btpUf3S7Ndaix3s3Ehw61QIj2pAHlH9OjCP55yqCT4U/edit" target="_blank">Definition of "横ネスト段階配列表記"</a> by mrna, Retrieved 2023/03/14<br>
+    The program (implementation.js) and the site (implementation.html) under https://naruyoko.github.io/googology/sideNestingStageArrayNotation is licensed by <a href="https://creativecommons.org/licenses/by-sa/3.0/legalcode" rel="license" target="_blank">Creative Commons Attribution-ShareAlike 3.0 Unported License</a>.
+  </div>
+  <div>Last updated: 2023/03/14</div>
+</body>
+</html>
