@@ -1,5 +1,5 @@
 import data.part
-import computability.turing_machine
+import data.pfun
 
 /- Lots of plagiarism from computability.turing_machine -/
 
@@ -21,47 +21,64 @@ structure accumulator_prenotation (α : Type*) :=
 structure accumulator_notation (α : Type*) extends accumulator_prenotation α :=
 (limit_expression : α)
 
+namespace accumulator_expression₀
+variable {α : Type*}
+
+def is_terminal (p : accumulator_expression₀ α) : bool :=
+option.is_none p.expression
+
+def wrap : accumulator_expression α → accumulator_expression₀ α :=
+λ ⟨T, n⟩, ⟨some T, n⟩
+
+@[simp] lemma nonterminal_wrap {p : accumulator_expression α} : ¬(wrap p).is_terminal :=
+by cases p; exact dec_trivial
+
+def unwrap_nonterminal : Π {p : accumulator_expression₀ α}, ¬p.is_terminal → accumulator_expression α
+| ⟨none  , n⟩ h := false.rec _ (h dec_trivial)
+| ⟨some T, n⟩ _ := ⟨T, n⟩
+
+@[simp] lemma unwrap_wrap (p : accumulator_expression α) (h : ¬(wrap p).is_terminal): unwrap_nonterminal h = p :=
+by cases p; refl
+
+end accumulator_expression₀
+
 namespace accumulator_notation
 variable {α : Type*}
 
 section
 variable (S : accumulator_notation α)
 
-def terminated (p : accumulator_expression₀ α) : bool :=
-option.is_none p.expression
-
 def init_limit : ℕ → accumulator_expression α :=
 λ n, ⟨S.limit_expression, n⟩
 
-def wrap_expression : accumulator_expression α → accumulator_expression₀ α :=
-λ ⟨T, n⟩, ⟨some T, n⟩
-
-def map_nonterminated (f : accumulator_expression α → accumulator_expression₀ α) : accumulator_expression₀ α → option (accumulator_expression₀ α)
-| ⟨none  , n⟩ := none
-| ⟨some T, n⟩ := some (f ⟨T, n⟩)
-
 def eval₀ : accumulator_expression₀ α → part ℕ :=
-λ p, (turing.eval (map_nonterminated S.step) p).map accumulator_expression.accumulator
+pfun.fix (λ p, part.some $ dite p.is_terminal (λ _, sum.inl p.accumulator) (λ h, sum.inr (S.step (accumulator_expression₀.unwrap_nonterminal h))))
 
 /--
 Repeatedly applies `S.step` until termination, returning the accumulator then.
 -/
 def eval : accumulator_expression α → part ℕ :=
-eval₀ S ∘ wrap_expression
+eval₀ S ∘ accumulator_expression₀.wrap
 
 def limit : ℕ → part ℕ :=
 eval S ∘ init_limit S
 
-@[simp] def map_nonterminated_none (f : accumulator_expression α → accumulator_expression₀ α) (n : ℕ) : map_nonterminated f ⟨none, n⟩ = none := rfl
-
-@[simp] def map_nonterminated_terminated (f : accumulator_expression α → accumulator_expression₀ α) {p : accumulator_expression₀ α} (h : terminated p) : map_nonterminated f p = none :=
+lemma eval₀_terminal {p : accumulator_expression₀ α} : p.is_terminal → p.accumulator ∈ eval₀ S p :=
 begin
-  cases p,
-  have := option.is_none_iff_eq_none.mp h,
-  simp * at *,
+  intro h,
+  apply pfun.fix_stop,
+  simp *,
 end
 
--- lemma eval₀_terminated {p : accumulator_expression₀ α} (h : terminated p) : part.get (eval₀ p) = p.accumulator := rfl
+lemma eval₀_fwd_eq {p : accumulator_expression₀ α} {h : ¬p.is_terminal} : eval₀ S p = eval₀ S (S.step (accumulator_expression₀.unwrap_nonterminal h)) :=
+begin
+  apply pfun.fix_fwd_eq,
+  rw part.mem_some_iff,
+  split_ifs,
+  refl,
+end
+
+lemma eval_eq_eval₀ {p : accumulator_expression α} : eval S p = eval₀ S (accumulator_expression₀.wrap p) := rfl
 
 end
 
@@ -84,6 +101,7 @@ def wrap_select_post_step_by_terminating : option α → ℕ → accumulator_exp
 @[simp] lemma wrap_select_post_step_by_terminating_some (T' : α) (n : ℕ) : wrap_select_post_step_by_terminating accumulator_step final_step (some T') n = ⟨T', accumulator_step n⟩ := rfl
 
 @[simp] lemma wrap_select_post_step_by_terminating_none (n : ℕ) : @wrap_select_post_step_by_terminating α accumulator_step final_step none n = ⟨none, final_step n⟩ := rfl
+
 end
 
 section
@@ -242,7 +260,7 @@ begin
   }
 end
 
-lemma get_of_is_some_limit_point_extend {T : option α} {n : ℕ} (h : option.is_some (limit_point_extend expand limit_seq T n)) : option.get h = option.cases_on' T (limit_seq n) (λ x, expand x n) :=
+lemma get_of_is_some_limit_point_extend {T : option α} {n : ℕ} (h : option.is_some (limit_point_extend expand limit_seq T n)) : option.get h = option.elim (limit_seq n) (λ x, expand x n) T :=
 begin
   have hT := (is_some_limit_point_iff _ _ _ _).mp h,
   cases hT,
