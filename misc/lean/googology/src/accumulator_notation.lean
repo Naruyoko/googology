@@ -220,78 +220,59 @@ by simp [option.is_none_iff_eq_none.mp h]
 lemma is_some_limit_point_extend_some_iff (T : α) (n : ℕ) : option.is_some (limit_point_extend expand limit_seq (some T) n) ↔ option.is_some (expand T n) :=
 begin
   split; intro h,
-  {
-    contrapose h,
+  { contrapose h,
     simp [option.is_none_iff_eq_none] at *,
-    assumption,
-  },
-  { simp * },
+    assumption },
+  { simp * }
 end
 
 lemma is_none_limit_point_extend_some_iff (T : α) (n : ℕ) : option.is_none (limit_point_extend expand limit_seq (some T) n) ↔ option.is_none (expand T n) :=
 begin
   have : ∀ {α} {x : option α}, option.is_none x ↔ ¬option.is_some x,
-  { intros _ x; cases x; simp, },
+  by intros _ x; cases x; tauto,
   iterate 2 { rw this },
   rw not_iff_not,
   exact is_some_limit_point_extend_some_iff _ _ _ _,
 end
 
 lemma is_some_limit_point_extend_none (n : ℕ) : option.is_some (limit_point_extend expand limit_seq none n) :=
-by simp
+by tauto
 
 lemma is_some_limit_point_iff (T : option α) (n : ℕ) : option.is_some (limit_point_extend expand limit_seq T n) ↔ (∃ x : α, T = some x ∧ option.is_some (expand x n)) ∨ option.is_none T :=
 begin
   cases T,
-  { simp },
-  {
-    simp [-accumulator_notation.limit_point_extend_some],
-    exact is_some_limit_point_extend_some_iff _ _ _ _,
-  },
+  { tauto },
+  { simp [-accumulator_notation.limit_point_extend_some],
+    exact is_some_limit_point_extend_some_iff _ _ _ _ }
 end
 
 lemma is_none_limit_point_iff (T : option α) (n : ℕ) : option.is_none (limit_point_extend expand limit_seq T n) ↔ (∃ x : α, T = some x ∧ option.is_none (expand x n)) :=
 begin
   cases T,
-  { simp },
-  {
-    simp [-accumulator_notation.limit_point_extend_some],
-    exact is_none_limit_point_extend_some_iff _ _ _ _,
-  }
+  { tauto },
+  { simp [-accumulator_notation.limit_point_extend_some],
+    exact is_none_limit_point_extend_some_iff _ _ _ _ }
 end
 
 lemma get_of_is_some_limit_point_extend {T : option α} {n : ℕ} (h : option.is_some (limit_point_extend expand limit_seq T n)) : option.get h = option.elim (limit_seq n) (λ x, expand x n) T :=
 begin
   have hT := (is_some_limit_point_iff _ _ _ _).mp h,
   cases hT,
-  {
-    cases hT with x hx,
-    cases hx with hT h_expand,
-    subst hT,
-    simp *,
-  },
-  {
-    have := option.eq_none_of_is_none hT,
+  { cases hT, simp * },
+  { have := option.eq_none_of_is_none hT,
     subst this,
-    simpa,
-  },
+    tauto }
 end
 
 lemma is_some_get_of_is_some_limit_point_extend {T : option α} {n : ℕ} (h : option.is_some (limit_point_extend expand limit_seq T n)) : option.is_some (option.get h) :=
 begin
   have hT := (is_some_limit_point_iff _ _ _ _).mp h,
   cases hT,
-  {
-    cases hT with x hx,
-    cases hx with hT h_expand,
-    subst hT,
-    simp *,
-  },
-  {
-    have := option.eq_none_of_is_none hT,
+  { cases hT with x hx,
+    simp * },
+  { have := option.eq_none_of_is_none hT,
     subst this,
-    simp,
-  },
+    tauto }
 end
 
 /--
