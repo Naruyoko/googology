@@ -1,5 +1,7 @@
+import data.list.basic
 import data.part
 import data.pfun
+import logic.relation
 
 /- Lots of plagiarism from computability.turing_machine -/
 
@@ -60,6 +62,8 @@ Repeatedly applies `S.step` until termination, returning the accumulator then.
 def eval : accumulator_expression α → part ℕ :=
 eval₀ S ∘ accumulator_expression₀.wrap
 
+lemma eval_eq_eval₀ {p : accumulator_expression α} : eval S p = eval₀ S (accumulator_expression₀.wrap p) := rfl
+
 def limit : ℕ → part ℕ :=
 eval S ∘ init_limit S
 
@@ -70,7 +74,7 @@ begin
   simp *,
 end
 
-lemma eval₀_fwd_eq {p : accumulator_expression₀ α} {h : ¬p.is_terminal} : eval₀ S p = eval₀ S (S.step (accumulator_expression₀.unwrap_nonterminal h)) :=
+lemma eval₀_step_eq {p : accumulator_expression₀ α} (h : ¬p.is_terminal) : eval₀ S p = eval₀ S (S.step (accumulator_expression₀.unwrap_nonterminal h)) :=
 begin
   apply pfun.fix_fwd_eq,
   rw part.mem_some_iff,
@@ -78,12 +82,84 @@ begin
   refl,
 end
 
-lemma eval_eq_eval₀ {p : accumulator_expression α} : eval S p = eval₀ S (accumulator_expression₀.wrap p) := rfl
+lemma dom_eval₀_terminal {p : accumulator_expression₀ α} : p.is_terminal → (eval₀ S p).dom :=
+λ h, part.dom_iff_mem.mpr ⟨_, eval₀_terminal S h⟩
+
+lemma dom_eval₀_step {p : accumulator_expression₀ α} (h : ¬p.is_terminal) : (eval₀ S p).dom = (eval₀ S (S.step (accumulator_expression₀.unwrap_nonterminal h))).dom :=
+by rw eval₀_step_eq
+
+def eval₀_is_total_at (T : option α) : Prop :=
+∀ n, (eval₀ S ⟨T, n⟩).dom
+
+def eval_is_total_at (T : α) : Prop :=
+∀ n, (eval S ⟨T, n⟩).dom
+
+lemma dom_of_all_dom_eval₀_step {T : α} : (∀ n, S.eval₀_is_total_at (S.step ⟨T, n⟩).expression) → S.eval_is_total_at T :=
+begin
+  intros h n,
+  rw eval_eq_eval₀,
+  rw eval₀_step_eq S accumulator_expression₀.nonterminal_wrap,
+  specialize h n (S.step ⟨T, n⟩).accumulator,
+  cases (S.step ⟨T, n⟩),
+  exact h,
+end
 
 end
 
--- def reaches {σ} (f : σ → option σ) : σ → σ → Prop :=
--- refl_trans_gen (λ a b, b ∈ f a)
+section
+variables {β : Type*} (f : α → β → option α)
+
+/--
+`reachable f a b` denotes the reachability of `a` to `b` by recursively iterating into the first argument of `f` and arbitrary second arguments.
+-/
+def reachable : option α → option α → Prop :=
+relation.refl_trans_gen (option.elim (λ _, false) (λ a b, ∃ c, b = f a c))
+
+lemma reflexive_reachable : reflexive (reachable f) :=
+λ _, relation.refl_trans_gen.refl
+
+lemma transitive_reachable : transitive (reachable f) :=
+λ _ _ _, relation.refl_trans_gen.trans
+
+lemma reachable_iff_exists_list_args {a b : option α} : reachable f a b ↔ ∃ (l : list β), (list.scanl (λ (c : option α) d, c >>= λ c', f c' d) a l).init.all option.is_some ∧ list.foldl (λ (c : option α) d, c >>= λ c', f c' d) a l = b :=
+begin
+  have scanl_ne_nil : ∀ a l, list.scanl (λ (c : option α) d, c >>= λ c', f c' d) a l ≠ [],
+  by introv; cases l; tauto,
+  unfold_coes,
+  split,
+  { intro hab,
+    unfold reachable at hab,
+    apply relation.refl_trans_gen.head_induction_on hab,
+    { use ([]), tauto },
+    { clear_dependent a,
+      intros a c hac hcb IH,
+      have ha_some : a.is_some,
+      by cases a; tauto,
+      obtain ⟨a, rfl⟩ := option.is_some_iff_exists.mp ha_some,
+      rcases hac with ⟨d, rfl⟩,
+      cases IH with l hl,
+      use d :: l,
+      unfold list.all at *,
+      simp [hl, scanl_ne_nil (f a d) l] } },
+  { intro hab,
+    rcases hab with ⟨l, ⟨hsome, hl⟩⟩,
+    unfold reachable,
+    induction l with d l IH generalizing a,
+    { simp * at * },
+    { have ha_some : a.is_some,
+      { cases a,
+        { unfold list.all at *,
+          simp [*, scanl_ne_nil none l] at * },
+        { exact rfl } },
+      obtain ⟨a, rfl⟩ := option.is_some_iff_exists.mp ha_some,
+      rw relation.refl_trans_gen.cases_head_iff,
+      right,
+      use f a d,
+      simp * at *,
+      exact IH hsome hl } }
+end
+
+end
 
 section
 variables (accumulator_step : ℕ → ℕ) (final_step : ℕ → ℕ)
