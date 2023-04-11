@@ -62,7 +62,7 @@ def reaches (M : machine) : option cfg → option cfg → Prop :=
 
 /-- The initial configuration. -/
 def init (l : list Γ) : cfg :=
-⟨default, tape.mk₁ l⟩
+⟨some default, tape.mk₁ l⟩
 
 /-- Evaluate a Turing machine on initial input to a final state,
   if it terminates. -/

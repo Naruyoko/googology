@@ -173,8 +173,8 @@ begin
     refl }
 end
 
-theorem map_init (l : list Γ) : (init l).map f₁ g₁ = init (l.map f₁) :=
-congr (congr_arg _ option.map_none') (turing.tape.map_mk₁ _ _)
+theorem map_init (g₁ : turing.pointed_map Λ Λ') (l : list Γ) : (init l).map f₁ g₁ = init (l.map f₁) :=
+congr (congr_arg _ (eq.trans (option.map_some') (congr_arg _ g₁.map_pt))) (turing.tape.map_mk₁ _ _)
 
 end map
 
