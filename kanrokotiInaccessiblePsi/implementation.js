@@ -581,7 +581,7 @@ function inT(t){
     return false;
   }
   if (t instanceof ZeroTerm) return true; //1
-  if (t instanceof SumTerm) return t.terms.every(inPT); //2
+  if (t instanceof SumTerm) return t.terms.every(inPT); //3
   if (t instanceof ITerm) return inTPsi(t.sub)&&inTPsi(t.inner); //4
   if (t instanceof PsiTerm) return inT(t.sub)&&inTPsi(t.inner); //5
   return false;
@@ -604,7 +604,7 @@ function inTPsi(t){
     return false;
   }
   if (t instanceof ZeroTerm) return true; //1
-  if (t instanceof SumTerm) return t.terms.every(inPTPsi); //3
+  if (t instanceof SumTerm) return t.terms.every(inPTPsi); //2
   if (t instanceof PsiTerm) return inT(t.sub)&&inTPsi(t.inner); //5
   return false;
 }
@@ -821,16 +821,21 @@ function fund(S,T){
             var c=Term_dom_S_sub.sub;
             var dom_c=dom(c);
             var Term_dom_c=new Term(dom_c);
-            if (!(Term_dom_c instanceof ITerm&&equal(Term_dom_c.inner,Term.ZERO))) throw Error("Unexpected error");
-            var d=Term_dom_c.sub;
-            if (equal(d,Term.ZERO)){ //4.1.2.2.2.1
+            if (equal(Term_dom_c,Term.ONE)){ //4.1.2.2.2.1
               var Term_fund_S_fund_T_0=null;
-              if (notEqual(T,Term.ZERO)&&isNat(T)&&(Term_fund_S_fund_T_0=new Term(fund(S,fund(T,Term.ZERO)))) instanceof PsiTerm&&equal(Term_fund_S_fund_T_0.inner,S.inner)) return "ψ("+fund(S.sub,bp(Term_fund_S_fund_T_0.sub))+","+S.inner+")"; //4.1.2.2.2.1.1
-              else return "ψ("+fund(S.sub,"ψ(0,0)")+","+S.inner+")"; //4.1.2.2.2.1.2
-            }else{ //4.1.2.2.2.2
-              var Term_fund_S_fund_T_0=null;
-              if (notEqual(T,Term.ZERO)&&isNat(T)&&(Term_fund_S_fund_T_0=new Term(fund(S,fund(T,Term.ZERO)))) instanceof PsiTerm&&equal(Term_fund_S_fund_T_0.inner,S.inner)) return "ψ("+fund(S.sub,"I("+fund(d,Term.ZERO)+","+bp(Term_fund_S_fund_T_0.sub)+")")+","+S.inner+")"; //4.1.2.2.2.2.1
-              else return "ψ("+fund(S.sub,"I("+fund(d,Term.ZERO)+",0)")+","+S.inner+")"; //4.1.2.2.2.2.2
+              if (equal(dom(T),Term.ONE)&&(Term_fund_S_fund_T_0=new Term(fund(S,fund(T,Term.ZERO)))) instanceof PsiTerm&&equal(Term_fund_S_fund_T_0.inner,S.inner)) return "ψ("+fund(S.sub,"ψ("+fund(c,Term.ZERO)+","+Term_fund_S_fund_T_0.sub+")")+","+S.inner+")"; //4.1.2.2.2.1.1
+              else return "ψ("+fund(S.sub,"ψ("+fund(c,Term.ZERO)+",0)")+","+S.inner+")"; //4.1.2.2.2.1.2
+            }else if (Term_dom_c instanceof ITerm&&equal(Term_dom_c.inner,Term.ZERO)){ //4.1.2.2.2.2
+              var d=Term_dom_c.sub;
+              if (equal(d,Term.ZERO)){ //4.1.2.2.2.2.1
+                var Term_fund_S_fund_T_0=null;
+                if (equal(dom(T),Term.ONE)&&(Term_fund_S_fund_T_0=new Term(fund(S,fund(T,Term.ZERO)))) instanceof PsiTerm&&equal(Term_fund_S_fund_T_0.inner,S.inner)) return "ψ("+fund(S.sub,bp(Term_fund_S_fund_T_0.sub))+","+S.inner+")"; //4.1.2.2.2.2.1.1
+                else return "ψ("+fund(S.sub,"ψ(0,0)")+","+S.inner+")"; //4.1.2.2.2.2.1.2
+              }else{ //4.1.2.2.2.2.2
+                var Term_fund_S_fund_T_0=null;
+                if (equal(dom(T),Term.ONE)&&(Term_fund_S_fund_T_0=new Term(fund(S,fund(T,Term.ZERO)))) instanceof PsiTerm&&equal(Term_fund_S_fund_T_0.inner,S.inner)) return "ψ("+fund(S.sub,"I("+fund(d,Term.ZERO)+","+bp(Term_fund_S_fund_T_0.sub)+")")+","+S.inner+")"; //4.1.2.2.2.2.2.1
+                else return "ψ("+fund(S.sub,"I("+fund(d,Term.ZERO)+",0)")+","+S.inner+")"; //4.1.2.2.2.2.2.2
+              }
             }
           }
         }
@@ -848,17 +853,17 @@ function fund(S,T){
         var Term_dom_c=new Term(dom_c);
         if (equal(Term_dom_c,Term.ONE)){ //4.3.2.1
           var Term_fund_S_fund_T_0=null;
-          if (notEqual(T,Term.ZERO)&&isNat(T)&&(Term_fund_S_fund_T_0=new Term(fund(S,fund(T,Term.ZERO)))) instanceof PsiTerm&&equal(Term_fund_S_fund_T_0.sub,S.sub)) return "ψ("+S.sub+","+fund(S.inner,"ψ("+fund(c,Term.ZERO)+","+Term_fund_S_fund_T_0.inner+")")+")"; //4.3.2.1.1
+          if (equal(dom(T),Term.ONE)&&(Term_fund_S_fund_T_0=new Term(fund(S,fund(T,Term.ZERO)))) instanceof PsiTerm&&equal(Term_fund_S_fund_T_0.sub,S.sub)) return "ψ("+S.sub+","+fund(S.inner,"ψ("+fund(c,Term.ZERO)+","+Term_fund_S_fund_T_0.inner+")")+")"; //4.3.2.1.1
           else return "ψ("+S.sub+","+fund(S.inner,"ψ("+fund(c,Term.ZERO)+",0)")+")"; //4.3.2.1.2
         }else if (Term_dom_c instanceof ITerm&&equal(Term_dom_c.inner,Term.ZERO)){ //4.3.2.2
           var d=Term_dom_c.sub;
           if (equal(d,Term.ZERO)){ //4.3.2.2.1
             var Term_fund_S_fund_T_0=null;
-            if (notEqual(T,Term.ZERO)&&isNat(T)&&(Term_fund_S_fund_T_0=new Term(fund(S,fund(T,Term.ZERO)))) instanceof PsiTerm&&equal(Term_fund_S_fund_T_0.sub,S.sub)) return "ψ("+S.sub+","+fund(S.inner,Term_fund_S_fund_T_0.inner)+")"; //4.3.2.2.1.1
+            if (equal(dom(T),Term.ONE)&&(Term_fund_S_fund_T_0=new Term(fund(S,fund(T,Term.ZERO)))) instanceof PsiTerm&&equal(Term_fund_S_fund_T_0.sub,S.sub)) return "ψ("+S.sub+","+fund(S.inner,Term_fund_S_fund_T_0.inner)+")"; //4.3.2.2.1.1
             else return "ψ("+S.sub+","+fund(S.inner,"ψ(0,0)")+")"; //4.3.2.2.1.2
           }else{ //4.3.2.2.2
             var Term_fund_S_fund_T_0=null;
-            if (notEqual(T,Term.ZERO)&&isNat(T)&&(Term_fund_S_fund_T_0=new Term(fund(S,fund(T,Term.ZERO)))) instanceof PsiTerm&&equal(Term_fund_S_fund_T_0.sub,S.sub)) return "ψ("+S.sub+","+fund(S.inner,"I("+fund(d,Term.ZERO)+","+Term_fund_S_fund_T_0.inner+")")+")"; //4.3.2.2.2.1
+            if (equal(dom(T),Term.ONE)&&(Term_fund_S_fund_T_0=new Term(fund(S,fund(T,Term.ZERO)))) instanceof PsiTerm&&equal(Term_fund_S_fund_T_0.sub,S.sub)) return "ψ("+S.sub+","+fund(S.inner,"I("+fund(d,Term.ZERO)+","+Term_fund_S_fund_T_0.inner+")")+")"; //4.3.2.2.2.1
             else return "ψ("+S.sub+","+fund(S.inner,"I("+fund(d,Term.ZERO)+",0)")+")"; //4.3.2.2.2.2
           }
         }
@@ -971,6 +976,8 @@ var testTermsPre=[
   ["ψ_0(ψ_I_0(0)(1))",-1],
   ["ψ_0(ψ_I_0(0)(ψ_I_0(0)(0)))",3],
   ["ψ_0(ψ_I_0(0)+1(0))",3],
+  ["ψ_0(ψ_I_0(0)+1(0)+ψ_ψ_I_0(0)+1(0)(0))",3],
+  ["ψ_0(ψ_I_0(0)+1(0)+ψ_I_0(0)(0))",3],
   ["ψ_0(ψ_I_0(0)+ψ_I_0(0)(0)(0))",3],
   ["ψ_0(ψ_I_0(0)+ψ_I_0(0)(0)+ψ_I_0(0)(0)(0))",3],
   ["ψ_0(ψ_I_0(0)+ψ_I_0(0)(ψ_I_0(0)(0))(0))",3],
@@ -1168,10 +1175,10 @@ function compute(){
           result=lessThanOrEqual(args[0],args[1]);
         }else if (cmd=="lessThan"||cmd=="<"){
           result=lessThan(args[0],args[1]);
+        }else if (cmd=="bp"){
+          result=bp(args[0]);
         }else if (cmd=="dom"){
           result=dom(args[0]);
-        }else if (cmd=="Ina"){
-          result=Ina(args[0]);
         }else if (cmd=="fund"||cmd=="expand"){
           var t=normalizeAbbreviations(args[0]);
           result=[t];
@@ -1204,9 +1211,9 @@ function compute(){
       output+=result;
     }else if (cmd=="lessThan"||cmd=="<"){
       output+=result;
-    }else if (cmd=="dom"){
+    }else if (cmd=="bp"){
       output+=abbreviateIfEnabled(result);
-    }else if (cmd=="Ina"){
+    }else if (cmd=="dom"){
       output+=abbreviateIfEnabled(result);
     }else if (cmd=="fund"||cmd=="expand"){
       if (options.detail){
