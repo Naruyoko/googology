@@ -823,7 +823,7 @@ function fund(S,T){
             var Term_dom_c=new Term(dom_c);
             if (equal(Term_dom_c,Term.ONE)){ //4.1.2.2.2.1
               var Term_fund_S_fund_T_0=null;
-              if (equal(dom(T),Term.ONE)&&(Term_fund_S_fund_T_0=new Term(fund(S,fund(T,Term.ZERO)))) instanceof PsiTerm&&equal(Term_fund_S_fund_T_0.inner,S.inner)) return "ψ("+fund(S.sub,"ψ("+fund(c,Term.ZERO)+","+Term_fund_S_fund_T_0.sub+")")+","+S.inner+")"; //4.1.2.2.2.1.1
+              if (equal(dom(T),Term.ONE)&&(Term_fund_S_fund_T_0=new Term(fund(S,fund(T,Term.ZERO)))) instanceof PsiTerm&&equal(Term_fund_S_fund_T_0.inner,S.inner)) return "ψ("+fund(S.sub,"ψ("+fund(c,Term.ZERO)+","+bp(Term_fund_S_fund_T_0.sub)+")")+","+S.inner+")"; //4.1.2.2.2.1.1
               else return "ψ("+fund(S.sub,"ψ("+fund(c,Term.ZERO)+",0)")+","+S.inner+")"; //4.1.2.2.2.1.2
             }else if (Term_dom_c instanceof ITerm&&equal(Term_dom_c.inner,Term.ZERO)){ //4.1.2.2.2.2
               var d=Term_dom_c.sub;
@@ -994,6 +994,7 @@ var testTermsPre=[
   ["ψ_0(ψ_I_0(1)+1(0))",3],
   ["ψ_0(ψ_I_0(1)+ψ_I_0(0)(0)(0))",3],
   ["ψ_0(ψ_I_0(1)+ψ_I_0(0)+1(0)(0))",3],
+  ["ψ_0(ψ_I_0(1)+ψ_I_0(0)+ψ_I_0(1)+1(0)(0)(0))",3],
   ["ψ_0(ψ_I_0(1)+ψ_I_0(1)(0)(0))",-1],
   ["ψ_0(ψ_I_0(1)+I_0(0)(0))",3],
   ["ψ_0(ψ_I_0(1)+I_0(1)(0))",-1],
