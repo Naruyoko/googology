@@ -635,7 +635,7 @@ function oplus(S,T,U){
     var Da=S.sub;
     var a=toNat(Da);
     var b=S.inner;
-    if (U<a) return "ψ_"+Da+"+"+normalizeAbbreviations(T)+"("+oplus(b,T,U)+")"; //3.1
+    if (U<a) return "ψ_"+normalizeAbbreviations(a+T)+"("+oplus(b,T,U)+")"; //3.1
     else return S+""; //3.2
   }
   throw Error("No rule to compute oplus of "+S+" by "+T+" and "+U);
