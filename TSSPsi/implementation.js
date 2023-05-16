@@ -626,9 +626,9 @@ function ascend(S,del,br,pr){
     var a=toNat(S.sub);
     var b=toNat(S.sup);
     var c=S.inner;
-    if (br<b) return "ψ_{"+normalizeAbbreviations(a)+"}^{"+normalizeAbbreviations(b+del)+"}("+ascend(c,del,br,pr)+")"; //3.1
+    if (br<b) return "ψ_{"+S.sub+"}^{"+normalizeAbbreviations(b+del)+"}("+ascend(c,del,br,pr)+")"; //3.1
     else{ //3.2
-      if (pr==0) return "ψ_{"+normalizeAbbreviations(a)+"}^{"+normalizeAbbreviations(b+del)+"}("+ascend(c,del,br,1)+")"; //3.2.1
+      if (pr==0) return "ψ_{"+S.sub+"}^{"+normalizeAbbreviations(b+del)+"}("+ascend(c,del,br,1)+")"; //3.2.1
       else return S+"";
     }
 
@@ -719,8 +719,8 @@ function fund(S,T){
     else if (equal(Term_dom_c,Term.ONE)){ //3.2
       var Term_fund_T_0=null;
       if (equal(T,(Term_fund_T_0=new Term(fund(T,Term.ZERO)))+"+"+Term.ONE)) return fund(S,Term_fund_T_0)+"+"+fund(S,Term.ONE); //3.2.1
-      else return "ψ_{"+normalizeAbbreviations(a)+"}^{"+normalizeAbbreviations(b)+"}("+fund(c,Term.ZERO)+")"; //3.2.2
-    }else if (equal(Term_dom_c,Term.SMALLOMEGA)) return "ψ_{"+normalizeAbbreviations(a)+"}^{"+normalizeAbbreviations(b)+"}("+fund(c,T)+")"; //3.3
+      else return "ψ_{"+S.sub+"}^{"+S.sup+"}("+fund(c,Term.ZERO)+")"; //3.2.2
+    }else if (equal(Term_dom_c,Term.SMALLOMEGA)) return "ψ_{"+S.sub+"}^{"+S.sup+"}("+fund(c,T)+")"; //3.3
     else{ //3.4
       if (!(Term_dom_c instanceof PsiTerm)) throw Error("Unexpected error");
       var d=toNat(Term_dom_c.sub);
@@ -728,9 +728,9 @@ function fund(S,T){
       var f=Term_dom_c.inner;
       if (d==0){ //3.4.1
         if (b<e){ //3.4.1.1
-          if (isNat(T)&&notEqual(T,Term.ZERO)) return "ψ_{"+normalizeAbbreviations(a)+"}^{"+normalizeAbbreviations(b)+"}("+fund(c,fund(S,fund(T,Term.ZERO)))+")"; //3.4.1.1.1
-          else return "ψ_{"+normalizeAbbreviations(a)+"}^{"+normalizeAbbreviations(b)+"}("+fund(c,Term.ZERO)+")"; //3.4.1.1.2
-        }else return "ψ_{"+normalizeAbbreviations(a)+"}^{"+normalizeAbbreviations(b)+"}("+fund(c,T)+")"; //3.4.1.2
+          if (isNat(T)&&notEqual(T,Term.ZERO)) return "ψ_{"+S.sub+"}^{"+S.sup+"}("+fund(c,fund(S,fund(T,Term.ZERO)))+")"; //3.4.1.1.1
+          else return "ψ_{"+S.sub+"}^{"+S.sup+"}("+fund(c,Term.ZERO)+")"; //3.4.1.1.2
+        }else return "ψ_{"+S.sub+"}^{"+S.sup+"}("+fund(c,T)+")"; //3.4.1.2
       }else{ //3.4.2
         if (a<d){ //3.4.2.1
           if (b<e){ //3.4.2.1.1
@@ -740,10 +740,10 @@ function fund(S,T){
             var g=toNat(Term_cp_c.sub);
             var h=toNat(Term_cp_c.sup);
             var del=h-b;
-            if (isNat(T)&&notEqual(T,Term.ZERO)) return "ψ_{"+normalizeAbbreviations(a)+"}^{"+normalizeAbbreviations(b)+"}("+fund(c,ascend(fund(S,fund(T,Term.ZERO)),del,b,0))+")"; //3.4.2.1.1.1
-            else return "ψ_{"+normalizeAbbreviations(a)+"}^{"+normalizeAbbreviations(b)+"}("+fund(c,Term.ZERO)+")"; //3.4.2.1.1.2
-          }else return "ψ_{"+normalizeAbbreviations(a)+"}^{"+normalizeAbbreviations(b)+"}("+fund(c,T)+")"; //3.4.2.1.2
-        }else return "ψ_{"+normalizeAbbreviations(a)+"}^{"+normalizeAbbreviations(b)+"}("+fund(c,T)+")"; //3.4.2.2
+            if (isNat(T)&&notEqual(T,Term.ZERO)) return "ψ_{"+S.sub+"}^{"+S.sup+"}("+fund(c,ascend(fund(S,fund(T,Term.ZERO)),del,b,0))+")"; //3.4.2.1.1.1
+            else return "ψ_{"+S.sub+"}^{"+S.sup+"}("+fund(c,Term.ZERO)+")"; //3.4.2.1.1.2
+          }else return "ψ_{"+S.sub+"}^{"+S.sup+"}("+fund(c,T)+")"; //3.4.2.1.2
+        }else return "ψ_{"+S.sub+"}^{"+S.sup+"}("+fund(c,T)+")"; //3.4.2.2
       }
     }
   }

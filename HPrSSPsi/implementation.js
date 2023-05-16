@@ -674,8 +674,8 @@ function fund(S,T){
     else if (equal(Term_dom_b,"1")){ //3.2
       var Term_fund_T_0=new Term(fund(T,"0"));
       if (equal(T,Term_fund_T_0+"+1")) return fund(S,Term_fund_T_0)+"+"+fund(S,"1"); //3.2.1
-      else return "ψ_{"+normalizeAbbreviations(a)+"}("+fund(b,"0")+")"; //3.2.2
-    }else if (equal(Term_dom_b,"ω")) return "ψ_{"+normalizeAbbreviations(a)+"}("+fund(b,T)+")"; //3.3
+      else return "ψ_{"+S.sub+"}("+fund(b,"0")+")"; //3.2.2
+    }else if (equal(Term_dom_b,"ω")) return "ψ_{"+S.sub+"}("+fund(b,T)+")"; //3.3
     else{ //3.4
       if (!(Term_dom_b instanceof PsiTerm)) throw Error("Unexpected error");
       var c=toNat(Term_dom_b.sub);
@@ -684,12 +684,12 @@ function fund(S,T){
         var del0=c-a-1;
         if (equal(dom(d),"0")){ //3.4.1.1
           if (del0<1){ //3.4.1.1.1
-            if (isNat(T)&&notEqual(T,"0")) return "ψ_{"+normalizeAbbreviations(a)+"}("+fund(b,fund(S,fund(T,"0")))+")"; //3.4.1.1.1.1
-            else return "ψ_{"+normalizeAbbreviations(a)+"}("+fund(b,"0")+")"; //3.4.1.1.1.2
+            if (isNat(T)&&notEqual(T,"0")) return "ψ_{"+S.sub+"}("+fund(b,fund(S,fund(T,"0")))+")"; //3.4.1.1.1.1
+            else return "ψ_{"+S.sub+"}("+fund(b,"0")+")"; //3.4.1.1.1.2
           }else{ //3.4.1.1.2
-            if (T instanceof ZeroTerm) return "ψ_{"+normalizeAbbreviations(a)+"}("+fund(b,"0")+")"; //3.4.1.1.2.1
-            else if (isNat(T)) return "ψ_{"+normalizeAbbreviations(a)+"}("+fund(b,ascend(fund(S,fund(T,"0")),del0,a,0))+")"; //3.4.1.1.2.2
-            else return "ψ_{"+normalizeAbbreviations(a)+"}("+fund(b,T)+")"; //3.4.1.1.2.3
+            if (T instanceof ZeroTerm) return "ψ_{"+S.sub+"}("+fund(b,"0")+")"; //3.4.1.1.2.1
+            else if (isNat(T)) return "ψ_{"+S.sub+"}("+fund(b,ascend(fund(S,fund(T,"0")),del0,a,0))+")"; //3.4.1.1.2.2
+            else return "ψ_{"+S.sub+"}("+fund(b,T)+")"; //3.4.1.1.2.3
           }
         }else{ //3.4.1.2
           var Term_cp_b=new Term(cp(b));
@@ -703,15 +703,15 @@ function fund(S,T){
           var del2=g-a-1;
           if (del0<del1){ //3.4.1.2.1
             var Term_fund_S_fund_T_0=null;
-            if (isNat(T)&&notEqual(T,"0")&&(Term_fund_S_fund_T_0=new Term(fund(S,fund(T,"0")))) instanceof PsiTerm) return "ψ_{"+normalizeAbbreviations(a)+"}("+fund(b,ascend(Term_fund_S_fund_T_0.inner,del2-del0-1,a,0))+")"; //3.4.1.2.1.1
-            else return "ψ_{"+normalizeAbbreviations(a)+"}("+fund(b,"0")+")"; //3.4.1.2.1.2
+            if (isNat(T)&&notEqual(T,"0")&&(Term_fund_S_fund_T_0=new Term(fund(S,fund(T,"0")))) instanceof PsiTerm) return "ψ_{"+S.sub+"}("+fund(b,ascend(Term_fund_S_fund_T_0.inner,del2-del0-1,a,0))+")"; //3.4.1.2.1.1
+            else return "ψ_{"+S.sub+"}("+fund(b,"0")+")"; //3.4.1.2.1.2
           }else{ //3.4.1.2.2
-            if (T instanceof ZeroTerm) return "ψ_{"+normalizeAbbreviations(a)+"}("+fund(b,"0")+")"; //3.4.1.2.2.1
-            else if (isNat(T)) return "ψ_{"+normalizeAbbreviations(a)+"}("+fund(b,ascend(fund(S,fund(T,"0")),del2,a,0))+")"; //3.4.1.2.2.2
-            else return "ψ_{"+normalizeAbbreviations(a)+"}("+fund(b,T)+")"; //3.4.1.2.2.3
+            if (T instanceof ZeroTerm) return "ψ_{"+S.sub+"}("+fund(b,"0")+")"; //3.4.1.2.2.1
+            else if (isNat(T)) return "ψ_{"+S.sub+"}("+fund(b,ascend(fund(S,fund(T,"0")),del2,a,0))+")"; //3.4.1.2.2.2
+            else return "ψ_{"+S.sub+"}("+fund(b,T)+")"; //3.4.1.2.2.3
           }
         }
-      }else return "ψ_{"+normalizeAbbreviations(a)+"}("+fund(b,T)+")"; //3.4.2
+      }else return "ψ_{"+S.sub+"}("+fund(b,T)+")"; //3.4.2
     }
   }
   throw Error("No rule to compute fund of "+S+","+T);
