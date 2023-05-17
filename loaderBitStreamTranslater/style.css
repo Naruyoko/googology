@@ -2,7 +2,7 @@
   width:calc(100% - 8px);
   height:150px;
   text-align:left;
-  white-space:nowrap;
+  white-space:pre;
   margin:0;
   border:1px solid black;
   resize:both;
