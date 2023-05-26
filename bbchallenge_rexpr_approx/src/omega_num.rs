@@ -1,11 +1,12 @@
 use std::cmp::Ordering::{self, Equal, Greater, Less};
 use std::f64::consts::{E, LOG10_2};
+use std::fmt::{Debug, Display, Formatter, Result};
 use std::ops::{Add, AddAssign, Div, DivAssign, Mul, MulAssign, Neg, Sub, SubAssign};
 
 use itertools::Itertools;
 
 /** Quickly made up, missing many features */
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub struct OmegaNum {
     pub top: f64,
     pub array: Vec<u64>,
@@ -34,9 +35,15 @@ impl OmegaNum {
         *self.array.get(i).unwrap_or(&0)
     }
     fn normalize(&mut self) {
-        if self.top < 0.0 && self.array.len() == 0 {
+        if !self.top.is_finite() {
+            self.array = vec![];
+        }
+        if self.top.is_sign_negative() && self.array.len() == 0 {
             self.top = -self.top;
             self.neg = !self.neg;
+        }
+        if !self.top.is_finite() {
+            return;
         }
         loop {
             let mut modified = false;
@@ -64,8 +71,8 @@ impl OmegaNum {
             for i in 1..self.array.len() {
                 if self.array[i] > MAX_SAFE_INTEGER_U64 {
                     self.top = self.array[i] as f64;
-                    for i in self.array[1..i].iter_mut() {
-                        *i = 0
+                    for a in self.array[0..=i].iter_mut() {
+                        *a = 0
                     }
                     self.safe_array_set(i + 1, self.safe_array_get(i + 1) + 1);
                     modified = true;
@@ -87,6 +94,9 @@ pub mod consts {
     pub const ONE: OmegaNum = OmegaNum::new_no_normalize(1.0, vec![], false);
     pub const MAX_SAFE_INTEGER: OmegaNum =
         OmegaNum::new_no_normalize(MAX_SAFE_INTEGER_F64, vec![], false);
+    pub const NAN: OmegaNum = OmegaNum::new_no_normalize(f64::NAN, vec![], false);
+    pub const INFINITY: OmegaNum = OmegaNum::new_no_normalize(f64::INFINITY, vec![], false);
+    pub const NEGATIVE_INFINITY: OmegaNum = OmegaNum::new_no_normalize(f64::INFINITY, vec![], true);
     pub fn e_max_safe_integer() -> OmegaNum {
         OmegaNum::new_no_normalize(MAX_SAFE_INTEGER_F64, vec![1], false)
     }
@@ -104,7 +114,7 @@ pub mod consts {
 impl From<f64> for OmegaNum {
     fn from(value: f64) -> Self {
         let abs = value.abs();
-        if abs > MAX_SAFE_INTEGER_F64 {
+        if abs.is_finite() && abs > MAX_SAFE_INTEGER_F64 {
             OmegaNum::new_no_normalize(abs.log10(), vec![1], value.is_sign_negative())
         } else {
             OmegaNum::new_no_normalize(abs, vec![], value.is_sign_negative())
@@ -124,57 +134,71 @@ impl From<OmegaNum> for f64 {
     }
 }
 
-impl ToString for OmegaNum {
-    fn to_string(&self) -> String {
-        (if self.neg { "-" } else { "" }).to_owned()
-            + &self
-                .array
-                .iter()
-                .enumerate()
-                .skip(1)
-                .rev()
-                .filter(|(_, &a)| a > 0)
-                .map({
-                    |(i, &a)| {
-                        let arrows = i + 1;
-                        let q = &if arrows >= 5 {
-                            format!("{{{}}}", arrows)
-                        } else {
-                            "^".repeat(arrows)
-                        };
-                        match a {
-                            1 => "10".to_owned() + q,
-                            _ => format!("(10{})^{} ", q, a),
+impl Display for OmegaNum {
+    fn fmt(&self, f: &mut Formatter) -> Result {
+        write!(
+            f,
+            "{}",
+            (if self.neg { "-" } else { "" }).to_owned()
+                + &self
+                    .array
+                    .iter()
+                    .enumerate()
+                    .skip(1)
+                    .rev()
+                    .filter(|(_, &a)| a > 0)
+                    .map({
+                        |(i, &a)| {
+                            let arrows = i + 1;
+                            let q = &if arrows >= 5 {
+                                format!("{{{}}}", arrows)
+                            } else {
+                                "^".repeat(arrows)
+                            };
+                            match a {
+                                1 => "10".to_owned() + q,
+                                _ => format!("(10{})^{} ", q, a),
+                            }
                         }
+                    })
+                    .join("")
+                + &match self.safe_array_get(0) {
+                    0 => self.top.to_string(),
+                    1 => {
+                        let i = self.top.trunc();
+                        let f = self.top - i;
+                        format!("{}e{}", 10.0_f64.powf(f), i as u64)
                     }
-                })
-                .join("")
-            + &match self.safe_array_get(0) {
-                0 => self.top.to_string(),
-                1 => {
-                    let i = self.top.trunc();
-                    let f = self.top - i;
-                    format!("{}e{}", 10.0_f64.powf(f), i as u64)
+                    2 => {
+                        let i = self.top.trunc();
+                        let f = self.top - i;
+                        format!("e{}e{}", 10.0_f64.powf(f), i as u64)
+                    }
+                    h @ (3 | 4 | 5 | 6 | 7) => "e".repeat(h as usize) + &self.top.to_string(),
+                    h => format!("(10^)^{} {}", h, self.top),
                 }
-                2 => {
-                    let i = self.top.trunc();
-                    let f = self.top - i;
-                    format!("e{}e{}", 10.0_f64.powf(f), i as u64)
-                }
-                h @ (3 | 4 | 5 | 6 | 7) => "e".repeat(h as usize) + &self.top.to_string(),
-                h => format!("(10^)^{} {}", h, self.top),
-            }
+        )
     }
 }
 impl OmegaNum {
     fn is_zero(&self) -> bool {
         self.top == 0.0 && self.array.len() == 0
     }
-    fn is_sign_negative(&self) -> bool {
+    pub fn is_sign_negative(&self) -> bool {
         self.neg && !self.is_zero()
     }
-    fn is_sign_positive(&self) -> bool {
+    pub fn is_sign_positive(&self) -> bool {
         !self.neg && !self.is_zero()
+    }
+
+    pub fn is_finite(&self) -> bool {
+        self.top.is_finite()
+    }
+    pub fn is_infinite(&self) -> bool {
+        self.top.is_infinite()
+    }
+    pub fn is_nan(&self) -> bool {
+        self.top.is_nan()
     }
 }
 
@@ -187,23 +211,30 @@ impl PartialEq for OmegaNum {
 
 impl PartialOrd for OmegaNum {
     fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
-        if self.is_zero() && other.is_zero() {
+        if self.is_nan() || other.is_nan() {
+            None
+        } else if self.is_zero() && other.is_zero() {
             Some(Equal)
         } else if self.neg != other.neg {
             Some(if self.neg { Less } else { Greater })
         } else {
-            match self.array.len().cmp(&other.array.len()) {
-                Equal => self
-                    .array
-                    .iter()
-                    .zip(other.array.iter())
-                    .rev()
-                    .find_map(|(&a, &b)| match a.cmp(&b) {
-                        Equal => None,
-                        o => Some(o),
-                    })
-                    .or_else(|| self.top.partial_cmp(&other.top)),
-                o => Some(o),
+            match (self.is_infinite(), other.is_infinite()) {
+                (true, true) => Some(Equal),
+                (true, false) => Some(if self.neg { Less } else { Greater }),
+                (false, true) => Some(if other.neg { Greater } else { Less }),
+                (false, false) => match self.array.len().cmp(&other.array.len()) {
+                    Equal => self
+                        .array
+                        .iter()
+                        .zip(other.array.iter())
+                        .rev()
+                        .find_map(|(&a, &b)| match a.cmp(&b) {
+                            Equal => None,
+                            o => Some(o),
+                        })
+                        .or_else(|| self.top.partial_cmp(&other.top)),
+                    o => Some(o),
+                },
             }
         }
     }
@@ -270,21 +301,28 @@ impl Add for OmegaNum {
         if rhs == consts::ZERO {
             return self;
         }
+        if self.is_nan() || rhs.is_nan() {
+            return consts::NAN;
+        }
+        if self.is_infinite() {
+            return self;
+        }
+        if rhs.is_infinite() {
+            return rhs;
+        }
         let (p, q) = if self < rhs { (self, rhs) } else { (rhs, self) };
         if q > consts::e_max_safe_integer() || q.clone() / p.clone() > consts::MAX_SAFE_INTEGER {
             q
         } else {
             match q.safe_array_get(0) {
                 0 => OmegaNum::from(p.top + q.top),
-                1 => {
+                _ => {
                     let a = match p.safe_array_get(0) {
                         0 => p.top.log10(),
-                        1 => p.top,
-                        _ => panic!(),
+                        _ => p.top,
                     };
                     OmegaNum::new(a + (10.0_f64.powf(q.top - a) + 1.0).log10(), vec![1], false)
                 }
-                _ => panic!(),
             }
         }
     }
@@ -309,6 +347,15 @@ impl Sub for OmegaNum {
         if rhs == consts::ZERO {
             return self;
         }
+        if self.is_nan() || rhs.is_nan() || self.is_infinite() && rhs.is_infinite() {
+            return consts::NAN;
+        }
+        if self.is_infinite() {
+            return self;
+        }
+        if rhs.is_infinite() {
+            return -rhs;
+        }
         let (p, q, n) = if self < rhs {
             (self, rhs, true)
         } else {
@@ -321,15 +368,13 @@ impl Sub for OmegaNum {
         } else {
             match q.safe_array_get(0) {
                 0 => OmegaNum::from(p.top + q.top),
-                1 => {
+                _ => {
                     let a = match p.safe_array_get(0) {
                         0 => p.top.log10(),
-                        1 => p.top,
-                        _ => panic!(),
+                        _ => p.top,
                     };
                     OmegaNum::new(a + (10.0_f64.powf(q.top - a) + 1.0).log10(), vec![1], false)
                 }
-                _ => panic!(),
             }
         };
         if n {
@@ -353,11 +398,24 @@ impl Mul for OmegaNum {
         if self.neg {
             return self.abs() * rhs.abs();
         }
+        if self.is_nan()
+            || rhs.is_nan()
+            || self == consts::ZERO && rhs.is_infinite()
+            || self.is_infinite() && rhs == consts::ZERO
+        {
+            return consts::NAN;
+        }
         if rhs == consts::ZERO {
             return consts::ZERO;
         }
         if rhs == consts::ONE {
             return self;
+        }
+        if self.is_infinite() {
+            return self;
+        }
+        if rhs.is_infinite() {
+            return rhs;
         }
         let q = if self > rhs {
             self.clone()
@@ -389,11 +447,24 @@ impl Div for OmegaNum {
         if self.neg {
             return self.abs() / rhs.abs();
         }
+        if self.is_nan()
+            || rhs.is_nan()
+            || self.is_infinite() && rhs.is_infinite()
+            || self == consts::ZERO && rhs == consts::ZERO
+        {
+            return consts::NAN;
+        }
         if rhs == consts::ZERO {
-            todo!()
+            return consts::INFINITY;
         }
         if rhs == consts::ONE {
             return self;
+        }
+        if self.is_infinite() {
+            return self;
+        }
+        if rhs.is_infinite() {
+            return consts::ZERO;
         }
         if self == rhs {
             return consts::ONE;
@@ -427,7 +498,9 @@ impl DivAssign for OmegaNum {
 }
 impl OmegaNum {
     pub fn recip(self) -> Self {
-        if self.clone().abs() > OmegaNum::new_no_normalize(323.0 + LOG10_2, vec![1], false) {
+        if self.is_nan() || self == consts::ZERO {
+            consts::NAN
+        } else if self.clone().abs() > OmegaNum::new_no_normalize(323.0 + LOG10_2, vec![1], false) {
             consts::ZERO
         } else {
             OmegaNum::from(f64::from(self).recip())
@@ -444,14 +517,14 @@ impl OmegaNum {
             return self.pow(-rhs).recip();
         }
         if self < consts::ZERO {
-            if rhs.is_integer() {
-                return match f64::from(rhs.clone()) as i64 % 2 {
+            return if rhs.is_integer() {
+                match f64::from(rhs.clone()) as i64 % 2 {
                     0 => self.abs().pow(rhs),
                     _ => -self.abs().pow(rhs),
-                };
+                }
             } else {
-                panic!()
-            }
+                consts::NAN
+            };
         }
         if self == consts::ONE {
             return consts::ONE;
@@ -488,41 +561,55 @@ impl OmegaNum {
         }
     }
     pub fn log10(mut self) -> Self {
-        if self <= consts::ZERO {
-            panic!();
+        if self < consts::ZERO {
+            consts::NAN
+        } else if self == consts::ZERO {
+            consts::NEGATIVE_INFINITY
+        } else if self <= consts::MAX_SAFE_INTEGER {
+            OmegaNum::from(f64::from(self).log10())
+        } else if self > consts::arrow_max_safe_integer(2) {
+            self
+        } else {
+            self.array[0] -= 1;
+            self.normalize();
+            self
         }
-        if self <= consts::MAX_SAFE_INTEGER {
-            return OmegaNum::from(f64::from(self).log10());
-        }
-        if self > consts::arrow_max_safe_integer(2) {
-            return self;
-        }
-        self.array[0] -= 1;
-        self.normalize();
-        self
     }
     pub fn logbase(self, base: Self) -> Self {
         self.log10() / base.log10()
     }
     pub fn iter_pow(self, mut rhs: Self, payload: Self) -> Self {
+        if self.is_nan() || rhs.is_nan() || payload.is_nan() {
+            return consts::NAN;
+        }
         if payload != consts::ONE {
             rhs += payload.slog(self.clone());
+            if rhs.is_nan() {
+                return consts::NAN;
+            }
+        }
+        if rhs == consts::INFINITY {
+            return if self >= OmegaNum::from((1.0_f64 / E).exp()) {
+                consts::INFINITY
+            } else {
+                todo!()
+            };
         }
         if rhs < OmegaNum::from(-2.0) {
-            panic!()
+            return consts::NAN;
         }
         if self == consts::ZERO {
             return if rhs == consts::ZERO {
-                panic!()
+                consts::NAN
             } else if f64::from(rhs.clone()) % 2.0 == 0.0 {
                 consts::ZERO
             } else {
-                return consts::ONE;
+                consts::ONE
             };
         }
         if self == consts::ONE {
             return if rhs == consts::ONE.neg() {
-                panic!()
+                consts::NAN
             } else {
                 consts::ONE
             };
@@ -557,7 +644,7 @@ impl OmegaNum {
         }
         if self > consts::arrow_max_safe_integer(2) || rhs > consts::MAX_SAFE_INTEGER {
             return if self < OmegaNum::from((1.0_f64 / E).exp()) {
-                panic!()
+                todo!()
             } else {
                 let mut j = self.slog(OmegaNum::from(10.0)) + rhs;
                 j.safe_array_set(1, j.safe_array_get(1) + 1);
@@ -569,7 +656,7 @@ impl OmegaNum {
         let f = y.floor();
         let mut r = self.clone().pow(OmegaNum::from(y - f));
         let mut f = f as i64;
-        let mut l = consts::ZERO;
+        let mut l = consts::NAN;
         let m = consts::e_max_safe_integer();
         let mut i = 0;
         while f != 0 && r < m && i < 100 {
@@ -603,6 +690,15 @@ impl OmegaNum {
         self.iter_pow(rhs, consts::ONE)
     }
     pub fn slog(mut self, base: Self) -> Self {
+        if self.is_nan() || base.is_nan() || self.is_infinite() && base.is_infinite() {
+            return consts::NAN;
+        }
+        if self.is_infinite() {
+            return self;
+        }
+        if base.is_infinite() {
+            return consts::ZERO;
+        }
         if self < consts::ONE {
             return consts::ONE.neg();
         }
@@ -613,7 +709,11 @@ impl OmegaNum {
             return consts::ONE;
         }
         if base < OmegaNum::from((1.0_f64 / E).exp()) {
-            panic!()
+            match self.partial_cmp(&base.clone().tetr(consts::INFINITY)) {
+                Some(Equal) => return consts::INFINITY,
+                Some(Greater) => return consts::NAN,
+                _ => (),
+            }
         }
 
         if self > base {
@@ -657,7 +757,7 @@ impl OmegaNum {
             2 => self.tetr(rhs),
             _ => {
                 if rhs < consts::ZERO {
-                    panic!()
+                    return consts::NAN;
                 }
                 if rhs == consts::ZERO {
                     return consts::ONE;
@@ -680,16 +780,16 @@ impl OmegaNum {
                 if self > consts::arrow_max_safe_integer(arrows) || rhs > consts::MAX_SAFE_INTEGER {
                     let r = if self > consts::arrow_max_safe_integer(arrows) {
                         let mut r = self;
-                        r.array[arrows] -= 1;
+                        r.array[arrows - 1] -= 1;
                         r.normalize();
                         r
                     } else if self > consts::arrow_max_safe_integer(arrows - 1) {
-                        OmegaNum::from(self.array[arrows - 1] as f64)
+                        OmegaNum::from(self.array[arrows - 2] as f64)
                     } else {
                         consts::ZERO
                     };
                     let mut j = r + rhs;
-                    j.safe_array_set(arrows, j.safe_array_get(arrows) + 1);
+                    j.safe_array_set(arrows - 1, j.safe_array_get(arrows - 1) + 1);
                     j.normalize();
                     return j;
                 }
@@ -704,11 +804,12 @@ impl OmegaNum {
                         r = self.clone().arrow(r, arrows - 1);
                         f -= 1;
                     }
+                    i += 1
                 }
                 if i == 100 {
                     f = 0
                 }
-                r.safe_array_set(arrows - 1, (r.safe_array_get(arrows - 1) as i64 + f) as u64);
+                r.safe_array_set(arrows - 2, (r.safe_array_get(arrows - 2) as i64 + f) as u64);
                 r.normalize();
                 r
             }
