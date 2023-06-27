@@ -103,7 +103,7 @@ pub mod consts {
     pub fn ee_max_safe_integer() -> OmegaNum {
         OmegaNum::new_no_normalize(MAX_SAFE_INTEGER_F64, vec![2], false)
     }
-    pub(super) fn arrow_max_safe_integer(arrows: usize) -> OmegaNum {
+    pub fn arrow_max_safe_integer(arrows: usize) -> OmegaNum {
         let mut array = vec![0; arrows];
         array[0] = 1;
         array[arrows - 1] = 1;
