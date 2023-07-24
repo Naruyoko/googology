@@ -6,6 +6,8 @@ import
   data.list.basic
   data.pnat.basic
   order.iterate
+  order.rel_classes
+  order.well_founded
 
 namespace ysequence
 
@@ -542,6 +544,37 @@ by { contrapose, simp_rw [← ne.def, option.ne_none_iff_is_some], exact value_i
       option.cases_on (prod.mk <$> value x p (j + 1) <*> value x i (j + 1)) false (function.uncurry (<)))).map
         ⟨index.index, fin.val_injective⟩)
     (by apply_instance) i.index := rfl
+
+def height_finite (x : value_parent_list_pair) (i : index x.values.val) : ∃ (j : ℕ), value x i j = none :=
+begin
+  apply @well_founded.induction_bot (with_bot ℕ+) (<)
+    (with_bot.well_founded_lt is_well_founded.wf) _ _
+    (λ r, ∃ (j : ℕ), value x i j = r) _ ⟨0, rfl⟩,
+  dsimp,
+  intros a ha IH,
+  rcases IH with ⟨j, rfl⟩,
+  refine ⟨_, _, j + 1, rfl⟩,
+  rw value_succ,
+  split_ifs,
+  { obtain ⟨⟨v, v_pos⟩, hv⟩ := option.ne_none_iff_exists.mp ha,
+    simp only [pnat.mk_coe, ← hv, option.get_some, pnat.mk_lt_mk, with_bot.some_lt_some],
+    exact nat.sub_lt v_pos (pnat.pos _) },
+  { exact ne.bot_lt ha }
+end
+
+def height (x : value_parent_list_pair) (i : index x.values.val) : ℕ :=
+nat.find (height_finite x i)
+
+lemma height_spec (x : value_parent_list_pair) (i : index x.values.val) : value x i (height x i) = none :=
+nat.find_spec (height_finite x i)
+
+lemma height_min {x : value_parent_list_pair} {i : index x.values.val} {j : ℕ} :
+  j < height x i → value x i j ≠ none :=
+nat.find_min (height_finite x i)
+
+lemma value_is_some_of_lt_height {x : value_parent_list_pair} {i : index x.values.val} {j : ℕ} :
+  j < height x i → (value x i j).is_some :=
+option.ne_none_iff_is_some.mp ∘ height_min
 
 end build
 
