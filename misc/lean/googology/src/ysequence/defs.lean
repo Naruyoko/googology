@@ -1,12 +1,7 @@
 import
-  algebra.order.positive.ring
-  control.monad.basic
-  control.fix
   data.fintype.sigma
-  data.list.basic
   data.pnat.basic
   order.iterate
-  order.rel_classes
   order.well_founded
 
 namespace ysequence
@@ -29,10 +24,10 @@ instance (r : α → α → Prop) [decidable_rel r] : decidable_pred $ function.
 by { rw function.uncurry, apply_instance }
 
 def iterate_eventually_none (f : α → option α) : Prop :=
-∀ x, ∃ k, (flip bind f)^[k] x = none
+∀ (x : option α), ∃ (k : ℕ), (flip bind f)^[k] x = none
 
 lemma iterate_eventually_none_or_mem_of_iterate_eventually_none {f : α → option α} (hf : iterate_eventually_none f)
-  (p : set α) (x : α) : ∃ k, option.elim true p $ (flip bind f)^[k] $ some x :=
+  (p : set α) (x : α) : ∃ (k : ℕ), option.elim true p $ (flip bind f)^[k] $ some x :=
 begin
   rcases hf (some x) with ⟨k, hk⟩,
   use k,
@@ -76,31 +71,17 @@ begin
 end
 
 def to_none_or_lt_id (f : ℕ → option ℕ) : Prop :=
-∀ n, option.elim true (λ m, m < n) (f n)
+∀ (n : ℕ), with_bot.has_lt.lt (f n) n
 
 theorem iterate_eventually_none_of_to_none_or_lt_id {f : ℕ → option ℕ} (hf : to_none_or_lt_id f) :
   iterate_eventually_none f :=
 begin
-  suffices : ∀ {m n}, option.elim true (λ m, m < n) m → ((flip bind f)^[n] m) = none,
-  { intro n,
-    cases n,
-    { exact ⟨0, rfl⟩ },
-    { refine ⟨n + 1, this (by simp)⟩ } },
-  intros m n hmn,
-  induction n with n IH generalizing m,
-  { cases m,
-    { refl },
-    { exact absurd hmn (nat.not_lt_zero _) } },
-  { rw function.iterate_succ_apply,
-    apply IH,
-    cases m with m,
-    { assumption },
-    { specialize hf m,
-      have : (flip bind f $ some m) = f m := rfl,
-      rw this,
-      cases f m,
-      { assumption },
-      { exact nat.lt_of_lt_of_le hf (nat.le_of_lt_succ hmn) } } }
+  refine λ n, @is_well_founded.induction (with_bot ℕ) (<) is_well_order.to_is_well_founded _ n _,
+  intros n IH,
+  cases n with n,
+  { exact ⟨0, rfl⟩ },
+  { choose! k h using IH,
+    exact ⟨k (f n) + 1, h _ (hf n)⟩ }
 end
 
 def find_iterate_of_to_none_or_lt_id {f : ℕ → option ℕ} (hf : to_none_or_lt_id f)
@@ -111,23 +92,18 @@ lemma iterate_bind_none (f : α → option α) (n : ℕ) : (flip bind f)^[n] non
 flip n.rec_on (by { intros n IH, simpa only [function.iterate_succ_apply', IH] }) rfl
 
 theorem to_none_or_lt_id_iterate_succ {f : ℕ → option ℕ} (hf : to_none_or_lt_id f) (n k : ℕ) :
-  option.elim true (λ r, r < n) $ (flip bind f)^[k + 1] $ some n :=
+  with_bot.has_lt.lt ((flip bind f)^[k + 1] $ some n : option ℕ) n :=
 begin
   induction k with k IH,
   { exact hf n },
   { rw function.iterate_succ_apply',
     cases ((flip bind f)^[k + 1] $ some n) with l,
-    { triv },
-    { specialize hf l,
-      dsimp [IH, flip] at *,
-      cases f l,
-      { triv },
-      { dsimp at *,
-        exact lt_trans hf IH } } }
+    { exact with_bot.bot_lt_coe n },
+    { exact lt_trans (hf l) IH } }
 end
 
 theorem to_none_or_lt_id_iterate_pos {f : ℕ → option ℕ} (hf : to_none_or_lt_id f)
-  (n : ℕ) {k : ℕ} (hk : 0 < k) : option.elim true (λ r, r < n) $ (flip bind f)^[k] $ some n :=
+  (n : ℕ) {k : ℕ} (hk : 0 < k) : with_bot.has_lt.lt ((flip bind f)^[k] $ some n : option ℕ) n :=
 begin
   cases k,
   { exact absurd hk dec_trivial },
@@ -136,7 +112,7 @@ end
 
 theorem to_none_or_lt_id_find_iterate_of_nin {f : ℕ → option ℕ} (hf : to_none_or_lt_id f)
   {p : set ℕ} (decidable_p : decidable_pred p) {n : ℕ} (hn : n ∉ p) :
-  option.elim true (λ r, r < n) $ find_iterate_of_to_none_or_lt_id hf decidable_p n :=
+  with_bot.has_lt.lt (find_iterate_of_to_none_or_lt_id hf decidable_p n : option ℕ) n :=
 to_none_or_lt_id_iterate_pos hf _ (find_index_iterate_pos_of_nin _ _ hn)
 
 theorem to_none_or_lt_id_find_iterate_of_all_nin {f : ℕ → option ℕ} (hf : to_none_or_lt_id f)
@@ -147,7 +123,12 @@ theorem to_none_or_lt_id_find_iterate_of_all_nin {f : ℕ → option ℕ} (hf : 
 example :
   let p := λ n, @find_iterate_of_to_none_or_lt_id
     (λ m, nat.cases_on m none some)
-    (by { intro m, cases m; simp only [nat.lt_succ_self, option.elim] })
+    begin
+      intro m,
+      cases m,
+      { exact with_bot.bot_lt_coe 0 },
+      { exact with_bot.coe_lt_coe.mpr (nat.lt_succ_self m) }
+    end
     ({1, 3, 4, 6} \ {n})
     (by apply_instance)
     n in
@@ -194,14 +175,14 @@ by simp [in_index_elim, index.index]
 by simp [in_index_elim, λ h', h ⟨⟨i, h'⟩, rfl⟩]
 
 lemma to_none_or_lt_id_in_index_elim_yes_none {s : list α} (f : index s → option ℕ)
-  (h : ∀ (i : index s), option.elim true (λ j, j < i.index) (f i)) :
+  (h : ∀ (i : index s), with_bot.has_lt.lt (f i) i.index) :
   to_none_or_lt_id (in_index_elim f none) :=
 begin
   intro i,
   rw in_index_elim,
   split_ifs with h',
   { exact h ⟨i, h'⟩ },
-  { triv }
+  { exact with_bot.bot_lt_coe i }
 end
 
 lemma not_map_is_some_and_lt_same {s : list α} (f : index s → option ℕ+) (i : index s) :
@@ -277,7 +258,7 @@ def value_list : Type :=
 
 /-- ^𝕊 -/
 def parent_list : Type :=
-{t : list (option ℕ) // ∀ (i : index t), option.elim true (λ p, p < i.index) i.val}
+{t : list (option ℕ) // ∀ (i : index t), with_bot.has_lt.lt i.val i.index}
 
 /-- 𝕊⁽²⁾ -/
 structure value_parent_list_pair :=
@@ -305,7 +286,7 @@ def parent_mountain : Type :=
 def lawful_parent_mountain : Type :=
 {P : parent_mountain // ∀ (q : index₂ P.val), let i := q.fst.index, j := q.snd.index in
   (q.val = none ↔ j = q.fst.val.length - 1) ∧
-  (option.elim true (λ p, p < i ∧ ∃ (q' : index₂ P.val), q.index = (p, j)) q.val)}
+  (with_bot.has_lt.lt q.val i ∧ option.elim true (λ p, ∃ (q' : index₂ P.val), q.index = (p, j)) q.val)}
 
 /-- 𝕄⁻ -/
 structure mountain :=
@@ -382,11 +363,12 @@ let parent_as_index :
   ⟨⟨@option.get _ (parent i) h,
     begin
       cases i with i hi,
-      specialize to_none_or_lt_id_parent i,
-      simp [in_index_elim, hi] at to_none_or_lt_id_parent,
-      cases parent ⟨i, hi⟩ with p,
-      { contradiction },
-      { exact lt_of_eq_of_lt (option.get_some _ _) (lt_trans to_none_or_lt_id_parent hi) }
+      have parent_i := to_none_or_lt_id_parent i,
+      simp [in_index_elim, hi] at parent_i,
+      rw @fin.eq_of_veq _ ⟨i, _⟩ ⟨i, hi⟩ rfl at parent_i,
+      obtain ⟨p, hp⟩ := option.is_some_iff_exists.mp h,
+      simp [hp] at parent_i ⊢,
+      exact lt_trans (with_bot.coe_lt_coe.mp parent_i) hi
     end⟩, rfl⟩ in
 have parent_spec :
   ∀ {i : index x.values.val} (h : (parent i).is_some), let p := (@parent_as_index i h).val in
