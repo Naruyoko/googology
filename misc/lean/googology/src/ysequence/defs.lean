@@ -169,7 +169,7 @@ to_none_or_lt_id_iterate_pos hf _ (find_index_iterate_pos_of_nin _ _ hn)
 
 theorem to_none_or_lt_id_find_iterate_of_all_nin {f : ℕ → option ℕ} (hf : to_none_or_lt_id f)
   {g : ℕ → set ℕ} (hg₁ : ∀ n, decidable_pred $ g n) (hg₂ : ∀ n, n ∉ g n) :
-  to_none_or_lt_id $ (λ n, find_iterate_of_to_none_or_lt_id hf (hg₁ n) n) :=
+  to_none_or_lt_id (λ n, find_iterate_of_to_none_or_lt_id hf (hg₁ n) n) :=
 λ n, to_none_or_lt_id_find_iterate_of_nin hf (hg₁ n) (hg₂ n)
 
 example :
@@ -469,7 +469,6 @@ let parent_as_index :
       cases i with i hi,
       have parent_i := to_none_or_lt_id_parent i,
       simp [in_index_elim, hi] at parent_i,
-      rw @fin.eq_of_veq _ ⟨i, _⟩ ⟨i, hi⟩ rfl at parent_i,
       obtain ⟨p, hp⟩ := option.is_some_iff_exists.mp h,
       simp [hp] at parent_i ⊢,
       exact lt_trans (with_bot.coe_lt_coe.mp parent_i) hi
@@ -480,14 +479,17 @@ have parent_spec :
   begin
     intros i h,
     obtain ⟨k, hk⟩ := option.is_some_iff_exists.mp h,
-    have hp : (@parent_as_index i h).val.index = k,
-      by simp only [index.index, option.get_some, eq_self_iff_true, hk],
+    rcases @parent_as_index i h with ⟨⟨p, hp₁⟩, hp₂⟩,
+    simp [hk, index.index] at hp₂,
+    subst hp₂,
     have spec : option.elim true _ (parent i) := find_iterate_spec _ _ _,
-    rw [hk, option.elim, ← @set.mem_def _ k (_ : finset ℕ)] at spec,
+    rw [hk, option.elim, ← @set.mem_def _ p (_ : finset ℕ)] at spec,
     simp at spec,
-    rcases spec with ⟨p', hp'₁, hp'₂⟩,
-    rw fin.eq_of_veq (hp.trans hp'₂.symm),
-    exact hp'₁
+    rcases spec with ⟨⟨p', hp'₁⟩, hp'₂, hp'₃⟩,
+    simp [hk, index.index] at hp'₃,
+    symmetry' at hp'₃,
+    subst hp'₃,
+    exact hp'₂
   end,
 have value_is_some_of_parent_is_some :
   ∀ {i : index x.values.val}, (parent i).is_some → (value i).is_some :=
@@ -571,8 +573,9 @@ lemma value_parent_lt_value {x : value_parent_list_pair} {i : index x.values.val
   @option.get _ (value x i j) (value_is_some_of_parent_is_some h) :=
 begin
   have spec := parent_spec h,
-  obtain ⟨m, hm⟩ := option.is_some_iff_exists.mp (value_parent_is_some_of_parent_is_some h),
-  obtain ⟨n, hn⟩ := option.is_some_iff_exists.mp (value_is_some_of_parent_is_some h),
+  generalize_proofs hvp₀ hvt₀,
+  obtain ⟨m, hm⟩ := option.is_some_iff_exists.mp hvp₀,
+  obtain ⟨n, hn⟩ := option.is_some_iff_exists.mp hvt₀,
   simp only [option.get_some, parent, hm, hn],
   delta at spec,
   rw [hm, hn] at spec,
@@ -642,8 +645,9 @@ lemma val_value_above_eq_of_parent_is_some {x : value_parent_list_pair}
   (@option.get _ (value x i j) (value_is_some_of_parent_is_some h)).val -
   (@option.get _ (value x p j) (value_parent_is_some_of_parent_is_some h)).val :=
 begin
-  obtain ⟨⟨vt, vt_pos⟩, hvt⟩ := option.is_some_iff_exists.mp (value_is_some_of_parent_is_some h),
-  obtain ⟨⟨vp, vp_pos⟩, hvp⟩ := option.is_some_iff_exists.mp (value_parent_is_some_of_parent_is_some h),
+  generalize_proofs hva₀ hvt₀ hvp₀,
+  obtain ⟨⟨vt, vt_pos⟩, hvt⟩ := option.is_some_iff_exists.mp hvt₀,
+  obtain ⟨⟨vp, vp_pos⟩, hvp⟩ := option.is_some_iff_exists.mp hvp₀,
   have vp_lt_vt := value_parent_lt_value h,
   simp [hvt, hvp, value_succ, -subtype.val_eq_coe] at vp_lt_vt ⊢,
   simp [option.get_some, h, pnat.sub_coe, vp_lt_vt]
@@ -655,8 +659,9 @@ lemma value_above_lt_value_of_parent_is_some {x : value_parent_list_pair}
   (@option.get _ (value x i j) (value_is_some_of_parent_is_some h)).val :=
 begin
   rw val_value_above_eq_of_parent_is_some,
-  obtain ⟨⟨vt, vt_pos⟩, hvt⟩ := option.is_some_iff_exists.mp (value_is_some_of_parent_is_some h),
-  obtain ⟨⟨vp, vp_pos⟩, hvp⟩ := option.is_some_iff_exists.mp (value_parent_is_some_of_parent_is_some h),
+  generalize_proofs hvt₀ hvp₀,
+  obtain ⟨⟨vt, vt_pos⟩, hvt⟩ := option.is_some_iff_exists.mp hvt₀,
+  obtain ⟨⟨vp, vp_pos⟩, hvp⟩ := option.is_some_iff_exists.mp hvp₀,
   simp [hvt, hvp, value_succ, -subtype.val_eq_coe],
   exact nat.sub_lt vt_pos vp_pos
 end
@@ -672,9 +677,10 @@ begin
   refine ⟨_, _, j + 1, rfl⟩,
   have value_succ_eq := value_succ x i j,
   split_ifs at value_succ_eq with h,
-  { obtain ⟨⟨vt, vt_pos⟩, hvt⟩ := option.is_some_iff_exists.mp (value_is_some_of_parent_is_some h),
-    obtain ⟨⟨va, va_pos⟩, hva⟩ := option.is_some_iff_exists.mp (value_succ_is_some_iff_parent_is_some.mpr h),
-    have va_lt_vt := value_above_lt_value_of_parent_is_some h,
+  { have va_lt_vt := value_above_lt_value_of_parent_is_some h,
+    generalize_proofs hva₀ hvp₀ at va_lt_vt,
+    obtain ⟨⟨vt, vt_pos⟩, hvt⟩ := option.is_some_iff_exists.mp hvp₀,
+    obtain ⟨⟨va, va_pos⟩, hva⟩ := option.is_some_iff_exists.mp hva₀,
     simp * at va_lt_vt ⊢,
     exact va_lt_vt },
   { rw value_succ_eq,
@@ -820,14 +826,15 @@ begin
   { cases h : index₂.val _ with k,
     { triv },
     { rw mountain_parent_at_index_eq_parent at h,
-      let q := (parent_as_index (option.is_some_iff_exists.mpr ⟨k, h⟩)),
+      have parent_is_some := option.is_some_iff_exists.mpr ⟨k, h⟩,
+      let q := (parent_as_index parent_is_some),
       let p := q.val,
       refine ⟨⟨pairable.transfer
             ((mountain_length_eq x).symm.trans (build_mountain x).pairable.fst) p,
           ⟨j.index, _⟩⟩, _⟩,
       { apply eq.subst ((mountain_height_eq' x _).symm.trans ((build_mountain x).pairable.snd _)),
         rw ← value_is_some_iff_lt_height,
-        exact value_parent_is_some_of_parent_is_some (option.is_some_iff_exists.mpr ⟨k, h⟩) },
+        exact value_parent_is_some_of_parent_is_some parent_is_some },
       { have hp := q.property,
         simp only [h, option.get_some] at hp,
         exact prod.ext hp rfl } } }
@@ -857,7 +864,6 @@ begin
   let i_on_mv : index _ := ⟨i, hi⟩,
   let i_on_lv : index _ := pairable.transfer (mountain_length_eq x) i_on_mv,
   let i_on_lp : index _ := pairable.transfer ((mountain_length_eq x).trans x.pairable) i_on_mv,
-  induction i using nat.strong_induction_on with i IH,
   let p := option.get i_has_parent_candidate,
   have hp := option.some_get i_has_parent_candidate,
   have p_lt_i : p < i,
@@ -909,21 +915,21 @@ begin
   use hP,
   rintros ⟨⟨i, hi⟩, ⟨j, hj⟩⟩ hq,
   dsimp [pairable₂.transfer, pairable.transfer, index.index,  parent_mountain.is_coherent.index_above_of_is_some, parent_mountain.is_coherent.index_parent_of_is_some],
+  simp only [mountain_value_at_index_eq_value, mountain_parent_at_index_eq_parent, pairable.transfer, index.index, option.get_some],
+  generalize_proofs hi' hva₀ hvt₀ hp₀ hj' hvp₀,
   simp [mountain_parent_at_index_eq_parent, pairable.transfer, index.index] at hq,
-  obtain ⟨⟨vt, vt_pos⟩, hvt⟩ := option.is_some_iff_exists.mp (value_is_some_of_parent_is_some hq),
-  obtain ⟨⟨vp, vp_pos⟩, hvp⟩ := option.is_some_iff_exists.mp (value_parent_is_some_of_parent_is_some hq),
-  obtain ⟨⟨va, va_pos⟩, hva⟩ := option.is_some_iff_exists.mp (value_succ_is_some_iff_parent_is_some.mpr hq),
+  obtain ⟨⟨vt, vt_pos⟩, hvt⟩ := option.is_some_iff_exists.mp hvt₀,
+  obtain ⟨⟨vp, vp_pos⟩, hvp⟩ := option.is_some_iff_exists.mp hvp₀,
+  obtain ⟨⟨va, va_pos⟩, hva⟩ := option.is_some_iff_exists.mp hva₀,
+  simp only [hvt, hvp, hva, option.get_some],
+  clear hi' hj' hvt₀ hvp₀ hva₀,
+  rcases hp : parent_as_index hq with ⟨⟨p, hp₁⟩, hp₂⟩,
+  simp only [← hp₂, index.index] at hvp,
   have vp_lt_vt := value_parent_lt_value hq,
-  simp [hvt, hvp, value_succ, -subtype.val_eq_coe] at vp_lt_vt ⊢,
+  simp [hvt, hp, hvp, option.get_some] at vp_lt_vt,
   have va_eq := val_value_above_eq_of_parent_is_some hq,
-  simp [hvt, hvp, hva, -subtype.val_eq_coe] at va_eq ⊢,
-  obtain ⟨p, hp⟩ := option.is_some_iff_exists.mp hq,
-  simp only [mountain_value_at_index_eq_value, mountain_parent_at_index_eq_parent, pairable.transfer, index.index, hp, option.get_some],
-  obtain ⟨⟨p', hp'₁⟩, hp'₂⟩ := parent_as_index hq,
-  intro hvp,
-  simp only [hp, option.get_some, index.index] at hp'₂,
-  simp only [parent_as_index, hp, option.get_some, subtype.val, hp'₂] at hvp,
-  simp [hvt, hvp, hva, va_eq, ← pnat.coe_inj, pnat.sub_coe, vp_lt_vt]
+  simp [hvt, hp, hvp, hva, -subtype.val_eq_coe] at va_eq,
+  simp [va_eq, ← pnat.coe_inj, pnat.sub_coe, vp_lt_vt]
 end
 
 theorem build_mountain_orphanless_is_coherent (x : value_parent_list_pair) (h : x.is_orphanless) :
