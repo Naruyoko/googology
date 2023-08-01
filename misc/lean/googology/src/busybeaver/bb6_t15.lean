@@ -1,5 +1,6 @@
 -- import busybeaver.defs
 import busybeaver.basic
+import data.list.basic
 import data.zmod.basic
 
 /-!
@@ -41,10 +42,30 @@ def t15 : machine Γ Λ
 | F I := (O, R, E)
 
 def collatz_state (n : ℕ) : cfg Γ Λ :=
-⟨C, ⟨O, list_blank.mk ([O,O,O,O,O,I,I] ++ list.repeat O n ++ [I]), list_blank.mk ([])⟩⟩
+⟨C, ⟨O, list_blank.mk ([O,O,O,O,O,I,I] ++ list.replicate n O ++ [I]), list_blank.mk ([])⟩⟩
 
 def halt_state (n : ℕ) : cfg Γ Λ :=
-⟨Z, ⟨O, list_blank.mk ([O,O,O,O,O,I,I] ++ list.repeat O n ++ [I]), list_blank.mk ([])⟩⟩
+⟨Z, ⟨O, list_blank.mk ([O,O,O,O,O,I,I] ++ list.replicate n O ++ [I]), list_blank.mk ([])⟩⟩
+
+/-
+...   S 1 0^n C>0 ...
+... A>S 1 1^n   1 ...
+in n+2 steps
+-/
+theorem C_sweep_zero (n S TL TR) :
+                ⟨C, ⟨O, list_blank.mk (list.replicate n O ++ [I,S] ++ TL), list_blank.mk TR⟩⟩
+  [t15]▸^[n + 2]⟨A, ⟨S, list_blank.mk TL, list_blank.mk (list.replicate (n + 2) I ++ TR)⟩⟩ :=
+begin
+  induction n with n IH generalizing TR,
+  { exact correct_multistep_correst_step_trans _ _ _ _ rfl rfl },
+  { refine (correct_multistep_succ_iff _ _ _).mpr ⟨_, ⟨rfl, _⟩⟩,
+    dsimp [t15, step, tape.move, tape.write],
+    rw ← list.cons_append,
+    rw ← list.replicate_succ,
+    rw list.replicate_succ',
+    rw list.append_assoc _ ([I]) TR,
+    exact IH _ }
+end
 
 def collatz_rule1_time : ℕ → ℕ := sorry
 def collatz_rule2_time : ℕ → ℕ := sorry
@@ -55,7 +76,10 @@ theorem collatz_rule1 (k) : (collatz_state (4 * k))[t15]▸^[collatz_rule1_time 
 sorry
 
 theorem collatz_rule2 (k) : (collatz_state (4 * k + 1))[t15]▸^[collatz_rule2_time k](collatz_state ((3 ^ (k + 3) - 11) / 2)) :=
-sorry
+begin
+  have : multistep t15 1 (collatz_state (4 * k + 1)) = sorry,
+  simp [collatz_state, multistep, multistep', step', step, t15, tape.move, tape.write],
+end
 
 theorem collatz_rule3 (k) : (collatz_state (4 * k + 2))[t15]▸^[collatz_rule3_time k](collatz_state ((3 ^ (k + 3) - 11) / 2)) :=
 sorry
