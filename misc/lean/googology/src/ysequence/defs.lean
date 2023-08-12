@@ -111,7 +111,7 @@ begin
   exact find_iterate_is_some_iff _ _ _
 end
 
-lemma find_index_iterate_pos_of_nin {f : α → option α} (hf : iterate_eventually_none f)
+lemma find_index_iterate_pos_of_not_mem {f : α → option α} (hf : iterate_eventually_none f)
   {p : set α} (decidable_p : decidable_pred p) {x : α} (hn : x ∉ p) :
   0 < find_index_iterate_of_iterate_eventually_none hf decidable_p x :=
 begin
@@ -128,7 +128,7 @@ def to_none_or_lt_id (f : ℕ → option ℕ) : Prop :=
 theorem iterate_eventually_none_of_to_none_or_lt_id {f : ℕ → option ℕ} (hf : to_none_or_lt_id f) :
   iterate_eventually_none f :=
 begin
-  refine λ n, @is_well_founded.induction (with_bot ℕ) (<) is_well_order.to_is_well_founded _ n _,
+  refine λ n, @is_well_founded.induction _ with_bot.has_lt.lt is_well_order.to_is_well_founded _ n _,
   intros n IH,
   cases n with n,
   { exact ⟨0, rfl⟩ },
@@ -162,15 +162,15 @@ begin
   { exact to_none_or_lt_id_iterate_succ hf n k }
 end
 
-theorem to_none_or_lt_id_find_iterate_of_nin {f : ℕ → option ℕ} (hf : to_none_or_lt_id f)
+theorem to_none_or_lt_id_find_iterate_of_not_mem {f : ℕ → option ℕ} (hf : to_none_or_lt_id f)
   {p : set ℕ} (decidable_p : decidable_pred p) {n : ℕ} (hn : n ∉ p) :
   with_bot.has_lt.lt (find_iterate_of_to_none_or_lt_id hf decidable_p n : option ℕ) n :=
-to_none_or_lt_id_iterate_pos hf _ (find_index_iterate_pos_of_nin _ _ hn)
+to_none_or_lt_id_iterate_pos hf _ (find_index_iterate_pos_of_not_mem _ _ hn)
 
-theorem to_none_or_lt_id_find_iterate_of_all_nin {f : ℕ → option ℕ} (hf : to_none_or_lt_id f)
+theorem to_none_or_lt_id_find_iterate_of_all_not_mem {f : ℕ → option ℕ} (hf : to_none_or_lt_id f)
   {g : ℕ → set ℕ} (hg₁ : ∀ n, decidable_pred $ g n) (hg₂ : ∀ n, n ∉ g n) :
   to_none_or_lt_id (λ n, find_iterate_of_to_none_or_lt_id hf (hg₁ n) n) :=
-λ n, to_none_or_lt_id_find_iterate_of_nin hf (hg₁ n) (hg₂ n)
+λ n, to_none_or_lt_id_find_iterate_of_not_mem hf (hg₁ n) (hg₂ n)
 
 example :
   let p := λ n, @find_iterate_of_to_none_or_lt_id
@@ -198,7 +198,7 @@ example :
   all_goals { rw nat.find_eq_iff, simp [flip], dec_trivial },
 end,
 begin
-  apply to_none_or_lt_id_find_iterate_of_all_nin,
+  apply to_none_or_lt_id_find_iterate_of_all_not_mem,
   intro n,
   simp [(∈)],
   exact not_and_not_right.mpr (congr_fun rfl)
@@ -211,7 +211,66 @@ def index.index {s : list α} (i :index s) : ℕ := i.val
 
 def index.val {s : list α} (i : index s) : α := s.nth_le i.index i.property
 
+def pairable (s : list α) (t : list β) : Prop := s.length = t.length
+
+lemma index.index_lt {s : list α} (i : index s) : i.index < s.length := i.property
+
+lemma index.eq_of_index_eq {s : list α} {i : index s} {i' : index s} : i.index = i'.index → i = i' :=
+fin.eq_of_veq
+
+lemma index.index_eq_of_eq {s : list α} {i : index s} {i' : index s} : i = i' → i.index = i'.index :=
+fin.veq_of_eq
+
+lemma index.ne_of_index_ne {s : list α} {i : index s} {i' : index s} : i.index ≠ i'.index → i ≠ i' :=
+fin.ne_of_vne
+
+lemma index.index_ne_of_ne {s : list α} {i : index s} {i' : index s} : i ≠ i' → i.index ≠ i'.index :=
+fin.vne_of_ne
+
+@[simp] lemma index.eta {s : list α} (i : index s) (h : i.index < s.length) : (⟨i.index, h⟩ : index s) = i :=
+fin.eta _ _
+
+@[ext] lemma index.ext {s : list α} {i : index s} {i' : index s} : i.index = i'.index → i = i' :=
+fin.ext
+
+lemma index.ext_iff {s : list α} {i : index s} {i' : index s} : i = i' ↔ i.index = i'.index :=
+fin.ext_iff
+
+lemma index.index_injective {s : list α} : function.injective $ @index.index _ s :=
+fin.val_injective
+
+lemma index.eq_iff_index_eq {s : list α} (i : index s) (i' : index s) : i = i' ↔ i.index = i'.index :=
+fin.eq_iff_veq _ _
+
+lemma index.ne_iff_index_ne {s : list α} (i : index s) (i' : index s) : i ≠ i' ↔ i.index ≠ i'.index :=
+fin.ne_iff_vne _ _
+
+@[simp] lemma index.mk_eq_mk {s : list α} {i : ℕ} {h : i < s.length} {i' : ℕ} {h' : i' < s.length} :
+  (⟨i, h⟩ : index s) = ⟨i', h'⟩ ↔ i = i' :=
+fin.mk_eq_mk
+
+lemma index.eq_mk_iff_index_eq {s : list α} {i : index s} {i' : ℕ} {h : i' < s.length} :
+  i = ⟨i', h⟩ ↔ i.index = i' :=
+fin.eq_mk_iff_coe_eq
+
+@[simp] lemma index.index_mk {s : list α} {i : ℕ} (h : i < s.length) : index.index ⟨i, h⟩ = i :=
+fin.mk_val _
+
+lemma index.mk_index {s : list α} (i : index s) : (⟨i.index, i.property⟩ : index s) = i :=
+fin.mk_coe _
+
+lemma index.heq_ext_iff {s : list α} {t : list β} (h : pairable s t) {i : index s} {i' : index t} :
+  i == i' ↔ i.index = i'.index :=
+fin.heq_ext_iff h
+
+lemma index.eq_val_of_base_eq_of_heq {s t : list α} (h : s = t) {i : index s} {i' : index t} :
+  i == i' → i.val = i'.val :=
+by { subst h, rw [index.heq_ext_iff rfl, ← index.eq_iff_index_eq], exact congr_arg _ }
+
 lemma index.val_mem {s : list α} (i : index s) : i.val ∈ s := list.nth_le_mem _ _ _
+
+def index.last {s : list α} (h : s ≠ []) : {i : index s // i.index = s.length - 1} :=
+⟨⟨s.length - 1, nat.sub_lt (list.length_pos_of_ne_nil h) (nat.succ_pos 0)⟩, rfl⟩
 
 instance (s : list α) : fintype (index s) := fin.fintype _
 
@@ -220,7 +279,7 @@ if h : i < s.length then f ⟨i, h⟩ else g
 
 @[simp] lemma in_index_elim_yes {s : list α} (f : index s → β) (g : β) (i : index s) :
   in_index_elim f g i.index = f i :=
-by simp [in_index_elim, index.index]
+by simp [in_index_elim, i.index_lt]
 
 @[simp] lemma in_index_elim_no {s : list α} (f : index s → β) (g : β) (i : ℕ)
   (h : ¬∃ (i' : index s), i'.index = i) : in_index_elim f g i = g :=
@@ -252,21 +311,6 @@ begin
   { exact irrefl _ }
 end
 
-def index₂ (m : list (list α)) : Type := Σ (i : index m), index $ index.val i
-
-def index₂.index {m : list (list α)} (q : index₂ m) : ℕ × ℕ := (q.fst.index, q.snd.index)
-
-def index₂.val {m : list (list α)} (q : index₂ m) : α := q.snd.val
-
-lemma index₂.val_mem {m : list (list α)} (q : index₂ m) : ∃ (c ∈ m), q.val ∈ c :=
-⟨q.fst.val, index.val_mem _, index.val_mem _⟩
-
-instance (m : list (list α)) : fintype (index₂ m) := sigma.fintype _
-
-def pairable (s : list α) (t : list β) : Prop := s.length = t.length
-
-instance (s : list α) (t : list β) : decidable $ pairable s t := nat.decidable_eq _ _
-
 lemma pairable.def {s : list α} {t : list β} : pairable s t → s.length = t.length := id
 
 lemma pairable.symm {s : list α} {t : list β} : pairable s t → pairable t s := symm
@@ -280,8 +324,106 @@ def pairable.transfer {s : list α} {t : list β} (h : pairable s t) (i : index 
 @[simp] lemma pairable.index_transfer {s : list α} {t : list β} (h : pairable s t) (i : index s) :
   (h.transfer i).index = i.index := rfl
 
+instance (s : list α) (t : list β) : decidable $ pairable s t := nat.decidable_eq _ _
+
+def index₂ (m : list (list α)) : Type := Σ (i : index m), index $ index.val i
+
+def index₂.index {m : list (list α)} (q : index₂ m) : ℕ × ℕ := (q.fst.index, q.snd.index)
+
+def index₂.val {m : list (list α)} (q : index₂ m) : α := q.snd.val
+
 def pairable₂ (m₁ : list (list α)) (m₂ : list (list β)) : Prop :=
 ∃ (h : pairable m₁ m₂), ∀ (i : index m₁), pairable i.val (h.transfer i).val
+
+lemma index₂.index_fst_lt {m : list (list α)} (q : index₂ m) : q.fst.index < m.length :=
+q.fst.index_lt
+
+lemma index₂.index_snd_lt {m : list (list α)} (q : index₂ m) : q.snd.index < q.fst.val.length :=
+q.snd.index_lt
+
+@[simp] lemma index₂.index_fst {m : list (list α)} (q : index₂ m) : q.index.fst = q.fst.index := rfl
+
+@[simp] lemma index₂.index_snd {m : list (list α)} (q : index₂ m) : q.index.snd = q.snd.index := rfl
+
+lemma index₂.eq_of_index_eq {m : list (list α)} {q : index₂ m} {q' : index₂ m} (h : q.index = q'.index) : q = q' :=
+have fst_eq : q.fst = q'.fst := (index.ext (index₂.index_fst q ▸ index₂.index_fst q' ▸ congr_arg _ h)),
+sigma.ext fst_eq
+  ((index.heq_ext_iff (congr_arg list.length (index.eq_val_of_base_eq_of_heq rfl (heq_of_eq fst_eq)))).mpr
+    (index₂.index_snd q ▸ index₂.index_snd q' ▸ congr_arg _ h))
+
+lemma index₂.index_eq_of_eq {m : list (list α)} {q : index₂ m} {q' : index₂ m} : q = q' → q.index = q'.index :=
+congr_arg _
+
+lemma index₂.ne_of_index_ne {m : list (list α)} {q : index₂ m} {q' : index₂ m} : q.index ≠ q'.index → q ≠ q' :=
+mt index₂.index_eq_of_eq
+
+lemma index₂.index_ne_of_ne {m : list (list α)} {q : index₂ m} {q' : index₂ m} : q ≠ q' → q.index ≠ q'.index :=
+mt index₂.eq_of_index_eq
+
+@[simp] lemma index₂.eta {m : list (list α)} (q : index₂ m) : (⟨q.fst, q.snd⟩ : index₂ m) = q :=
+sigma.eta _
+
+@[ext] lemma index₂.ext {m : list (list α)} {q : index₂ m} {q' : index₂ m} : q.index = q'.index → q = q' :=
+index₂.eq_of_index_eq
+
+@[simp] lemma index₂.eta₂ {m : list (list α)} (q : index₂ m)
+  (h₁ : q.fst.index < m.length) (h₂ : q.snd.index < (index.val ⟨q.fst.index, h₁⟩).length) :
+  (⟨⟨q.fst.index, h₁⟩, ⟨q.snd.index, h₂⟩⟩ : index₂ m) = q :=
+index₂.ext rfl
+
+@[simp] lemma index₂.eta₂' {m : list (list α)} (q : index₂ m)
+  (h₁ : q.fst.index < m.length) (h₂ : q.snd.index < q.fst.val.length) :
+  (⟨⟨q.fst.index, h₁⟩, ⟨q.snd.index, (index.eta q.fst h₁).symm ▸ h₂⟩⟩ : index₂ m) = q :=
+index₂.eta₂ _ _ _
+
+lemma index₂.ext_iff {m : list (list α)} {q : index₂ m} {q' : index₂ m} : q = q' ↔ q.index = q'.index :=
+⟨index₂.index_eq_of_eq, index₂.eq_of_index_eq⟩
+
+lemma index₂.index_injective {m : list (list α)} : function.injective $ @index₂.index _ m :=
+@index₂.eq_of_index_eq _ _
+
+lemma index₂.eq_iff_index_eq {m : list (list α)} (q : index₂ m) (q' : index₂ m) : q = q' ↔ q.index = q'.index :=
+index₂.ext_iff
+
+lemma index₂.ne_iff_index_ne {m : list (list α)} (q : index₂ m) (q' : index₂ m) : q ≠ q' ↔ q.index ≠ q'.index :=
+iff.not index₂.ext_iff
+
+lemma index₂.mk_eq_mk {m : list (list α)}
+  {i : index m} {j : index i.val} {i' : index m} {j' : index i'.val} :
+  (⟨i, j⟩ : index₂ m) = ⟨i', j'⟩ ↔ i = i' ∧ j == j' :=
+sigma.mk.inj_iff
+
+@[simp] lemma index₂.mk_mk_eq_mk_mk {m : list (list α)}
+  {i : ℕ} {hi : i < m.length} {j : ℕ} {hj : j < (index.val ⟨i, hi⟩).length}
+  {i' : ℕ} {hi' : i' < m.length} {j' : ℕ} {hj' : j' < (index.val ⟨i', hi'⟩).length} :
+  (⟨⟨i, hi⟩, ⟨j, hj⟩⟩ : index₂ m) = ⟨⟨i', hi'⟩, ⟨j', hj'⟩⟩ ↔ (i, j) = (i', j') :=
+begin
+  simp,
+  intro i_eq,
+  refine index.heq_ext_iff _,
+  congr,
+  exact i_eq
+end
+
+lemma index₂.eq_mk_mk_iff_index_eq {m : list (list α)} {q : index₂ m}
+  {i' : ℕ} {hi' : i' < m.length} {j' : ℕ} {hj' : j' < (index.val ⟨i', hi'⟩).length} :
+  q = ⟨⟨i', hi'⟩, ⟨j', hj'⟩⟩ ↔ q.index = (i', j') :=
+by { rw index₂.ext_iff, refl }
+
+lemma index₂.index_mk {m : list (list α)} {i : index m} {j : index i.val} :
+  index₂.index ⟨i, j⟩ = (i.index, j.index) := rfl
+
+@[simp] lemma index₂.index_mk_mk {m : list (list α)}
+  {i : ℕ} {hi : i < m.length} {j : ℕ} {hj : j < (index.val ⟨i, hi⟩).length} :
+  index₂.index ⟨⟨i, hi⟩, ⟨j, hj⟩⟩ = (i, j) := rfl
+
+lemma index₂.mk_mk_index {m : list (list α)} (q : index₂ m) : (⟨⟨q.fst.index, q.fst.property⟩, ⟨q.snd.index, q.snd.property⟩⟩ : index₂ m) = q :=
+index₂.eta₂' _ _ q.snd.property
+
+lemma index₂.val_mem {m : list (list α)} (q : index₂ m) : ∃ (c ∈ m), q.val ∈ c :=
+⟨q.fst.val, index.val_mem _, index.val_mem _⟩
+
+instance (m : list (list α)) : fintype (index₂ m) := sigma.fintype _
 
 instance (m₁ : list (list α)) (m₂ : list (list β)) : decidable $ pairable₂ m₁ m₂ := exists_prop_decidable _
 
@@ -451,7 +593,7 @@ have to_none_or_lt_id_parent : to_none_or_lt_id (in_index_elim parent none) :=
   begin
     apply to_none_or_lt_id_in_index_elim_yes_none,
     intro i,
-    apply to_none_or_lt_id_find_iterate_of_nin,
+    apply to_none_or_lt_id_find_iterate_of_not_mem,
     simp,
     intro k,
     contrapose!,
@@ -483,7 +625,7 @@ have parent_spec :
     simp [hk, index.index] at hp₂,
     subst hp₂,
     have spec : option.elim true _ (parent i) := find_iterate_spec _ _ _,
-    rw [hk, option.elim, ← @set.mem_def _ p (_ : finset ℕ)] at spec,
+    rw [hk, option.elim, ← @set.mem_def _ _ (coe _)] at spec,
     simp at spec,
     rcases spec with ⟨⟨p', hp'₁⟩, hp'₂, hp'₃⟩,
     simp [hk, index.index] at hp'₃,
@@ -666,6 +808,25 @@ begin
   exact nat.sub_lt vt_pos vp_pos
 end
 
+lemma pnat.sub_val_eq_iff_eq_add {a b c : ℕ+} /- (ab : b < a) -/ : a.val - b.val = c.val ↔ a = c + b :=
+begin
+  cases a with a a_pos,
+  cases b with b b_pos,
+  cases c with c c_pos,
+  obtain ⟨c, rfl⟩ := nat.exists_eq_succ_of_ne_zero (ne_of_gt c_pos),
+  dsimp,
+  split; intro h,
+  { have h' := congr_arg (+ b) h,
+    simp only [] at h',
+    apply pnat.eq,
+    dsimp,
+    convert ← h',
+    exact nat.sub_add_cancel (nat.le_of_lt (nat.lt_of_sub_eq_succ h)) },
+  { have h' := congr_arg subtype.val h,
+    dsimp at h',
+    exact tsub_eq_of_eq_add h' }
+end
+
 def height_finite (x : value_parent_list_pair) (i : index x.values.val) : ∃ (j : ℕ), value x i j = none :=
 begin
   refine @well_founded.induction_bot (with_bot ℕ+) (<)
@@ -706,7 +867,7 @@ begin
   contradiction
 end
 
-lemma value_eq_none_of_ge_height {x : value_parent_list_pair} {i : index x.values.val} {j : ℕ}
+lemma value_eq_none_of_height_le {x : value_parent_list_pair} {i : index x.values.val} {j : ℕ}
   (h : height x i ≤ j) : value x i j = none :=
 begin
   refine nat.le_induction (height_spec x i) _ j h,
@@ -725,11 +886,11 @@ lemma value_is_some_iff_lt_height {x : value_parent_list_pair} {i : index x.valu
     contrapose,
     simp,
     intro H,
-    exact option.is_none_iff_eq_none.mpr (value_eq_none_of_ge_height H)
+    exact option.is_none_iff_eq_none.mpr (value_eq_none_of_height_le H)
   end,
   value_is_some_of_lt_height⟩
 
-lemma value_eq_none_iff_ge_height {x : value_parent_list_pair} {i : index x.values.val} {j : ℕ} :
+lemma value_eq_none_iff_height_le {x : value_parent_list_pair} {i : index x.values.val} {j : ℕ} :
   value x i j = none ↔ height x i ≤ j :=
 begin
   rw [← not_iff_not, ← ne.def, option.ne_none_iff_is_some, not_le],
@@ -798,7 +959,7 @@ begin
   refine ⟨_, _, _⟩,
   { rw [mountain_parent_at_index_eq_parent,
       ← value_succ_eq_none_iff_parent_eq_none,
-      value_eq_none_iff_ge_height],
+      value_eq_none_iff_height_le],
     simp [pairable.transfer],
     rw nat.le_add_one_iff,
     conv in (height _ _ = j.index + 1)
@@ -899,8 +1060,7 @@ begin
         exact this.symm } },
     rw [← option.some_inj, option.some_get] at htp₂,
     rw [function.iterate_succ_apply, htp₂],
-    congr
-  },
+    congr },
   all_goals
   { have := i_on_lv.property,
     simp [i_on_lv, i_on_mv, pairable.transfer, index.index] at this,
