@@ -1,5 +1,6 @@
 import
   data.fintype.sigma
+  data.nat.with_bot
   data.pnat.basic
   order.iterate
   order.well_founded
@@ -269,8 +270,10 @@ by { subst h, rw [index.heq_ext_iff rfl, ← index.eq_iff_index_eq], exact congr
 
 lemma index.val_mem {s : list α} (i : index s) : i.val ∈ s := list.nth_le_mem _ _ _
 
-def index.last {s : list α} (h : s ≠ []) : {i : index s // i.index = s.length - 1} :=
-⟨⟨s.length - 1, nat.sub_lt (list.length_pos_of_ne_nil h) (nat.succ_pos 0)⟩, rfl⟩
+def index.last {s : list α} (h : s ≠ []) : index s :=
+⟨s.length - 1, nat.sub_lt (list.length_pos_of_ne_nil h) (nat.succ_pos 0)⟩
+
+@[simp] lemma index.last_index {s : list α} (h : s ≠ []) : (index.last h).index = s.length - 1 := rfl
 
 instance (s : list α) : fintype (index s) := fin.fintype _
 
@@ -285,15 +288,23 @@ by simp [in_index_elim, i.index_lt]
   (h : ¬∃ (i' : index s), i'.index = i) : in_index_elim f g i = g :=
 by simp [in_index_elim, λ h', h ⟨⟨i, h'⟩, rfl⟩]
 
-lemma to_none_or_lt_id_in_index_elim_yes_none {s : list α} (f : index s → option ℕ)
-  (h : ∀ (i : index s), with_bot.has_lt.lt (f i) i.index) :
-  to_none_or_lt_id (in_index_elim f none) :=
+lemma to_none_or_lt_id_in_index_elim_yes_none_of_forall_index {s : list α} (f : index s → option ℕ)
+  (h : ∀ (i : index s), with_bot.has_lt.lt (f i) i.index) : to_none_or_lt_id (in_index_elim f none) :=
 begin
   intro i,
   rw in_index_elim,
   split_ifs with h',
   { exact h ⟨i, h'⟩ },
   { exact with_bot.bot_lt_coe i }
+end
+
+lemma to_none_or_lt_id_in_index_elim_yes_none_forall_index_of {s : list α} (f : index s → option ℕ)
+  (h : to_none_or_lt_id (in_index_elim f none)) : ∀ (i : index s), with_bot.has_lt.lt (f i) i.index :=
+begin
+  intro i,
+  specialize h i.index,
+  rw in_index_elim_yes at h,
+  exact h
 end
 
 lemma not_map_is_some_and_lt_same {s : list α} (f : index s → option ℕ+) (i : index s) :
@@ -335,10 +346,10 @@ def index₂.val {m : list (list α)} (q : index₂ m) : α := q.snd.val
 def pairable₂ (m₁ : list (list α)) (m₂ : list (list β)) : Prop :=
 ∃ (h : pairable m₁ m₂), ∀ (i : index m₁), pairable i.val (h.transfer i).val
 
-lemma index₂.index_fst_lt {m : list (list α)} (q : index₂ m) : q.fst.index < m.length :=
+lemma index₂.fst_index_lt {m : list (list α)} (q : index₂ m) : q.fst.index < m.length :=
 q.fst.index_lt
 
-lemma index₂.index_snd_lt {m : list (list α)} (q : index₂ m) : q.snd.index < q.fst.val.length :=
+lemma index₂.snd_index_lt {m : list (list α)} (q : index₂ m) : q.snd.index < q.fst.val.length :=
 q.snd.index_lt
 
 @[simp] lemma index₂.index_fst {m : list (list α)} (q : index₂ m) : q.index.fst = q.fst.index := rfl
@@ -387,6 +398,14 @@ index₂.ext_iff
 
 lemma index₂.ne_iff_index_ne {m : list (list α)} (q : index₂ m) (q' : index₂ m) : q ≠ q' ↔ q.index ≠ q'.index :=
 iff.not index₂.ext_iff
+
+lemma index₂.eq_iff_fst_index_eq_and_snd_index_eq {m : list (list α)} (q : index₂ m) (q' : index₂ m) :
+  q = q' ↔ q.fst.index = q'.fst.index ∧ q.snd.index = q'.snd.index :=
+by simp [index₂.eq_iff_index_eq, prod.eq_iff_fst_eq_snd_eq]
+
+lemma index₂.ne_iff_fst_index_ne_or_snd_index_ne {m : list (list α)} (q : index₂ m) (q' : index₂ m) :
+  q ≠ q' ↔ q.fst.index ≠ q'.fst.index ∨ q.snd.index ≠ q'.snd.index :=
+by { rw [ne.def, index₂.eq_iff_fst_index_eq_and_snd_index_eq], tauto }
 
 lemma index₂.mk_eq_mk {m : list (list α)}
   {i : index m} {j : index i.val} {i' : index m} {j' : index i'.val} :
@@ -451,7 +470,7 @@ section types
 
 /-- 𝕊 -/
 def value_list : Type :=
-{s : list ℕ+ // if h : 1 ≤ s.length then s.nth_le 0 h = 1 else true}
+{s : list ℕ+ // if h : 0 < s.length then index.val (⟨0, h⟩ : index s) = 1 else true}
 
 /-- ^𝕊 -/
 def parent_list : Type :=
@@ -489,8 +508,30 @@ def parent_mountain.is_coherent (P : parent_mountain) : Prop :=
   with_bot.has_lt.lt q.val i ∧
   option.elim true (λ p, ∃ (q' : index₂ P.val), q'.index = (p, j)) q.val
 
+lemma parent_mountain.is_coherent.val_eq_none_iff {P : parent_mountain} (hP : P.is_coherent) (q : index₂ P.val) :
+  q.val = none ↔ q.snd.index = q.fst.val.length - 1 := (hP q).left
+
+lemma parent_mountain.is_coherent.val_lt {P : parent_mountain} (hP : P.is_coherent) (q : index₂ P.val) :
+  with_bot.has_lt.lt q.val q.fst.index := (hP q).right.left
+
+lemma parent_mountain.is_coherent.elim_exists_index {P : parent_mountain} (hP : P.is_coherent) (q : index₂ P.val) :
+  option.elim true (λ p, ∃ (q' : index₂ P.val), q'.index = (p, q.snd.index)) q.val := (hP q).right.right
+
 instance : decidable_pred parent_mountain.is_coherent :=
 λ P, fintype.decidable_forall_fintype
+
+lemma parent_mountain.is_coherent.head_eq_none {P : parent_mountain} (hP : P.is_coherent)
+  (h : 0 < P.val.length) (j : index (index.val (⟨0, h⟩ : index P.val))) :
+  index₂.val (⟨⟨0, h⟩, j⟩ : index₂ P.val) = none :=
+(nat.with_bot.lt_zero_iff _).mp (hP.val_lt _)
+
+lemma parent_mountain.is_coherent.head_length {P : parent_mountain} (hP : P.is_coherent)
+  (h : 0 < P.val.length) : (index.val (⟨0, h⟩ : index P.val)).length = 1 :=
+begin
+  have head_length_pos := list.length_pos_of_ne_nil (P.property _ (index.val_mem ⟨0, h⟩)),
+  rw ← nat.sub_eq_iff_eq_add head_length_pos,
+  exact ((hP.val_eq_none_iff ⟨⟨0, h⟩, ⟨0, head_length_pos⟩⟩).mp (hP.head_eq_none _ _)).symm
+end
 
 def parent_mountain.is_coherent.index_parent_of_is_some {P : parent_mountain} (hP : P.is_coherent)
   {q : index₂ P.val} (hq : q.val.is_some) :
@@ -538,10 +579,25 @@ structure mountain :=
 /-- 𝕄* = {x : mountain // x.parents.is_coherent ∧ x.is_orphanless} -/
 def mountain.is_orphanless (x : mountain) : Prop :=
 ∀ (i : index x.values.val),
-  1 < (@index₂.val _ x.values.val ⟨i, ⟨0,
-    list.length_pos_of_ne_nil (x.values.property _ (index.val_mem _))⟩⟩).val → 
-  (@index₂.val _ x.parents.val ⟨x.pairable.fst.transfer i, ⟨0,
-    list.length_pos_of_ne_nil (x.parents.property _ (index.val_mem _))⟩⟩).is_some
+  1 < (index₂.val (⟨i, ⟨0,
+    list.length_pos_of_ne_nil (x.values.property _ (index.val_mem _))⟩⟩ : index₂ x.values.val)).val → 
+  (index₂.val (⟨x.pairable.fst.transfer i, ⟨0,
+    list.length_pos_of_ne_nil (x.parents.property _ (index.val_mem _))⟩⟩ : index₂ x.parents.val)).is_some
+
+lemma mountain.head_value_eq_one_of_parents_is_coherent_of_is_orphanless_of_length_pos {x : mountain}
+  (h_coherent : x.parents.is_coherent) (h_orphanless : x.is_orphanless)
+  (len_pos : 0 < x.values.val.length) :
+  index₂.val (⟨⟨0, len_pos⟩, ⟨0,
+    list.length_pos_of_ne_nil (x.values.property _ (index.val_mem _))⟩⟩ : index₂ x.values.val) = 1 :=
+begin
+  by_contra H,
+  have := h_orphanless ⟨0, len_pos⟩
+    begin
+      apply lt_of_le_of_ne (pnat.one_le _) (ne.symm H),
+    end,
+  rw ← option.ne_none_iff_is_some at this,
+  exact absurd (h_coherent.head_eq_none (lt_of_lt_of_eq len_pos x.pairable.fst) _) this,
+end
 
 def mountain.is_cross_coherent (x : mountain) : Prop :=
 ∃ (hP : x.parents.is_coherent), ∀ {q : index₂ x.parents.val} (hq : q.val.is_some),
@@ -591,7 +647,7 @@ let parent : index x.values.val → option ℕ := λ i,
       (by apply_instance) i.index in
 have to_none_or_lt_id_parent : to_none_or_lt_id (in_index_elim parent none) :=
   begin
-    apply to_none_or_lt_id_in_index_elim_yes_none,
+    apply to_none_or_lt_id_in_index_elim_yes_none_of_forall_index,
     intro i,
     apply to_none_or_lt_id_find_iterate_of_not_mem,
     simp,
@@ -667,7 +723,7 @@ have value_parent_is_some_of_parent_is_some :
 def mountain_builder (x : value_parent_list_pair) : ℕ → row_builder x
 | 0 := build_row_builder x (some ∘ index.val) (index.val ∘ x.pairable.transfer)
   begin
-    apply to_none_or_lt_id_in_index_elim_yes_none,
+    apply to_none_or_lt_id_in_index_elim_yes_none_of_forall_index,
     intro,
     rw ← pairable.index_transfer x.pairable _,
     exact x.parents.property _
@@ -742,7 +798,7 @@ by { contrapose, simp_rw [← ne.def, option.ne_none_iff_is_some], exact value_i
   parent x i 0 = @find_iterate_of_to_none_or_lt_id
     (in_index_elim (index.val ∘ x.pairable.transfer) none)
     begin
-      apply to_none_or_lt_id_in_index_elim_yes_none,
+      apply to_none_or_lt_id_in_index_elim_yes_none_of_forall_index,
       intro,
       rw ← pairable.index_transfer x.pairable _,
       exact x.parents.property _
@@ -1097,5 +1153,397 @@ theorem build_mountain_orphanless_is_coherent (x : value_parent_list_pair) (h : 
 ⟨build_mountain_orphanless_is_orphanless x h, build_mountain_orphanless_is_cross_coherent x h⟩
 
 end build
+
+
+section diagonal
+
+def surface_at {V : value_mountain} (i : index V.val) : ℕ+ :=
+index₂.val ⟨i, index.last (V.property _ (index.val_mem i))⟩
+
+def descend {P : parent_mountain} (hP : P.is_coherent) (q : index₂ P.val) : option (index₂ P.val) :=
+if h : q.val.is_some
+then some (hP.index_parent_of_is_some h)
+else match q.snd with
+| ⟨0    , _⟩ := none
+| ⟨j + 1, h⟩ := some ⟨q.fst, ⟨j, lt_trans (nat.lt_succ_self j) h⟩⟩
+end
+
+def descend_eq_none_iff {P : parent_mountain} (hP : P.is_coherent) (q : index₂ P.val) :
+  descend hP q = none ↔ ¬q.val.is_some ∧ q.snd.index = 0 :=
+begin
+  rw descend,
+  split_ifs with h,
+  { simp [h] },
+  { rcases q.snd with ⟨_ | j, hj⟩; simp [descend, h] }
+end
+
+def descend_eq_none_iff' {P : parent_mountain} (hP : P.is_coherent) (q : index₂ P.val) :
+  descend hP q = none ↔ q.val = none ∧ q.snd.index = 0 :=
+by { rw ← @option.not_is_some_iff_eq_none _ q.val, exact descend_eq_none_iff hP q }
+
+def descend_is_some_iff {P : parent_mountain} (hP : P.is_coherent) (q : index₂ P.val) :
+  (descend hP q).is_some ↔ q.val.is_some ∨ q.snd.index ≠ 0 :=
+begin
+  rw descend,
+  split_ifs with h,
+  { simp [h] },
+  { rcases q.snd with ⟨_ | j, hj⟩; simp [descend, h] }
+end
+
+lemma descend_lt_and_eq_or_eq_and_lt_of_it_is_some {P : parent_mountain} {hP : P.is_coherent}
+  {q : index₂ P.val} (h : (descend hP q).is_some) :
+  let i := q.fst.index, j := q.snd.index,
+    q' := option.get h, i' := q'.fst.index, j' := q'.snd.index in
+  i' < i ∧ j' = j ∨ i' = i ∧ j' < j :=
+begin
+  intros i j q' i' j',
+  have q'_eq := eq.refl q',
+  conv_rhs at q'_eq { simp only [q'] },
+  simp only [descend] at q'_eq,
+  split_ifs at q'_eq with hq_val,
+  { left,
+    simp only [option.get_some] at q'_eq,
+    obtain ⟨k, hk⟩ := option.is_some_iff_exists.mp hq_val,
+    obtain ⟨p, hp⟩ := hP.index_parent_of_is_some hq_val,
+    intro q'_eq,
+    simp only [subtype.coe_mk] at q'_eq,
+    subst q'_eq,
+    simp [hk, option.get_some, prod.eq_iff_fst_eq_snd_eq, index₂.index_fst, index₂.index_snd] at hp,
+    cases hp with hp₁ hp₂,
+    have q_val_lt := (hP q).right.left,
+    rw [hk, ← hp₁, with_bot.some_eq_coe, with_bot.coe_lt_coe] at q_val_lt,
+    exact ⟨q_val_lt, hp₂⟩ },
+  { rcases q_eq : q with ⟨⟨i₁, hi⟩, ⟨j₁, hj⟩⟩,
+    have : i = i₁ := congr_arg (λ (q : index₂ P.val), q.fst.index) q_eq,
+    subst this,
+    have : j = j₁ := congr_arg (λ (q : index₂ P.val), q.snd.index) q_eq,
+    subst this,
+    conv_rhs at q'_eq { congr, rw q_eq },
+    cases hk : j with k,
+    { generalize_proofs H at q'_eq,
+      simp [hk, descend, option.get] at H,
+      contradiction },
+    { right,
+      simp [hk] at q'_eq,
+      replace q'_eq := congr_arg index₂.index q'_eq,
+      simp [index₂.index, index.index] at q'_eq,
+      exact ⟨q'_eq.left, lt_of_eq_of_lt q'_eq.right (lt_add_one k)⟩ } }
+end
+
+lemma descend_pairwise_le_of_it_is_some {P : parent_mountain} {hP : P.is_coherent}
+  {q : index₂ P.val} (h : (descend hP q).is_some) :
+  let i := q.fst.index, j := q.snd.index,
+    q' := option.get h, i' := q'.fst.index, j' := q'.snd.index in i' ≤ i ∧ j' ≤ j :=
+begin
+  rcases descend_lt_and_eq_or_eq_and_lt_of_it_is_some h with ⟨h'₁, h'₂⟩ | ⟨h'₁, h'₂⟩,
+  { exact ⟨le_of_lt h'₁, le_of_eq h'₂⟩ },
+  { exact ⟨le_of_eq h'₁, le_of_lt h'₂⟩ }
+end
+
+lemma descend_pairwise_ne_of_it_is_some {P : parent_mountain} {hP : P.is_coherent}
+  {q : index₂ P.val} (h : (descend hP q).is_some) : q ≠ option.get h :=
+begin
+  intro H,
+  rcases descend_lt_and_eq_or_eq_and_lt_of_it_is_some h with ⟨h'₁, h'₂⟩ | ⟨h'₁, h'₂⟩,
+  { exact absurd (congr_arg (λ (q : index₂ P.val), q.fst.index) H.symm) (ne_of_lt h'₁) },
+  { exact absurd (congr_arg (λ (q : index₂ P.val), q.snd.index) H.symm) (ne_of_lt h'₂) }
+end
+
+lemma iterate_descend_pairwise_le_of_it_is_some {P : parent_mountain} {hP : P.is_coherent}
+  {q : index₂ P.val} {k : ℕ} (h : ((flip bind (descend hP))^[k] $ some q).is_some) :
+  let i := q.fst.index, j := q.snd.index,
+    q' := option.get h, i' := q'.fst.index, j' := q'.snd.index in i' ≤ i ∧ j' ≤ j :=
+begin
+  induction k with k IH,
+  { split; refl },
+  { simp_rw ← index₂.index_snd,
+    simp only [function.iterate_succ_apply'] at h ⊢,
+    suffices,
+    { specialize IH this,
+      obtain ⟨q', hq'⟩ := option.is_some_iff_exists.mp this,
+      simp_rw ← index₂.index_snd at IH,
+      simp [hq', index₂.index_snd] at IH,
+      simp [hq'] at h,
+      simp [hq', index₂.index_snd],
+      have h' := descend_pairwise_le_of_it_is_some h,
+      exact ⟨le_trans h'.left IH.left, le_trans h'.right IH.right⟩ },
+    by_contra H,
+    rw option.not_is_some_iff_eq_none at H,
+    rw H at h,
+    contradiction }
+end
+
+lemma iterate_descend_succ_ne_of_it_is_some {P : parent_mountain} {hP : P.is_coherent}
+  {q : index₂ P.val} {k : ℕ} (h : ((flip bind (descend hP))^[k + 1] $ some q).is_some) :
+  q ≠ option.get h :=
+begin
+  have h' : (descend hP q).is_some,
+  { induction k with k IH,
+    { exact h },
+    { apply IH,
+      by_contra H,
+      rw option.not_is_some_iff_eq_none at H,
+      rw [function.iterate_succ_apply', H] at h,
+      contradiction } },
+  obtain ⟨q', hq'⟩ := option.is_some_iff_exists.mp h',
+  have eq_iterate_from := function.iterate_succ_apply (flip bind (descend hP)) k (some q),
+  change flip bind (descend hP) (some q) with descend hP q at eq_iterate_from,
+  rw hq' at eq_iterate_from,
+  rw eq_iterate_from at h,
+  simp only [eq_iterate_from],
+  have hq'₂ := eq.refl (option.get h'),
+  conv_rhs at hq'₂ { simp only [hq', option.get_some] },
+  have h₁ := descend_lt_and_eq_or_eq_and_lt_of_it_is_some h',
+  rw hq'₂ at h₁,
+  have h₂ := iterate_descend_pairwise_le_of_it_is_some h,
+  rw [ne, index₂.eq_iff_index_eq, prod.eq_iff_fst_eq_snd_eq, decidable.not_and_distrib],
+  simp,
+  cases h₁,
+  { exact or.inl (ne_of_lt (lt_of_le_of_lt h₂.left h₁.left)).symm },
+  { exact or.inr (ne_of_lt (lt_of_le_of_lt h₂.right h₁.right)).symm }
+end
+
+theorem descend_finite {P : parent_mountain} (hP : P.is_coherent) : iterate_eventually_none $ descend hP :=
+begin
+  refine λ q, @is_well_founded.induction (option (index₂ P.val))
+    (with_bot.has_lt.lt on option.map (λ q, q.fst.index + q.snd.index))
+    ⟨inv_image.wf _ (is_well_order.to_is_well_founded.wf : well_founded _)⟩ _ q _,
+  clear q,
+  intros q IH,
+  cases q with q,
+  { exact ⟨0, rfl⟩ },
+  { choose! k hk using IH,
+    cases h : descend hP q with q',
+    { exact ⟨1, h⟩ },
+    { refine ⟨k (descend hP q) + 1, hk _ _⟩,
+      simp [h, function.on_fun],
+      have h' := descend_lt_and_eq_or_eq_and_lt_of_it_is_some (option.is_some_iff_exists.mpr ⟨_, h⟩),
+      simp_rw ← index₂.index_snd at h',
+      simp [h] at h',
+      rcases h' with ⟨h'₁, h'₂⟩ | ⟨h'₁, h'₂⟩,
+      { simp only [add_lt_add_iff_right, h'₁, h'₂] },
+      { simp only [add_lt_add_iff_left, h'₁, h'₂] } } }
+end
+
+def descend_to_surface {P : parent_mountain} (hP : P.is_coherent) (q : index₂ P.val) : option (index P.val) :=
+sigma.fst <$> @find_iterate_of_iterate_eventually_none _
+  (descend hP) (descend_finite hP)
+  (finset.univ.filter (λ (p : index₂ P.val), p.val = none ∧ p.fst ≠ q.fst))
+  (by apply_instance) q
+
+lemma exists_iterate_descend_spec_of_descend_to_surface_is_some {P : parent_mountain} (hP : P.is_coherent)
+  (q : index₂ P.val) (h : (descend_to_surface hP q).is_some) :
+  ∃ (k : ℕ) (hk : ((flip bind (descend hP))^[k] $ some q).is_some),
+    (option.get hk).fst = option.get h ∧ (option.get hk).val = none ∧ (option.get hk).fst ≠ q.fst :=
+begin
+  obtain ⟨i', hi'⟩ := option.is_some_iff_exists.mp h,
+  have hi'₂ := hi',
+  simp only [descend_to_surface] at hi'₂,
+  simp at hi'₂,
+  cases hi'₂ with j' hi'j',
+  refine ⟨_, option.is_some_iff_exists.mpr ⟨_, hi'j'⟩, ⟨_, _⟩⟩,
+  { conv_lhs
+    begin
+      congr,
+      congr,
+      change find_iterate_of_iterate_eventually_none _ _ q,
+    end,
+    simp [hi'j', hi'] },
+  { have : option.elim true _ _ := @eq.subst _ _ _ _ hi'j' (find_iterate_spec _ _ _),
+    rw [option.elim, ← @set.mem_def _ _ (coe _)] at this,
+    simp at this,
+    convert this,
+    { rw [← option.some.inj_eq, option.some_get],
+      exact hi'j' },
+    { conv_lhs
+      begin
+        congr,
+        congr,
+        change find_iterate_of_iterate_eventually_none _ _ q,
+      end,
+      simp [hi'j'] } }
+end
+
+lemma descend_to_surface_to_none_or_lt_fst_index {P : parent_mountain} (hP : P.is_coherent) (q : index₂ P.val) :
+  with_bot.has_lt.lt ((descend_to_surface hP q).map index.index) q.fst.index :=
+begin
+  cases h : descend_to_surface hP q,
+  { exact with_bot.none_lt_some _ },
+  { have h' := option.is_some_iff_exists.mpr ⟨_, h⟩,
+    obtain ⟨k, hk₁, hk₂⟩ := exists_iterate_descend_spec_of_descend_to_surface_is_some hP q h',
+    simp only [h, option.get_some] at hk₂,
+    rw [option.map_some', with_bot.some_eq_coe, with_bot.coe_lt_coe, ← hk₂.left],
+    have h'' := iterate_descend_pairwise_le_of_it_is_some hk₁,
+    exact lt_of_le_of_ne h''.left (fin.vne_of_ne hk₂.right.right) }
+end
+
+lemma descend_to_surface_is_some_iff {P : parent_mountain} (hP : P.is_coherent) (q : index₂ P.val) :
+  (descend_to_surface hP q).is_some ↔ 0 < q.snd.index ∨ q.val.is_some :=
+begin
+  rw [descend_to_surface, option.is_some_iff_exists],
+  generalize_proofs descend_finite,
+  generalize mem_decidable_def : (λ _, finset.decidable_mem' _ _) = mem_decidable,
+  simp,
+  transitivity ∃ (q' : index₂ P.val), find_iterate_of_iterate_eventually_none descend_finite mem_decidable q = some q',
+  { convert sigma.exists.symm,
+    funext,
+    congr },
+  subst mem_decidable_def,
+  rw [← option.is_some_iff_exists, find_iterate_is_some_iff],
+  split,
+  { rintro ⟨k, hk₁, hk₂⟩,
+    have k_ne_zero : k ≠ 0,
+    { intro H,
+      subst H,
+      simp at hk₂,
+      simp [set.mem_def] at hk₂,
+      exact hk₂ },
+    obtain ⟨k, rfl⟩ := nat.exists_eq_succ_of_ne_zero k_ne_zero,
+    clear k_ne_zero hk₂,
+    by_contra H,
+    rcases q with ⟨⟨i, hi⟩, ⟨j, hj⟩⟩,
+    rw decidable.not_or_iff_and_not at H,
+    cases H with H' H,
+    simp [index.index] at H',
+    subst H',
+    induction k with k IH,
+    { simp [flip, descend, H] at hk₁, exact hk₁ },
+    { rw [imp_false, option.not_is_some_iff_eq_none] at IH,
+      rw [function.iterate_succ_apply', IH] at hk₁,
+      contradiction } },
+  { have descend_finite_on_q := descend_finite (some q),
+    generalize k_def : nat.find descend_finite_on_q = k,
+    obtain ⟨hk_eq, hk_lt⟩ := (nat.find_eq_iff descend_finite_on_q).mp k_def,
+    have k_ne_zero : k ≠ 0,
+    { intro H,
+      subst H,
+      contradiction },
+    obtain ⟨k, rfl⟩ := nat.exists_eq_succ_of_ne_zero k_ne_zero,
+    clear k_ne_zero,
+    intro h,
+    have last_is_some := option.ne_none_iff_is_some.mp (hk_lt k (lt_add_one k)),
+    refine ⟨k, last_is_some, _⟩,
+    simp,
+    rw set.mem_def,
+    have last_pairwise_le := iterate_descend_pairwise_le_of_it_is_some last_is_some,
+    dsimp at last_pairwise_le,
+    generalize hr : option.get last_is_some = r,
+    rw hr at last_pairwise_le,
+    have hr' := congr_arg option.some hr,
+    rw option.some_get at hr',
+    rw [function.iterate_succ_apply', hr'] at hk_eq,
+    simp [flip, descend_eq_none_iff'] at hk_eq,
+    split,
+    { exact hk_eq.left },
+    { conv at last_pairwise_le
+      begin
+        rw [le_iff_lt_or_eq, or_and_distrib_right],
+        congr,
+        skip,
+        rw [le_iff_lt_or_eq, and_or_distrib_left]
+      end,
+      rcases last_pairwise_le with _ | _ | _,
+      { exact index.ne_of_index_ne (ne_of_lt last_pairwise_le.left) },
+      { refine absurd hk_eq.left ((not_iff_not_of_iff (hP r).left).mpr (ne_of_lt _)),
+        rw [← nat.pred_eq_sub_one, nat.lt_pred_iff],
+        refine lt_of_lt_of_le (nat.succ_lt_succ last_pairwise_le.right) (nat.succ_le_of_lt _),
+        rw index.eq_of_index_eq last_pairwise_le.left,
+        exact q.snd_index_lt },
+      { rw ← index₂.eq_iff_fst_index_eq_and_snd_index_eq at last_pairwise_le,
+        subst last_pairwise_le,
+        cases h,
+        { exact absurd hk_eq.right (ne_of_lt h).symm },
+        { exact absurd hk_eq.left (option.ne_none_iff_is_some.mpr h) } } } }
+end
+
+def diagonal_preparent_of {P : parent_mountain} (hP : P.is_coherent) (i : index P.val) : option (index P.val) :=
+descend_to_surface hP ⟨i, index.last (P.property _ (index.val_mem i))⟩
+
+def diagonal_preparent_of_is_some_iff {P : parent_mountain} (hP : P.is_coherent) (i : index P.val) :
+  (diagonal_preparent_of hP i).is_some ↔ 1 < i.val.length :=
+begin
+  simp [diagonal_preparent_of, descend_to_surface_is_some_iff],
+  intro h,
+  exfalso,
+  rw ← option.ne_none_iff_is_some at h,
+  apply h,
+  simp [(hP _).left]
+end
+
+lemma to_none_or_lt_diagonal_preparent {P : parent_mountain} (hP : P.is_coherent) :
+  to_none_or_lt_id $ in_index_elim (option.map index.index ∘ diagonal_preparent_of hP) none :=
+begin
+  apply to_none_or_lt_id_in_index_elim_yes_none_of_forall_index,
+  intro q,
+  exact descend_to_surface_to_none_or_lt_fst_index hP _
+end
+
+def diagonal {x : mountain} (h_coherent : x.parents.is_coherent) (h_orphanless : x.is_orphanless) :
+  value_parent_list_pair :=
+{ values := ⟨surface_at <$> list.fin_range x.values.val.length,
+    begin
+      simp,
+      split_ifs,
+      { rw index.val,
+        simp [surface_at, index.last],
+        have := eq.trans (x.pairable.snd ⟨0, h⟩) (h_coherent.head_length _),
+        generalize_proofs,
+        simp [this],
+        exact mountain.head_value_eq_one_of_parents_is_coherent_of_is_orphanless_of_length_pos
+          h_coherent h_orphanless h },
+      { triv }
+    end⟩,
+  parents := ⟨(option.map index.index ∘ diagonal_preparent_of h_coherent) <$>
+      list.fin_range x.parents.val.length,
+    begin
+      have := to_none_or_lt_id_in_index_elim_yes_none_forall_index_of _
+        (to_none_or_lt_diagonal_preparent h_coherent),
+      rintro ⟨i, hi⟩,
+      simp [index.val],
+      exact this _
+    end⟩,
+  pairable := by { simp [pairable], exact x.pairable.fst } }
+
+lemma diagonal_length_eq {x : mountain} (h_coherent : x.parents.is_coherent) (h_orphanless : x.is_orphanless) :
+  (diagonal h_coherent h_orphanless).values.val.length = x.values.val.length := by simp [diagonal]
+
+@[simp] def diagonal_value_at {x : mountain} (h_coherent : x.parents.is_coherent)
+  (h_orphanless : x.is_orphanless) (i : index (diagonal h_coherent h_orphanless).values.val) :
+  i.val = surface_at (pairable.transfer (diagonal_length_eq h_coherent h_orphanless) i) :=
+by simp [pairable.transfer, index.val, diagonal]
+
+@[simp] def diagonal_parent_at {x : mountain} (h_coherent : x.parents.is_coherent)
+  (h_orphanless : x.is_orphanless) (i : index (diagonal h_coherent h_orphanless).parents.val) :
+  i.val = index.index <$> diagonal_preparent_of h_coherent
+    (pairable.transfer
+      (((diagonal h_coherent h_orphanless).pairable.symm.trans
+        (diagonal_length_eq h_coherent h_orphanless)).trans
+        x.pairable.fst)
+      i) :=
+by simp [pairable.transfer, index.val, diagonal]
+
+lemma diagonal_is_orphanless {x : mountain} (h_coherent : x.parents.is_coherent)
+  (h_orphanless : x.is_orphanless) : (diagonal h_coherent h_orphanless).is_orphanless :=
+begin
+  intro i,
+  simp [pairable.transfer],
+  intro h,
+  rw option.is_some_iff_exists,
+  simp,
+  rw exists_comm,
+  simp [exists_and_distrib_left],
+  rw [← option.is_some_iff_exists, diagonal_preparent_of_is_some_iff, nat.one_lt_iff_ne_zero_and_ne_one],
+  split,
+  { exact (ne_of_lt (list.length_pos_of_ne_nil (x.parents.property _ (index.val_mem _)))).symm },
+  { intro H,
+    rw [surface_at, index.last] at h,
+    simp [(x.pairable.snd _).def, pairable.transfer, H] at h,
+    replace h := h_orphanless _ h,
+    rw [← option.ne_none_iff_is_some, ne.def, (h_coherent _).left] at h,
+    simp [pairable.transfer, H] at h,
+    exact h }
+end
+
+end diagonal
 
 end ysequence
