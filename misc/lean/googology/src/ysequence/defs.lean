@@ -1399,14 +1399,11 @@ theorem descend_to_surface_is_some_iff {P : parent_mountain} (hP : P.is_coherent
 begin
   rw [descend_to_surface, option.is_some_iff_exists],
   generalize_proofs descend_finite,
-  generalize mem_decidable_def : (λ _, finset.decidable_mem' _ _) = mem_decidable,
+  generalize : (λ _, finset.decidable_mem' _ _) = mem_decidable,
   simp,
-  transitivity ∃ (q' : index₂ P.val), find_iterate_of_iterate_eventually_none descend_finite mem_decidable q = some q',
-  { convert sigma.exists.symm,
-    funext,
-    congr },
-  subst mem_decidable_def,
-  rw [← option.is_some_iff_exists, find_iterate_is_some_iff],
+  rw [← @index₂.exists_iff _ _
+      (λ q', find_iterate_of_iterate_eventually_none descend_finite mem_decidable q = some q'),
+    ← option.is_some_iff_exists, find_iterate_is_some_iff],
   split,
   { rintro ⟨k, hk₁, hk₂⟩,
     have k_ne_zero : k ≠ 0,
