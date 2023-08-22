@@ -1094,7 +1094,7 @@ begin
   let i₀_on_lv : index _ := pairable.transfer (mountain_length_eq x) i₀_on_mv,
   refine @nat.strong_induction_on
     (λ i, ∀ (hi : _ < _), _ < _ → option.is_some _ →
-      ∃ (k : ℕ) (h : option.is_some _) (p : index _), _ < index.val ⟨i₀, i₀_on_lv.index_lt ∧ _)
+      ∃ (k : ℕ) (h : option.is_some _) (p : index _), _ < i₀_on_lv.val ∧ _)
     i₀ _ hi₀ value₀_gt_one,
   intros i IH hi value_gt_one i_has_parent_candidate,
   let i_on_mv : index _ := ⟨i, hi⟩,
@@ -1209,7 +1209,7 @@ begin
   { rcases q.snd with ⟨_ | j, hj⟩; simp [descend, h] }
 end
 
-lemma descend_lt_and_eq_or_eq_and_lt_of_it_is_some {P : parent_mountain} {hP : P.is_coherent}
+theorem descend_lt_and_eq_or_eq_and_lt_of_it_is_some {P : parent_mountain} {hP : P.is_coherent}
   {q : index₂ P.val} (h : (descend hP q).is_some) :
   let i := q.fst.index, j := q.snd.index,
     q' := option.get h, i' := q'.fst.index, j' := q'.snd.index in
@@ -1268,7 +1268,7 @@ begin
   { exact absurd (congr_arg (λ (q : index₂ P.val), q.snd.index) H.symm) (ne_of_lt h'₂) }
 end
 
-lemma iterate_descend_pairwise_le_of_it_is_some {P : parent_mountain} {hP : P.is_coherent}
+theorem iterate_descend_pairwise_le_of_it_is_some {P : parent_mountain} {hP : P.is_coherent}
   {q : index₂ P.val} {k : ℕ} (h : ((flip bind (descend hP))^[k] $ some q).is_some) :
   let i := q.fst.index, j := q.snd.index,
     q' := option.get h, i' := q'.fst.index, j' := q'.snd.index in i' ≤ i ∧ j' ≤ j :=
@@ -1290,7 +1290,7 @@ begin
     contradiction }
 end
 
-lemma iterate_descend_succ_ne_of_it_is_some {P : parent_mountain} {hP : P.is_coherent}
+theorem iterate_descend_succ_ne_of_it_is_some {P : parent_mountain} {hP : P.is_coherent}
   {q : index₂ P.val} {k : ℕ} (h : ((flip bind (descend hP))^[k + 1] $ some q).is_some) :
   q ≠ option.get h :=
 begin
@@ -1394,7 +1394,7 @@ begin
     exact lt_of_le_of_ne h''.left (index.index_ne_of_ne hk₂.right.right) }
 end
 
-lemma descend_to_surface_is_some_iff {P : parent_mountain} (hP : P.is_coherent) (q : index₂ P.val) :
+theorem descend_to_surface_is_some_iff {P : parent_mountain} (hP : P.is_coherent) (q : index₂ P.val) :
   (descend_to_surface hP q).is_some ↔ 0 < q.snd.index ∨ q.val.is_some :=
 begin
   rw [descend_to_surface, option.is_some_iff_exists],
@@ -1476,7 +1476,7 @@ end
 def diagonal_preparent_of {P : parent_mountain} (hP : P.is_coherent) (i : index P.val) : option (index P.val) :=
 descend_to_surface hP ⟨i, index.last (P.property _ (index.val_mem i))⟩
 
-def diagonal_preparent_of_is_some_iff {P : parent_mountain} (hP : P.is_coherent) (i : index P.val) :
+theorem diagonal_preparent_of_is_some_iff {P : parent_mountain} (hP : P.is_coherent) (i : index P.val) :
   (diagonal_preparent_of hP i).is_some ↔ 1 < i.val.length :=
 begin
   simp [diagonal_preparent_of, descend_to_surface_is_some_iff],
@@ -1487,7 +1487,7 @@ begin
   simp [hP.val_eq_none_iff]
 end
 
-lemma to_none_or_lt_diagonal_preparent {P : parent_mountain} (hP : P.is_coherent) :
+theorem to_none_or_lt_diagonal_preparent {P : parent_mountain} (hP : P.is_coherent) :
   to_none_or_lt_id $ in_index_elim (option.map index.index ∘ diagonal_preparent_of hP) none :=
 begin
   apply to_none_or_lt_id_in_index_elim_yes_none_of_forall_index,
@@ -1524,12 +1524,12 @@ def diagonal {x : mountain} (h_coherent : x.parents.is_coherent) (h_orphanless :
 lemma diagonal_length_eq {x : mountain} (h_coherent : x.parents.is_coherent) (h_orphanless : x.is_orphanless) :
   (diagonal h_coherent h_orphanless).values.val.length = x.values.val.length := by simp [diagonal]
 
-@[simp] def diagonal_value_at {x : mountain} (h_coherent : x.parents.is_coherent)
+@[simp] lemma diagonal_value_at {x : mountain} (h_coherent : x.parents.is_coherent)
   (h_orphanless : x.is_orphanless) (i : index (diagonal h_coherent h_orphanless).values.val) :
   i.val = surface_at (pairable.transfer (diagonal_length_eq h_coherent h_orphanless) i) :=
 by simp [pairable.transfer, index.val, diagonal]
 
-@[simp] def diagonal_parent_at {x : mountain} (h_coherent : x.parents.is_coherent)
+@[simp] lemma diagonal_parent_at {x : mountain} (h_coherent : x.parents.is_coherent)
   (h_orphanless : x.is_orphanless) (i : index (diagonal h_coherent h_orphanless).parents.val) :
   i.val = index.index <$> diagonal_preparent_of h_coherent
     (pairable.transfer
@@ -1539,7 +1539,7 @@ by simp [pairable.transfer, index.val, diagonal]
       i) :=
 by simp [pairable.transfer, index.val, diagonal]
 
-lemma diagonal_is_orphanless {x : mountain} (h_coherent : x.parents.is_coherent)
+theorem diagonal_is_orphanless {x : mountain} (h_coherent : x.parents.is_coherent)
   (h_orphanless : x.is_orphanless) : (diagonal h_coherent h_orphanless).is_orphanless :=
 begin
   intro i,
