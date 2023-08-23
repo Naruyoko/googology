@@ -513,9 +513,15 @@ let s : list ℕ+ := [1, 3, 4], t := [none, some 0, some 1] in
 def value_mountain : Type :=
 {V : list (list ℕ+) // ∀ (c ∈ V), c ≠ []}
 
+lemma value_mountain.index_val_ne_nil (V : value_mountain) (i : index V.val) : i.val ≠ [] :=
+V.property _ (index.val_mem i)
+
 /-- 𝕄ₚ⁻ -/
 def parent_mountain : Type :=
 {P : list (list (option ℕ)) // ∀ (c ∈ P), c ≠ []}
+
+lemma parent_mountain.index_val_ne_nil (P : parent_mountain) (i : index P.val) : i.val ≠ [] :=
+P.property _ (index.val_mem i)
 
 /-- 𝕄ₚ = {P : 𝕄ₚ⁻ // P.is_coherent} -/
 def parent_mountain.is_coherent (P : parent_mountain) : Prop :=
@@ -553,7 +559,7 @@ lemma parent_mountain.is_coherent.head_eq_none {P : parent_mountain} (hP : P.is_
 lemma parent_mountain.is_coherent.head_length {P : parent_mountain} (hP : P.is_coherent)
   (h : 0 < P.val.length) : (index.val (⟨0, h⟩ : index P.val)).length = 1 :=
 begin
-  have head_length_pos := list.length_pos_of_ne_nil (P.property _ (index.val_mem ⟨0, h⟩)),
+  have head_length_pos := list.length_pos_of_ne_nil (P.index_val_ne_nil ⟨0, h⟩),
   rw ← nat.sub_eq_iff_eq_add head_length_pos,
   exact ((hP.val_eq_none_iff ⟨⟨0, h⟩, ⟨0, head_length_pos⟩⟩).mp (hP.head_eq_none _ _)).symm
 end
@@ -585,7 +591,7 @@ def parent_mountain.is_coherent.index_above_of_is_some {P : parent_mountain} (hP
   split,
   { exact nat.succ_le_of_lt q.snd_index_lt },
   { rw [← ne.def, ← nat.succ_ne_succ] at h,
-    rw ← nat.sub_add_cancel (list.length_pos_of_ne_nil (P.property _ (index.val_mem _))),
+    rw ← nat.sub_add_cancel (list.length_pos_of_ne_nil (P.index_val_ne_nil _)),
     exact h }
 end⟩⟩, rfl⟩
 
@@ -599,15 +605,15 @@ structure mountain :=
 def mountain.is_orphanless (x : mountain) : Prop :=
 ∀ (i : index x.values.val),
   1 < (index₂.val (⟨i, ⟨0,
-    list.length_pos_of_ne_nil (x.values.property _ (index.val_mem _))⟩⟩ : index₂ x.values.val)).val → 
+    list.length_pos_of_ne_nil (x.values.index_val_ne_nil _)⟩⟩ : index₂ x.values.val)).val → 
   (index₂.val (⟨x.pairable.fst.transfer i, ⟨0,
-    list.length_pos_of_ne_nil (x.parents.property _ (index.val_mem _))⟩⟩ : index₂ x.parents.val)).is_some
+    list.length_pos_of_ne_nil (x.parents.index_val_ne_nil _)⟩⟩ : index₂ x.parents.val)).is_some
 
 lemma mountain.head_value_eq_one_of_parents_is_coherent_of_is_orphanless_of_length_pos {x : mountain}
   (h_coherent : x.parents.is_coherent) (h_orphanless : x.is_orphanless)
   (len_pos : 0 < x.values.val.length) :
   index₂.val (⟨⟨0, len_pos⟩, ⟨0,
-    list.length_pos_of_ne_nil (x.values.property _ (index.val_mem _))⟩⟩ : index₂ x.values.val) = 1 :=
+    list.length_pos_of_ne_nil (x.values.index_val_ne_nil _)⟩⟩ : index₂ x.values.val) = 1 :=
 begin
   by_contra H,
   have := h_orphanless ⟨0, len_pos⟩
@@ -1177,7 +1183,7 @@ end build
 section diagonal
 
 def surface_at {V : value_mountain} (i : index V.val) : ℕ+ :=
-index₂.val ⟨i, index.last (V.property _ (index.val_mem i))⟩
+index₂.val ⟨i, index.last (V.index_val_ne_nil i)⟩
 
 def descend {P : parent_mountain} (hP : P.is_coherent) (q : index₂ P.val) : option (index₂ P.val) :=
 if h : q.val.is_some
@@ -1471,7 +1477,7 @@ begin
 end
 
 def diagonal_preparent_of {P : parent_mountain} (hP : P.is_coherent) (i : index P.val) : option (index P.val) :=
-descend_to_surface hP ⟨i, index.last (P.property _ (index.val_mem i))⟩
+descend_to_surface hP ⟨i, index.last (P.index_val_ne_nil i)⟩
 
 theorem diagonal_preparent_of_is_some_iff {P : parent_mountain} (hP : P.is_coherent) (i : index P.val) :
   (diagonal_preparent_of hP i).is_some ↔ 1 < i.val.length :=
@@ -1548,7 +1554,7 @@ begin
   simp [exists_and_distrib_left],
   rw [← option.is_some_iff_exists, diagonal_preparent_of_is_some_iff, nat.one_lt_iff_ne_zero_and_ne_one],
   split,
-  { exact (ne_of_lt (list.length_pos_of_ne_nil (x.parents.property _ (index.val_mem _)))).symm },
+  { exact (ne_of_lt (list.length_pos_of_ne_nil (x.parents.index_val_ne_nil _))).symm },
   { intro H,
     rw [surface_at, index.last] at h,
     simp [(x.pairable.snd _).def, pairable.transfer, H] at h,
