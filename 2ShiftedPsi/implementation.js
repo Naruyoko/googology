@@ -601,32 +601,28 @@ function lessThan(S,T){
 }
 /**
  * @param {Term|string} G
- * @param {Term|string} B
- * @param {Term|string} C
+ * @param {Term|string} sbp
+ * @param {Term|string} fbp
+ * @param {Term|string} cpm
  * @returns {string}
  */
-function bp(G,B,C){
+function bp(G,sbp,fbp,cpm){
   if (!(G instanceof Term)) G=new Term(G);
-  if (!(B instanceof Term)) B=new Term(B);
-  if (!(C instanceof Term)) C=new Term(C);
-  if (!inT(B)||!inT(C)) throw Error("Invalid argument: "+G+","+B+","+C);
-  if (B instanceof ZeroTerm) return "0"; //1
-  if (G instanceof ZeroTerm) return "0"; //2
-  if (G instanceof SumTerm){ //2
-    if (B instanceof SumTerm){ //2.1
-      if (lessThan(B,C)) return bp(G.getNotLeft(),B.getNotLeft(),C); //2.1.1
-      else return G+""; //2.1.2
-    }
-    if (B instanceof PsiTerm) return "0"; //2.2
+  if (!(sbp instanceof Term)) sbp=new Term(sbp);
+  if (!(fbp instanceof Term)) fbp=new Term(fbp);
+  if (!(cpm instanceof Term)) cpm=new Term(cpm);
+  if (!inT(G)||!inT(sbp)||!inT(fbp)||!inT(cpm)) throw Error("Invalid argument: "+G+","+sbp+","+fbp+","+cpm);
+  if (lessThanOrEqual(fbp,sbp)) return "ψ("+cpm+","+G+")"; //1
+  else{ //2
+    var G_getLeft=null;
+    var sbp_getLeft=null;
+    if (G instanceof SumTerm&&(G_getLeft=G.getLeft()) instanceof PsiTerm&&sbp instanceof SumTerm&&(sbp_getLeft=sbp.getLeft()) instanceof PsiTerm){ //2.1
+      if (equal(G_getLeft.sub,cpm)&&lessThanOrEqual(fbp,G_getLeft.inner)) return G+""; //2.1.1
+      else return bp(G.getNotLeft(),sbp.getNotLeft(),fbp,cpm); //2.1.2
+    }else if (G instanceof PsiTerm&&sbp instanceof PsiTerm) return bp(G.inner,sbp.inner,fbp,cpm); //2.2
+    else return "0"; //2.3
   }
-  if (G instanceof PsiTerm){ //3
-    if (B instanceof SumTerm) return "0"; //3.1
-    if (B instanceof PsiTerm){ //3.2
-      if (lessThan(B,C)) return bp(G.inner,B.inner,C); //3.2.1
-      else return G+""; //3.2.2
-    }
-  }
-  throw Error("No rule to compute bp("+G+","+B+","+C+")");
+  throw Error("No rule to compute bp("+G+","+sbp+","+fbp+","+cpm+")");
 }
 /**
  * @param {Term|string} S
@@ -699,7 +695,7 @@ function fund(S,T){
           if (!(Term_dom_d instanceof PsiTerm)||notEqual(Term_dom_d.inner,Term.ZERO)) throw Error("Failed assertion");
           var Term_fund_S_fund_T_0=null;
           var fund_Term_dom_d_sub_0=fund(Term_dom_d.sub,Term.ZERO);
-          if (equal(dom(T),Term.ONE)&&(Term_fund_S_fund_T_0=new Term(fund(S,fund(T,Term.ZERO)))) instanceof PsiTerm&&equal(Term_fund_S_fund_T_0.sub,S.sub)) return "ψ("+S.sub+","+fund(S.inner,"ψ("+fund_Term_dom_d_sub_0+","+bp(Term_fund_S_fund_T_0.inner,S.inner,d)+")")+")"; //3.3.2.2.1
+          if (equal(dom(T),Term.ONE)&&(Term_fund_S_fund_T_0=new Term(fund(S,fund(T,Term.ZERO)))) instanceof PsiTerm&&equal(Term_fund_S_fund_T_0.sub,S.sub)) return "ψ("+S.sub+","+fund(S.inner,bp(Term_fund_S_fund_T_0.inner,S.inner,d,fund_Term_dom_d_sub_0))+")"; //3.3.2.2.1
           else return "ψ("+S.sub+","+fund(S.inner,"ψ("+fund_Term_dom_d_sub_0+",0)")+")"; //3.3.2.2.2
         }
       }
@@ -855,6 +851,8 @@ var testTermsPre=[
   ["ψ_0(ψ_0(ψ_2(0)+1))",-1],
   ["ψ_0(ψ_0(ψ_2(0)+ψ_0(ψ_0(ψ_2(0)))))",3],
   ["ψ_0(ψ_0(ψ_2(0)+ψ_0(ψ_1(0))))",3],
+  ["ψ_0(ψ_0(ψ_2(0)+ψ_0(ψ_1(ψ_0(ψ_2(0)))+ψ_1(ψ_0(ψ_2(0))))))",3],
+  ["ψ_0(ψ_0(ψ_2(0)+ψ_0(ψ_1(ψ_1(0)))))",-1],
   ["ψ_0(ψ_0(ψ_2(0)+ψ_0(ψ_1(ψ_2(0)))))",3],
   ["ψ_0(ψ_0(ψ_2(0)+ψ_0(ψ_1(ψ_2(0))+ψ_0(ψ_2(0)))))",3],
   ["ψ_0(ψ_0(ψ_2(0)+ψ_0(ψ_1(ψ_2(0))+ψ_1(0))))",3],
@@ -1192,7 +1190,7 @@ function compute(){
         }else if (cmd=="lessThan"||cmd=="<"){
           result=lessThan(args[0],args[1]);
         }else if (cmd=="bp"){
-          result=bp(args[0],args[1],args[2]);
+          result=bp(args[0],args[1],args[2],args[3]);
         }else if (cmd=="dom"){
           result=dom(args[0]);
         }else if (cmd=="fund"||cmd=="expand"){
