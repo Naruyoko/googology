@@ -617,10 +617,12 @@ function bp(G,sbp,fbp,cpm){
     var G_getLeft=null;
     var sbp_getLeft=null;
     if (G instanceof SumTerm&&(G_getLeft=G.getLeft()) instanceof PsiTerm&&sbp instanceof SumTerm&&(sbp_getLeft=sbp.getLeft()) instanceof PsiTerm){ //2.1
-      if (equal(G_getLeft.sub,cpm)&&lessThanOrEqual(fbp,G_getLeft.inner)) return G+""; //2.1.1
+      if (equal(sbp_getLeft.sub,cpm)&&lessThanOrEqual(fbp,G_getLeft.inner)) return G+""; //2.1.1
       else return bp(G.getNotLeft(),sbp.getNotLeft(),fbp,cpm); //2.1.2
-    }else if (G instanceof PsiTerm&&sbp instanceof PsiTerm) return bp(G.inner,sbp.inner,fbp,cpm); //2.2
-    else return "0"; //2.3
+    }else if (G instanceof PsiTerm&&sbp instanceof PsiTerm){ //2.2
+      if (equal(sbp.inner,Term.ZERO)) return bp(G.sub,sbp.sub,fbp,cpm); //2.2.1
+      else return bp(G.inner,sbp.inner,fbp,cpm); //2.2.2
+    }else return "0"; //2.3
   }
   throw Error("No rule to compute bp("+G+","+sbp+","+fbp+","+cpm+")");
 }
