@@ -641,24 +641,39 @@ structure mountain :=
 /-- 𝕄* = {x : mountain // x.parents.is_coherent ∧ x.is_orphanless} -/
 def mountain.is_orphanless (x : mountain) : Prop :=
 ∀ (i : index x.values.val),
-  1 < (index₂.val (⟨i, ⟨0,
-    list.length_pos_of_ne_nil (x.values.index_val_ne_nil _)⟩⟩ : index₂ x.values.val)).val → 
-  (index₂.val (⟨x.pairable.fst.transfer i, ⟨0,
-    list.length_pos_of_ne_nil (x.parents.index_val_ne_nil _)⟩⟩ : index₂ x.parents.val)).is_some
+  1 < (index₂.val ⟨i, ⟨0, list.length_pos_of_ne_nil (x.values.index_val_ne_nil _)⟩⟩).val → 
+  (index₂.val ⟨x.pairable.fst.transfer i, ⟨0, list.length_pos_of_ne_nil (x.parents.index_val_ne_nil _)⟩⟩).is_some
+
+instance : decidable_pred mountain.is_orphanless :=
+λ x, fintype.decidable_forall_fintype
+
+lemma mountain.base_value_eq_one_of_parents_is_coherent_of_is_orphanless_of_height_eq_one
+  {x : mountain} (h_coherent : x.parents.is_coherent) (h_orphanless : x.is_orphanless)
+  {i : index x.values.val} (h : i.val.length = 1) :
+  index₂.val ⟨i, ⟨0, list.length_pos_of_ne_nil (x.values.index_val_ne_nil _)⟩⟩ = 1 :=
+begin
+  by_contra H,
+  have := h_orphanless i (by apply lt_of_le_of_ne (pnat.one_le _) (ne.symm H)),
+  rw ← option.ne_none_iff_is_some at this,
+  apply this,
+  rw h_coherent.val_eq_none_iff,
+  conv_rhs
+  begin
+    rw (x.pairable.symm.snd _).def,
+    simp only [pairable.transfer],
+    erw h
+  end,
+  simp
+end
 
 lemma mountain.head_value_eq_one_of_parents_is_coherent_of_is_orphanless_of_length_pos {x : mountain}
   (h_coherent : x.parents.is_coherent) (h_orphanless : x.is_orphanless)
   (len_pos : 0 < x.values.val.length) :
-  index₂.val (⟨⟨0, len_pos⟩, ⟨0,
-    list.length_pos_of_ne_nil (x.values.index_val_ne_nil _)⟩⟩ : index₂ x.values.val) = 1 :=
+  index₂.val ⟨⟨0, len_pos⟩, ⟨0, list.length_pos_of_ne_nil (x.values.index_val_ne_nil _)⟩⟩ = 1 :=
 begin
-  by_contra H,
-  have := h_orphanless ⟨0, len_pos⟩
-    begin
-      apply lt_of_le_of_ne (pnat.one_le _) (ne.symm H),
-    end,
-  rw ← option.ne_none_iff_is_some at this,
-  exact absurd (h_coherent.head_eq_none (lt_of_lt_of_eq len_pos x.pairable.fst) _) this,
+  apply mountain.base_value_eq_one_of_parents_is_coherent_of_is_orphanless_of_height_eq_one h_coherent h_orphanless,
+  rw (x.pairable.snd _).def,
+  exact h_coherent.head_length (lt_of_lt_of_eq len_pos x.pairable.fst)
 end
 
 def mountain.is_cross_coherent (x : mountain) : Prop :=
@@ -783,6 +798,25 @@ begin
       simp [hp] at this ⊢,
       exact with_bot.coe_lt_coe.mp this } }
 end
+
+theorem mountain.is_cross_coherent.value_ne_one_where_parent_is_some {x : mountain}
+  (h : x.is_cross_coherent) {q : index₂ x.parents.val} (hq : q.val.is_some) :
+  (x.pairable.symm.transfer q).val ≠ 1 :=
+begin
+  intro H,
+  have := h.value_above_lt_value_of_parent_is_some hq,
+  rw H at this,
+  exact pnat.not_lt_one _ this
+end
+
+theorem mountain.is_cross_coherent.parent_eq_none_where_value_eq_one {x : mountain}
+  (h : x.is_cross_coherent) {q : index₂ x.values.val} :
+  q.val = 1 → (x.pairable.transfer q).val = none :=
+begin
+  rw [← decidable.not_imp_not, ← ne.def, option.ne_none_iff_is_some],
+  exact h.value_ne_one_where_parent_is_some
+end
+
 /-- 𝕄** = {x : mountain // x.is_coherent} -/
 def mountain.is_coherent (x : mountain) : Prop :=
 x.is_orphanless ∧ x.is_cross_coherent
@@ -1839,5 +1873,147 @@ end
 end diagonal_rec
 
 end diagonal
+
+
+section badroot
+
+/-- `@badroot x _ _` contains (↓BadRoot(x),↓BadRootHeight(x)) -/
+def badroot {x : mountain} : x.values.val ≠ [] → x.is_coherent → option (index₂ x.values.val) :=
+diagonal_rec begin
+  clear x,
+  intros x ne_nil h_coherent h_surface,
+  exact
+    if h_last_length : (x.pairable.fst.transfer (index.last ne_nil)).val.length = 1
+    then none
+    else begin
+      have h_parent_is_coherent := h_coherent.to_is_cross_coherent.to_parent_is_coherent,
+      exact
+        some (x.pairable.symm.transfer (h_parent_is_coherent.index_parent_of_is_some
+          (begin
+            rw h_parent_is_coherent.val_is_some_iff,
+            simp,
+            apply ne_of_lt,
+            rw ← nat.sub_sub _ 1 1,
+            refine nat.sub_lt _ one_pos,
+            rw [tsub_pos_iff_lt, ← nat.succ_le_iff, nat.two_le_iff],
+            exact ⟨(ne_of_lt (list.length_pos_of_ne_nil (x.parents.index_val_ne_nil _))).symm, h_last_length⟩
+          end :
+            (index₂.val ⟨x.pairable.fst.transfer (index.last ne_nil),
+              ⟨(x.pairable.fst.transfer (index.last ne_nil)).val.length - 2,
+                nat.sub_lt (list.length_pos_of_ne_nil (x.parents.index_val_ne_nil _)) two_pos⟩⟩).is_some)).val)
+    end
+end
+begin
+  clear x,
+  intros x ne_nil h_coherent h_surface p,
+  exact p.map (λ p, let i : index x.values.val := pairable.transfer
+      (by rw [pairable, mountain_length_eq, diagonal_length_eq])
+      p.fst in
+    ⟨i, index.last (x.values.index_val_ne_nil _)⟩)
+end
+
+lemma badroot_of_last_height_eq_one {x : mountain} (ne_nil : x.values.val ≠ []) (h_coherent : x.is_coherent)
+  (h_last_length : (x.pairable.fst.transfer (index.last ne_nil)).val.length = 1) :
+  badroot ne_nil h_coherent = none :=
+begin
+  rw [badroot, diagonal_rec_eq_dite],
+  split_ifs, { refl },
+  exfalso,
+  apply h,
+  simp only [surface_at, index.last],
+  convert mountain.base_value_eq_one_of_parents_is_coherent_of_is_orphanless_of_height_eq_one
+    h_coherent.to_is_cross_coherent.to_parent_is_coherent
+    h_coherent.to_is_orphanless
+    ((x.pairable.snd _).def.trans h_last_length),
+  erw [(x.pairable.snd _).def, h_last_length]
+end
+
+lemma badroot_of_last_height_ne_one_of_last_surface_eq_one {x : mountain} (ne_nil : x.values.val ≠ []) (h_coherent : x.is_coherent)
+  (h_last_length : (x.pairable.fst.transfer (index.last ne_nil)).val.length ≠ 1)
+  (h_surface : surface_at (index.last ne_nil) = 1) :
+  badroot ne_nil h_coherent =
+  begin
+    have h_parent_is_coherent := h_coherent.to_is_cross_coherent.to_parent_is_coherent,
+    exact
+      some (x.pairable.symm.transfer (h_parent_is_coherent.index_parent_of_is_some
+        (begin
+          rw h_parent_is_coherent.val_is_some_iff,
+          simp,
+          apply ne_of_lt,
+          rw ← nat.sub_sub _ 1 1,
+          refine nat.sub_lt _ one_pos,
+          rw [tsub_pos_iff_lt, ← nat.succ_le_iff, nat.two_le_iff],
+          exact ⟨(ne_of_lt (list.length_pos_of_ne_nil (x.parents.index_val_ne_nil _))).symm, h_last_length⟩
+        end :
+          (index₂.val ⟨x.pairable.fst.transfer (index.last ne_nil),
+            ⟨(x.pairable.fst.transfer (index.last ne_nil)).val.length - 2,
+              nat.sub_lt (list.length_pos_of_ne_nil (x.parents.index_val_ne_nil _)) two_pos⟩⟩).is_some)).val)
+  end :=
+by { rw [badroot, diagonal_rec_eq_dite], split_ifs, refl }
+
+lemma badroot_of_last_surface_ne_one {x : mountain} (ne_nil : x.values.val ≠ []) (h_coherent : x.is_coherent)
+  (h_surface : surface_at (index.last ne_nil) ≠ 1) :
+  badroot ne_nil h_coherent =
+  (@badroot
+    (build_mountain (@diagonal x
+      h_coherent.to_is_cross_coherent.to_parent_is_coherent h_coherent.to_is_orphanless))
+    begin
+      rw ← list.length_pos_iff_ne_nil at ne_nil ⊢,
+      rwa [mountain_length_eq, diagonal_length_eq]
+    end
+    (mountain_orphanless_is_coherent (diagonal_is_orphanless _ _))).map
+  (λ p, let i : index x.values.val := pairable.transfer
+      (by rw [pairable, mountain_length_eq, diagonal_length_eq])
+      p.fst in
+    ⟨i, index.last (x.values.index_val_ne_nil _)⟩) :=
+by { rw [badroot, diagonal_rec_of_surface_ne_one], refl, exact h_surface }
+
+/-- 𝕄ᴸ = {x : mountain // x.is_limit} -/
+def mountain.is_limit (x : mountain) : Prop :=
+∃ (ne_nil : x.values.val ≠ []) (h_coherent : x.is_coherent), (badroot ne_nil h_coherent).is_some
+
+lemma mountain.is_limit.badroot_is_some {x : mountain} (h : x.is_limit) :
+  (badroot h.fst h.snd.fst).is_some := h.snd.snd
+
+theorem mountain.is_limit.iff_last_length_ne_one {x : mountain} (ne_nil : x.values.val ≠ []) (h_coherent : x.is_coherent) :
+  x.is_limit ↔ (x.pairable.fst.transfer (index.last ne_nil)).val.length ≠ 1 :=
+begin
+  split, 
+  { intro h,
+    intro H,
+    exact absurd h.badroot_is_some
+      (option.not_is_some_iff_eq_none.mpr (badroot_of_last_height_eq_one ne_nil h_coherent H)) },
+  { have ne_nil' := ne_nil,
+    revert ne_nil,
+    refine diagonal_rec _ _ ne_nil' h_coherent;
+      clear_dependent x;
+      intros x _ h_coherent h_surface,
+    { intros ne_nil h_last_length,
+      exact ⟨ne_nil, h_coherent, option.is_some_iff_exists.mpr ⟨_,
+        badroot_of_last_height_ne_one_of_last_surface_eq_one ne_nil h_coherent h_last_length h_surface⟩⟩ },
+    { intros IH ne_nil h_last_length,
+      exact ⟨ne_nil, h_coherent, option.is_some_iff_exists.mpr
+        begin
+          rw badroot_of_last_surface_ne_one ne_nil h_coherent h_surface,
+          generalize_proofs _ _ _ digonal_ne_nil diagonal_is_coherent,
+          obtain ⟨p, hp⟩ := option.is_some_iff_exists.mp (IH digonal_ne_nil
+            begin
+              intro H,
+              apply absurd
+                (mountain.base_value_eq_one_of_parents_is_coherent_of_is_orphanless_of_height_eq_one
+                  diagonal_is_coherent.to_is_cross_coherent.to_parent_is_coherent
+                  diagonal_is_coherent.to_is_orphanless
+                  (((mountain.pairable _).snd _).def.trans H)),
+              simp [mountain_value_at_index_eq_value],
+              convert h_surface,
+              ext,
+              simp [mountain_length_eq, diagonal_length_eq, -subtype.val_eq_coe]
+            end).badroot_is_some,
+          rw hp,
+          exact ⟨_, rfl⟩
+        end⟩ } }
+end
+
+end badroot
 
 end ysequence
