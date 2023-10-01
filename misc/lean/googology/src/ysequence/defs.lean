@@ -276,6 +276,10 @@ lemma index.forall_iff {s : list α} {p : index s → Prop} :
 
 lemma index.val_mem {s : list α} (i : index s) : i.val ∈ s := list.nth_le_mem _ _ _
 
+lemma index.index_ne_pred_length_iff {s : list α} {i : index s} :
+  i.index ≠ s.length - 1 ↔ i.index < s.length - 1 :=
+ne_iff_lt_iff_le.mpr (nat.le_pred_of_lt i.index_lt)
+
 def index.last {s : list α} (h : s ≠ []) : index s :=
 ⟨s.length - 1, nat.sub_lt (list.length_pos_of_ne_nil h) (nat.succ_pos 0)⟩
 
@@ -542,6 +546,10 @@ lemma parent_mountain.is_coherent.elim_exists_index {P : parent_mountain} (hP : 
 instance : decidable_pred parent_mountain.is_coherent :=
 λ P, fintype.decidable_forall_fintype
 
+lemma parent_mountain.is_coherent.val_is_some_iff {P : parent_mountain} (hP : P.is_coherent) (q : index₂ P.val) :
+  q.val.is_some ↔ q.snd.index ≠ q.fst.val.length - 1 :=
+option.ne_none_iff_is_some.symm.trans (decidable.not_iff_not.mpr (hP.val_eq_none_iff _))
+
 lemma parent_mountain.is_coherent.exists_index_of_is_some {P : parent_mountain} (hP : P.is_coherent)
   {q : index₂ P.val} (hq : q.val.is_some) :
   ∃ (q' : index₂ P.val), q'.index = (option.get hq, q.snd.index) :=
@@ -626,15 +634,83 @@ end
 
 def mountain.is_cross_coherent (x : mountain) : Prop :=
 ∃ (hP : x.parents.is_coherent), ∀ {q : index₂ x.parents.val} (hq : q.val.is_some),
-  (x.pairable.symm.transfer (hP.index_above_of_is_some hq).val).val =
-  (x.pairable.symm.transfer q).val - (x.pairable.symm.transfer (hP.index_parent_of_is_some hq).val).val
+  (x.pairable.symm.transfer (hP.index_above_of_is_some hq).val).val.val =
+  (x.pairable.symm.transfer q).val.val - (x.pairable.symm.transfer (hP.index_parent_of_is_some hq).val).val.val
 
+lemma mountain.is_cross_coherent.to_parent_is_coherent {x : mountain} (h : x.is_cross_coherent) :
+  x.parents.is_coherent := h.fst
+
+lemma mountain.is_cross_coherent.val_value_above_eq_of_parent_is_some {x : mountain}
+  (h : x.is_cross_coherent) {q : index₂ x.parents.val} (hq : q.val.is_some) :
+  have hP : x.parents.is_coherent := h.to_parent_is_coherent,
+  (x.pairable.symm.transfer (hP.index_above_of_is_some hq).val).val.val =
+    (x.pairable.symm.transfer q).val.val - (x.pairable.symm.transfer (hP.index_parent_of_is_some hq).val).val.val :=
+h.snd hq
+
+lemma pnat.sub_val_eq_iff_eq_add {a b c : ℕ+} : a.val - b.val = c.val ↔ a = c + b :=
+begin
+  cases a with a a_pos,
+  cases b with b b_pos,
+  cases c with c c_pos,
+  obtain ⟨c, rfl⟩ := nat.exists_eq_succ_of_ne_zero (ne_of_gt c_pos),
+  dsimp,
+  split; intro h,
+  { have h' := congr_arg (+ b) h,
+    simp only [] at h',
+    apply pnat.eq,
+    dsimp,
+    convert ← h',
+    exact nat.sub_add_cancel (nat.le_of_lt (nat.lt_of_sub_eq_succ h)) },
+  { have h' := congr_arg subtype.val h,
+    dsimp at h',
+    exact tsub_eq_of_eq_add h' }
+end
+
+lemma mountain.is_cross_coherent.value_above_lt_value_of_parent_is_some {x : mountain}
+  (h : x.is_cross_coherent) {q : index₂ x.parents.val} (hq : q.val.is_some) :
+  have hP : x.parents.is_coherent := h.to_parent_is_coherent,
+  (x.pairable.symm.transfer (hP.index_above_of_is_some hq).val).val < (x.pairable.symm.transfer q).val :=
+begin
+  have := (h.val_value_above_eq_of_parent_is_some hq).symm,
+  rw pnat.sub_val_eq_iff_eq_add at this,
+  rw this,
+  exact pnat.lt_add_right _ _
+end
+
+theorem mountain.is_cross_coherent.value_decrease_upwards {x : mountain} (h : x.is_cross_coherent)
+  {i : index x.values.val} {j₁ j₂ : index i.val} (hj : j₁.index < j₂.index) : j₂.val < j₁.val :=
+begin
+  cases j₁ with j₁ hj₁,
+  cases j₂ with j₂ hj₂,
+  simp only [ysequence.index.index_mk] at hj,
+  revert j₂ hj hj₁ hj₂,
+  refine nat.le_induction _ _,
+  { intros hj₁ hj₁',
+    have hj₁'' := nat.pred_lt_pred (nat.succ_ne_zero _) hj₁',
+    change j₁ with index.index ⟨j₁, hj₁⟩ at hj₁'',
+    rw [nat.pred_succ, nat.pred_eq_sub_one, ← index.index_ne_pred_length_iff] at hj₁'',
+    conv_rhs at hj₁'' { rw (x.pairable.snd i).def },
+    erw ← h.to_parent_is_coherent.val_is_some_iff (x.pairable.transfer ⟨i, ⟨j₁, hj₁⟩⟩) at hj₁'',
+    exact h.value_above_lt_value_of_parent_is_some hj₁'' },
+  { intros j₂ hj IH hj₁ hj₂',
+    have hj₂ := nat.lt_trans (nat.lt_succ_self _) hj₂',
+    refine lt_trans _ (IH _ hj₂),
+    have hj₂'' := hj₂',
+    change j₂ with index.index ⟨j₂, hj₂⟩ at hj₂'',
+    rw [← nat.lt_pred_iff, nat.pred_eq_sub_one, ← index.index_ne_pred_length_iff] at hj₂'',
+    conv_rhs at hj₂'' { rw (x.pairable.snd i).def },
+    erw ← h.to_parent_is_coherent.val_is_some_iff (x.pairable.transfer ⟨i, ⟨j₂, hj₂⟩⟩) at hj₂'',
+    exact h.value_above_lt_value_of_parent_is_some hj₂'' }
+end
 /-- 𝕄** = {x : mountain // x.is_coherent} -/
 def mountain.is_coherent (x : mountain) : Prop :=
 x.is_orphanless ∧ x.is_cross_coherent
 
-instance : decidable_pred mountain.is_orphanless :=
-λ x, fintype.decidable_forall_fintype
+lemma mountain.is_coherent.to_is_orphanless {x : mountain} (h : x.is_coherent) :
+  x.is_orphanless := h.left
+
+lemma mountain.is_coherent.to_is_cross_coherent {x : mountain} (h : x.is_coherent) :
+  x.is_cross_coherent := h.right
 
 end types
 
@@ -887,25 +963,6 @@ begin
   obtain ⟨⟨vp, vp_pos⟩, hvp⟩ := option.is_some_iff_exists.mp hvp₀,
   simp [hvt, hvp, value_succ, -subtype.val_eq_coe],
   exact nat.sub_lt vt_pos vp_pos
-end
-
-lemma pnat.sub_val_eq_iff_eq_add {a b c : ℕ+} /- (ab : b < a) -/ : a.val - b.val = c.val ↔ a = c + b :=
-begin
-  cases a with a a_pos,
-  cases b with b b_pos,
-  cases c with c c_pos,
-  obtain ⟨c, rfl⟩ := nat.exists_eq_succ_of_ne_zero (ne_of_gt c_pos),
-  dsimp,
-  split; intro h,
-  { have h' := congr_arg (+ b) h,
-    simp only [] at h',
-    apply pnat.eq,
-    dsimp,
-    convert ← h',
-    exact nat.sub_add_cancel (nat.le_of_lt (nat.lt_of_sub_eq_succ h)) },
-  { have h' := congr_arg subtype.val h,
-    dsimp at h',
-    exact tsub_eq_of_eq_add h' }
 end
 
 def height_finite (x : value_parent_list_pair) (i : index x.values.val) : ∃ (j : ℕ), value x i j = none :=
@@ -1185,6 +1242,41 @@ section diagonal
 def surface_at {V : value_mountain} (i : index V.val) : ℕ+ :=
 index₂.val ⟨i, index.last (V.index_val_ne_nil i)⟩
 
+theorem surface_at_lt_base_of_orphanless_of_ne_one {x : mountain} (h_coherent : x.is_coherent)
+  {i : index x.values.val} (h_surface : surface_at i ≠ 1) :
+  surface_at i < index₂.val ⟨i, ⟨0, list.length_pos_of_ne_nil (x.values.index_val_ne_nil _)⟩⟩ :=
+begin
+  have h_orphanless := h_coherent.to_is_orphanless,
+  have h_cross_coherent := h_coherent.to_is_cross_coherent,
+  have h_parent_is_coherent := h_cross_coherent.to_parent_is_coherent,
+  apply h_cross_coherent.value_decrease_upwards,
+  simp only [index.last, index.index_mk],
+  rw [(x.pairable.snd _).def, tsub_pos_iff_lt, ← nat.succ_le_iff, nat.two_le_iff],
+  split,
+  { exact (ne_of_lt (list.length_pos_of_ne_nil (x.parents.index_val_ne_nil _))).symm },
+  { intro H,
+    have h := h_parent_is_coherent.val_eq_none_iff
+      ⟨x.pairable.fst.transfer i, ⟨0, list.length_pos_of_ne_nil (x.parents.index_val_ne_nil _)⟩⟩,
+    conv at h in (_ - 1) { simp only [index.last, index.index_mk, H] },
+    simp at h,
+    have h' := h_orphanless i,
+    rw [← decidable.not_imp_not, option.not_is_some_iff_eq_none, not_lt] at h',
+    specialize h' h,
+    erw [pnat.coe_le_coe _ 1, pnat.le_one_iff] at h',
+    rw surface_at at h_surface,
+    conv at h_surface
+    begin
+      to_lhs,
+      congr,
+      congr,
+      rw [index.last],
+      congr,
+      rw [(x.pairable.snd _).def, H],
+      simp
+    end,
+    contradiction }
+end
+
 def descend {P : parent_mountain} (hP : P.is_coherent) (q : index₂ P.val) : option (index₂ P.val) :=
 if h : q.val.is_some
 then some (hP.index_parent_of_is_some h)
@@ -1193,7 +1285,7 @@ else match q.snd with
 | ⟨j + 1, h⟩ := some ⟨q.fst, ⟨j, lt_trans (nat.lt_succ_self j) h⟩⟩
 end
 
-def descend_eq_none_iff {P : parent_mountain} (hP : P.is_coherent) (q : index₂ P.val) :
+lemma descend_eq_none_iff {P : parent_mountain} (hP : P.is_coherent) (q : index₂ P.val) :
   descend hP q = none ↔ ¬q.val.is_some ∧ q.snd.index = 0 :=
 begin
   rw descend,
@@ -1202,11 +1294,11 @@ begin
   { rcases q.snd with ⟨_ | j, hj⟩; simp [descend, h] }
 end
 
-def descend_eq_none_iff' {P : parent_mountain} (hP : P.is_coherent) (q : index₂ P.val) :
+lemma descend_eq_none_iff' {P : parent_mountain} (hP : P.is_coherent) (q : index₂ P.val) :
   descend hP q = none ↔ q.val = none ∧ q.snd.index = 0 :=
 by { rw ← @option.not_is_some_iff_eq_none _ q.val, exact descend_eq_none_iff hP q }
 
-def descend_is_some_iff {P : parent_mountain} (hP : P.is_coherent) (q : index₂ P.val) :
+lemma descend_is_some_iff {P : parent_mountain} (hP : P.is_coherent) (q : index₂ P.val) :
   (descend hP q).is_some ↔ q.val.is_some ∨ q.snd.index ≠ 0 :=
 begin
   rw descend,
@@ -1529,7 +1621,7 @@ lemma diagonal_length_eq {x : mountain} (h_coherent : x.parents.is_coherent) (h_
 
 @[simp] lemma diagonal_value_at {x : mountain} (h_coherent : x.parents.is_coherent)
   (h_orphanless : x.is_orphanless) (i : index (diagonal h_coherent h_orphanless).values.val) :
-  i.val = surface_at (pairable.transfer (diagonal_length_eq h_coherent h_orphanless) i) :=
+  i.val = surface_at (pairable.transfer (diagonal_length_eq _ _) i) :=
 by simp [pairable.transfer, index.val, diagonal]
 
 @[simp] lemma diagonal_parent_at {x : mountain} (h_coherent : x.parents.is_coherent)
@@ -1563,6 +1655,107 @@ begin
     simp [pairable.transfer, H] at h,
     exact h }
 end
+
+theorem diagonal_lt_base_of_orphanless_of_ne_one {x : mountain} (h_coherent : x.is_coherent)
+  {i : index (@diagonal x
+    h_coherent.to_is_cross_coherent.to_parent_is_coherent
+    h_coherent.to_is_orphanless).values.val}
+  (h_surface : i.val ≠ 1) :
+  i.val < index₂.val ⟨pairable.transfer (diagonal_length_eq _ _) i, ⟨0, list.length_pos_of_ne_nil (x.values.index_val_ne_nil _)⟩⟩ :=
+begin
+  rw diagonal_value_at at h_surface ⊢,
+  exact surface_at_lt_base_of_orphanless_of_ne_one h_coherent h_surface
+end
+
+section diagonal_rec
+
+variables {C : mountain → Sort*}
+  (base : Π {x : mountain} (ne_nil : x.values.val ≠ []) (h_coherent : x.is_coherent),
+    surface_at (index.last ne_nil) = 1 → C x)
+  (rec : Π {x : mountain} (ne_nil : x.values.val ≠ []) (h_coherent : x.is_coherent),
+    surface_at (index.last ne_nil) ≠ 1 →
+    C (build_mountain (@diagonal x
+      h_coherent.to_is_cross_coherent.to_parent_is_coherent h_coherent.to_is_orphanless)) →
+    C x)
+  {x : mountain} (ne_nil : x.values.val ≠ []) (h_coherent : x.is_coherent)
+
+include base rec
+
+def diagonal_rec : C x :=
+@well_founded.fix
+  {x : mountain // x.values.val ≠ []}
+  (λ ⟨x, ne_nil⟩, x.is_coherent → C x)
+  ((<) on (λ ⟨x, ne_nil⟩, index₂.val
+    (⟨index.last ne_nil, ⟨0, list.length_pos_of_ne_nil (x.values.index_val_ne_nil _)⟩⟩ : index₂ x.values.val)))
+  (inv_image.wf _ is_well_founded.wf)
+  begin
+    clear_dependent x,
+    rintros ⟨x, ne_nil⟩ f,
+    assume h_coherent,
+    exact
+      if h_surface : surface_at (index.last ne_nil) = 1
+      then base ne_nil h_coherent h_surface
+      else rec ne_nil h_coherent h_surface
+        (f
+          ⟨build_mountain (diagonal h_coherent.to_is_cross_coherent.to_parent_is_coherent h_coherent.to_is_orphanless),
+            begin
+              rw ← list.length_pos_iff_ne_nil at ne_nil ⊢,
+              rwa [mountain_length_eq, diagonal_length_eq]
+            end⟩
+          begin
+            simp [function.on_fun, diagonal_rec._match_2, mountain_value_at_index_eq_value],
+            convert surface_at_lt_base_of_orphanless_of_ne_one h_coherent h_surface,
+            ext,
+            simp only [pairable.transfer, index.index_mk, surface_at, index.last,
+              mountain_length_eq, diagonal_length_eq]
+          end
+          (mountain_orphanless_is_coherent (diagonal_is_orphanless _ _)))
+  end
+  ⟨x, ne_nil⟩
+  h_coherent
+
+lemma diagonal_rec_of_surface_eq_one (h_surface : surface_at (index.last ne_nil) = 1) :
+  diagonal_rec @base @rec ne_nil h_coherent = base ne_nil h_coherent h_surface :=
+begin
+  rw [diagonal_rec, well_founded.fix_eq],
+  simp,
+  split_ifs,
+  refl
+end
+
+lemma diagonal_rec_of_surface_ne_one (h_surface : surface_at (index.last ne_nil) ≠ 1) :
+  diagonal_rec @base @rec ne_nil h_coherent = rec ne_nil h_coherent h_surface (diagonal_rec @base @rec
+    begin
+      rw ← list.length_pos_iff_ne_nil at ne_nil ⊢,
+      rwa [mountain_length_eq, diagonal_length_eq]
+    end
+    (mountain_orphanless_is_coherent (diagonal_is_orphanless _ _))) :=
+begin
+  rw [diagonal_rec, well_founded.fix_eq],
+  simp,
+  rw [ne.def] at h_surface,
+  split_ifs,
+  refl
+end
+
+lemma diagonal_rec_eq_dite : diagonal_rec @base @rec ne_nil h_coherent =
+  if h_surface : surface_at (index.last ne_nil) = 1
+  then base ne_nil h_coherent h_surface
+  else rec ne_nil h_coherent h_surface (diagonal_rec @base @rec
+    begin
+      rw ← list.length_pos_iff_ne_nil at ne_nil ⊢,
+      rwa [mountain_length_eq, diagonal_length_eq]
+    end
+    (mountain_orphanless_is_coherent (diagonal_is_orphanless _ _))) :=
+begin
+  symmetry,
+  rw dite_eq_iff',
+  split; intro h_surface; symmetry,
+  { apply diagonal_rec_of_surface_eq_one },
+  { apply diagonal_rec_of_surface_ne_one }
+end
+
+end diagonal_rec
 
 end diagonal
 
