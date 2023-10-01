@@ -1032,7 +1032,7 @@ lemma mountain_parent_at_index_eq_parent (x : value_parent_list_pair) (q : index
     q.snd.index :=
 by simp [pairable.transfer, index₂.val, index.val, build_mountain, index.index]
 
-theorem build_mountain_parents_is_coherent (x : value_parent_list_pair) :
+theorem mountain_parents_is_coherent (x : value_parent_list_pair) :
   (build_mountain x).parents.is_coherent :=
 begin
   rintro ⟨i, j⟩,
@@ -1082,7 +1082,7 @@ begin
         exact prod.ext hp rfl } } }
 end
 
-theorem build_mountain_orphanless_is_orphanless (x : value_parent_list_pair) (h : x.is_orphanless) :
+theorem mountain_orphanless_is_orphanless {x : value_parent_list_pair} (h : x.is_orphanless) :
   (build_mountain x).is_orphanless :=
 begin
   rintro ⟨i, hi⟩,
@@ -1149,10 +1149,10 @@ begin
     refl }
 end
 
-theorem build_mountain_orphanless_is_cross_coherent (x : value_parent_list_pair) (h : x.is_orphanless) :
+theorem mountain_orphanless_is_cross_coherent {x : value_parent_list_pair} (h : x.is_orphanless) :
   (build_mountain x).is_cross_coherent :=
 begin
-  have hP := build_mountain_parents_is_coherent x,
+  have hP := mountain_parents_is_coherent x,
   use hP,
   rintros ⟨⟨i, hi⟩, ⟨j, hj⟩⟩ hq,
   dsimp [pairable₂.transfer, pairable.transfer, index.index,  parent_mountain.is_coherent.index_above_of_is_some, parent_mountain.is_coherent.index_parent_of_is_some],
@@ -1173,9 +1173,9 @@ begin
   simp [va_eq, ← pnat.coe_inj, pnat.sub_coe, vp_lt_vt]
 end
 
-theorem build_mountain_orphanless_is_coherent (x : value_parent_list_pair) (h : x.is_orphanless) :
+theorem mountain_orphanless_is_coherent {x : value_parent_list_pair} (h : x.is_orphanless) :
   (build_mountain x).is_coherent :=
-⟨build_mountain_orphanless_is_orphanless x h, build_mountain_orphanless_is_cross_coherent x h⟩
+⟨mountain_orphanless_is_orphanless h, mountain_orphanless_is_cross_coherent h⟩
 
 end build
 
