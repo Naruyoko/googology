@@ -334,6 +334,8 @@ end
 
 lemma pairable.def {s : list α} {t : list β} : pairable s t → s.length = t.length := id
 
+lemma pairable.refl (s : list α) : pairable s s := eq.refl _
+
 lemma pairable.symm {s : list α} {t : list β} : pairable s t → pairable t s := symm
 
 lemma pairable.trans {s : list α} {t : list β} {u : list γ} :
@@ -346,6 +348,15 @@ def pairable.transfer {s : list α} {t : list β} (h : pairable s t) (i : index 
   (h.transfer i).index = i.index := rfl
 
 instance (s : list α) (t : list β) : decidable $ pairable s t := nat.decidable_eq _ _
+
+lemma pairable.list_ext {s t : list α} (h : pairable s t)
+  (h' : ∀ (i : index s), i.val = (h.transfer i).val) : s = t :=
+begin
+  apply list.ext_le h,
+  intros n h₁ h₂,
+  rw index.forall_iff at h',
+  exact h' n h₁
+end
 
 def index₂ (m : list (list α)) : Type := Σ (i : index m), index $ index.val i
 
@@ -462,8 +473,15 @@ instance (m : list (list α)) : fintype (index₂ m) := sigma.fintype _
 
 instance (m₁ : list (list α)) (m₂ : list (list β)) : decidable $ pairable₂ m₁ m₂ := exists_prop_decidable _
 
+lemma pairable₂.refl (m : list (list α)) : pairable₂ m m :=
+⟨pairable.refl _, λ _, pairable.refl _⟩
+
 lemma pairable₂.symm {m₁ : list (list α)} {m₂ : list (list β)} : pairable₂ m₁ m₂ → pairable₂ m₂ m₁ :=
-assume h, ⟨h.fst.symm, λ i, (h.snd (h.fst.symm.transfer i)).symm⟩
+assume h, ⟨h.fst.symm, λ i, (h.snd (pairable.transfer _ i)).symm⟩
+
+lemma pairable₂.trans {m₁ : list (list α)} {m₂ : list (list β)} {m₃ : list (list γ)} :
+  pairable₂ m₁ m₂ → pairable₂ m₂ m₃ → pairable₂ m₁ m₃ :=
+assume h₁ h₂, ⟨h₁.fst.trans h₂.fst, λ i, (h₁.snd i).trans (h₂.snd _)⟩
 
 def pairable₂.transfer {m₁ : list (list α)} {m₂ : list (list β)}
   (h : pairable₂ m₁ m₂) (q : index₂ m₁) : index₂ m₂ :=
@@ -474,6 +492,17 @@ def pairable₂.transfer {m₁ : list (list α)} {m₂ : list (list β)}
 
 @[simp] lemma pairable₂.index₂_snd_transfer {m₁ : list (list α)} {m₂ : list (list β)}
   (h : pairable₂ m₁ m₂) (q : index₂ m₁) : (h.transfer q).snd.index = q.snd.index := rfl
+
+lemma pairable₂.list_ext {m₁ m₂ : list (list α)} (h : pairable₂ m₁ m₂)
+  (h' : ∀ (q : index₂ m₁), q.val = (h.transfer q).val) : m₁ = m₂ :=
+begin
+  apply h.fst.list_ext,
+  intro i,
+  apply (h.snd i).list_ext,
+  intro j,
+  rw index₂.forall_iff at h',
+  exact h' i j
+end
 
 
 @[simp] lemma option.seq_none_right {f : option (α → β)} : f <*> none = none :=
@@ -701,6 +730,58 @@ begin
     conv_rhs at hj₂'' { rw (x.pairable.snd i).def },
     erw ← h.to_parent_is_coherent.val_is_some_iff (x.pairable.transfer ⟨i, ⟨j₂, hj₂⟩⟩) at hj₂'',
     exact h.value_above_lt_value_of_parent_is_some hj₂'' }
+end
+
+theorem mountain.is_cross_coherent.eq_of_parents_eq_of_value_eq_where_parent_eq_none {x₁ x₂ : mountain}
+  (hx₁ : x₁.is_cross_coherent) (hx₂ : x₂.is_cross_coherent) (parents_eq : x₁.parents = x₂.parents)
+  (value_eq_where_parent_eq_none : ∀ (q : index₂ x₁.parents.val), q.val = none →
+    (x₁.pairable.symm.transfer q).val =
+    (((parents_eq ▸ pairable₂.refl x₁.parents.val : pairable₂ x₁.parents.val x₂.parents.val).trans
+      x₂.pairable.symm).transfer q).val) :
+  x₁ = x₂ :=
+begin
+  cases x₁ with V₁ P₁ hVP₁,
+  cases x₂ with V₂ P₂ hVP₂,
+  dsimp only [] at *,
+  subst parents_eq,
+  rename P₁ P,
+  simp only [and_true, eq_self_iff_true],
+  apply subtype.ext,
+  apply (hVP₁.trans hVP₂.symm).list_ext,
+  rintro ⟨⟨i, hi⟩, ⟨j, hj⟩⟩,
+  induction i using nat.strong_induction_on with i IH₁ generalizing j,
+  obtain ⟨l, hl⟩ := nat.exists_eq_succ_of_ne_zero (ne_of_lt (list.length_pos_of_ne_nil (V₁.index_val_ne_nil ⟨i, hi⟩))).symm,
+  have hjl : j ≤ l := nat.le_of_lt_succ (hl ▸ hj),
+  have hl' := nat.pred_eq_of_eq_succ hl,
+  revert hj,
+  apply nat.decreasing_induction' _ hjl,
+  { clear_dependent j,
+    intro hj,
+    apply value_eq_where_parent_eq_none (hVP₁.transfer ⟨⟨i, hi⟩, ⟨l, hj⟩⟩),
+    rw hx₁.to_parent_is_coherent.val_eq_none_iff,
+    simp [← hl'],
+    congr' 1,
+    exact hVP₁.snd _ },
+  { intros j' hj'l hjj' IH₂,
+    clear_dependent j,
+    rename [j' j, hj'l hjl],
+    intro hj,
+    have hj' := lt_of_lt_of_eq hjl (hl'.symm.trans (congr_arg _ (hVP₁.snd _))),
+    replace hj' := ne_of_lt hj',
+    erw ← hx₁.to_parent_is_coherent.val_is_some_iff (hVP₁.transfer ⟨⟨i, hi⟩, ⟨j, hj⟩⟩) at hj',
+    have lhs_eq := (hx₁.val_value_above_eq_of_parent_is_some hj').symm,
+    have rhs_eq := (hx₂.val_value_above_eq_of_parent_is_some hj').symm,
+    rw pnat.sub_val_eq_iff_eq_add at lhs_eq rhs_eq,
+    erw [lhs_eq, rhs_eq],
+    congr' 1,
+    { apply IH₂ },
+    { apply IH₁,
+      simp [parent_mountain.is_coherent.index_parent_of_is_some],
+      have := hx₁.to_parent_is_coherent.val_lt (hVP₁.transfer ⟨⟨i, hi⟩, ⟨j, hj⟩⟩),
+      simp at this,
+      obtain ⟨p, hp⟩ := option.is_some_iff_exists.mp hj',
+      simp [hp] at this ⊢,
+      exact with_bot.coe_lt_coe.mp this } }
 end
 /-- 𝕄** = {x : mountain // x.is_coherent} -/
 def mountain.is_coherent (x : mountain) : Prop :=
