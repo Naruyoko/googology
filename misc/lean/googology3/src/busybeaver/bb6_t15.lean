@@ -67,6 +67,7 @@ begin
     exact IH _ }
 end
 
+/-
 def collatz_rule1_time : ℕ → ℕ := sorry
 def collatz_rule2_time : ℕ → ℕ := sorry
 def collatz_rule3_time : ℕ → ℕ := sorry
@@ -87,6 +88,7 @@ sorry
 
 theorem collatz_rule4 (k) : (collatz_state (4 * k + 3))[t15]▸^[collatz_rule4_time k](collatz_state ((3 ^ (k + 3) + 1) / 2)) :=
 sorry
+-/
 
 #reduce cfg₀
 #reduce multistep t15 45 cfg₀
@@ -95,9 +97,11 @@ sorry
 constant resttime : ℕ
 constant finalstate : cfg Γ Λ
 
+/-
 theorem t15_evaluation : cfg₀[t15]▸^[45+resttime](finalstate) :=
 begin
   calc
   cfg₀[t15]▸^[45](collatz_state (4 * 1 + 1)) : by exact rfl
   ... [t15]▸^[resttime](finalstate) : sorry,
 end
+-/
