@@ -79,6 +79,7 @@ theorem collatz_rule2 (k) : (collatz_state (4 * k + 1))[t15]▸^[collatz_rule2_t
 begin
   have : multistep t15 1 (collatz_state (4 * k + 1)) = sorry,
   simp [collatz_state, multistep, multistep', step', step, t15, tape.move, tape.write],
+  all_goals { sorry }
 end
 
 theorem collatz_rule3 (k) : (collatz_state (4 * k + 2))[t15]▸^[collatz_rule3_time k](collatz_state ((3 ^ (k + 3) - 11) / 2)) :=

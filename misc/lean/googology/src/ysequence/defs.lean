@@ -1540,7 +1540,7 @@ theorem descend_finite {P : parent_mountain} (hP : P.is_coherent) : iterate_even
 begin
   refine λ q, @is_well_founded.induction (option (index₂ P.val))
     (with_bot.has_lt.lt on option.map (λ q, q.fst.index + q.snd.index))
-    ⟨inv_image.wf _ (is_well_order.to_is_well_founded.wf : well_founded _)⟩ _ q _,
+    ⟨is_well_founded.wf.on_fun⟩ _ q _,
   clear q,
   intros q IH,
   cases q with q,
@@ -1806,7 +1806,7 @@ def diagonal_rec : C x :=
   (λ ⟨x, ne_nil⟩, x.is_coherent → C x)
   ((<) on (λ ⟨x, ne_nil⟩, index₂.val
     (⟨index.last ne_nil, ⟨0, list.length_pos_of_ne_nil (x.values.index_val_ne_nil _)⟩⟩ : index₂ x.values.val)))
-  (inv_image.wf _ is_well_founded.wf)
+  is_well_founded.wf.on_fun
   begin
     clear_dependent x,
     rintros ⟨x, ne_nil⟩ f,
