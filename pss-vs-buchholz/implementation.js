@@ -1097,6 +1097,7 @@ function Mark_internal(M,m){
   else if (type==-2){
     var PM=PPair(M);
     var J1=PM.length-1;
+    var j0=j1-PM[J1].length+1;
     return equalPair(PM[J1],[[0,0]])?BUCHHOLZ_ONE:Mark(PM[J1],m-j0);
   }else if (type==-1) return getPair(M,0,0)==0&&getPair(M,1,0)==0?BUCHHOLZ_ZERO:{sub:getPair(M,1,0),inner:BUCHHOLZ_ZERO};
   else if (type==0) return m==0?{sub:0,inner:{sub:getPair(M,1,j1),inner:BUCHHOLZ_ZERO}}:{sub:getPair(M,1,j1),inner:BUCHHOLZ_ZERO};
