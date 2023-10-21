@@ -67,7 +67,7 @@ var buchholzRegex=/^(?:[ \dwω,+⊕*×\(\)]|[Dp]_?\d|[WΩ](?:_?\d)?)+$/;
 
 /**
  * @param {string} s
- * @returns {PairSequence} 
+ * @returns {PairSequence}
  */
 function parsePair(s){
   return Array.from(s.matchAll(/\((\d+),(\d+)\)/g),function(m){
@@ -77,8 +77,8 @@ function parsePair(s){
   });
 }
 /**
- * @param {PairSequence} M 
- * @param {boolean=} writeCommon 
+ * @param {PairSequence} M
+ * @param {boolean=} writeCommon
  * @returns {string}
  */
 function stringifyPair(M,writeCommon){
@@ -86,25 +86,25 @@ function stringifyPair(M,writeCommon){
   return (writeCommon?"":"(")+M.map(function(c){return "("+c[0]+","+c[1]+")";}).join(writeCommon?"":",")+(writeCommon?"":")");
 }
 /**
- * @param {PairSequence} M 
- * @param {PairSequence} N 
+ * @param {PairSequence} M
+ * @param {PairSequence} N
  * @returns {boolean}
  */
 function equalPair(M,N){
   return M===N||M.length==N.length&&M.every(function(c,i){return c[0]==N[i][0]&&c[1]==N[i][1];});
 }
 /**
- * @param {PairSequence} M 
- * @param {number} i 
- * @param {number} j 
+ * @param {PairSequence} M
+ * @param {number} i
+ * @param {number} j
  * @returns {number}
  */
 function getPair(M,i,j){
   return M[j][i];
 }
 /**
- * @param {PairSequence} M 
- * @param {PairSequence} N 
+ * @param {PairSequence} M
+ * @param {PairSequence} N
  * @returns {boolean}
  */
 function lessThanPair(M,N){
@@ -119,10 +119,10 @@ function lessThanPair(M,N){
 }
 
 /**
- * @param {PairSequence} M 
- * @param {number} i 
- * @param {number} j 
- * @param {number=} k 
+ * @param {PairSequence} M
+ * @param {number} i
+ * @param {number} j
+ * @param {number=} k
  * @returns {number}
  */
 function findParent(M,i,j,k){
@@ -136,20 +136,20 @@ function findParent(M,i,j,k){
   }else return -1;
 }
 /**
- * @param {PairSequence} M 
- * @param {number} i 
- * @param {number} j 
- * @param {number} k 
+ * @param {PairSequence} M
+ * @param {number} i
+ * @param {number} j
+ * @param {number} k
  * @returns {boolean}
  */
 function isParent(M,i,j,k){
   return k>=0&&k<M.length&&k==findParent(M,i,j,k);
 }
 /**
- * @param {PairSequence} M 
- * @param {number} i 
- * @param {number} j 
- * @param {number=} k 
+ * @param {PairSequence} M
+ * @param {number} i
+ * @param {number} j
+ * @param {number=} k
  * @returns {number[]}
  */
 function findAncestors(M,i,j,k){
@@ -162,10 +162,10 @@ function findAncestors(M,i,j,k){
   return a;
 }
 /**
- * @param {PairSequence} M 
- * @param {number} i 
- * @param {number} j 
- * @param {number} k 
+ * @param {PairSequence} M
+ * @param {number} i
+ * @param {number} j
+ * @param {number} k
  * @returns {boolean}
  */
 function isAncestor(M,i,j,k){
@@ -177,22 +177,22 @@ function isAncestor(M,i,j,k){
   return false;
 }
 /**
- * @param {PairSequence} M 
+ * @param {PairSequence} M
  * @returns {PairSequence}
  */
 function Pred(M){
   return M.length==1?M:M.slice(0,-1);
 }
 /**
- * @param {PairSequence} M 
+ * @param {PairSequence} M
  * @returns {PairSequence}
  */
 function Derp(M){
   return M.slice(1);
 }
 /**
- * @param {PairSequence} M 
- * @param {number} n 
+ * @param {PairSequence} M
+ * @param {number} n
  * @returns {PairSequence}
  */
 function fundPair(M,n){
@@ -212,8 +212,8 @@ function fundPair(M,n){
   return r;
 }
 /**
- * @param {PairSequence} M 
- * @param {number=} i 
+ * @param {PairSequence} M
+ * @param {number=} i
  * @returns {PairSequence}
  */
 function IncrFirst(M,i){
@@ -221,21 +221,21 @@ function IncrFirst(M,i){
   return M.map(function(c){return [c[0]+i,c[1]];});
 }
 /**
- * @param {PairSequence} M 
+ * @param {PairSequence} M
  * @returns {boolean}
  */
 function isZeroPair(M){
   return M.length==1&&getPair(M,1,0)==0;
 }
 /**
- * @param {PairSequence} M 
+ * @param {PairSequence} M
  * @returns {boolean}
  */
 function isPrincipalPair(M){
   return !isZeroPair(M)&&isAncestor(M,0,M.length-1,0);
 }
 /**
- * @param {PairSequence} M 
+ * @param {PairSequence} M
  * @returns {PairSequence[]}
  */
 function PPair(M){
@@ -251,23 +251,23 @@ function PPair(M){
   return r;
 }
 /**
- * @param {PairSequence} M 
- * @param {number} j 
+ * @param {PairSequence} M
+ * @param {number} j
  * @returns {boolean}
  */
 function isUnadmitted(M,j){
   return j>=M.length||isParent(M,1,j,j-1)&&isParent(M,1,j+1,j);
 }
 /**
- * @param {PairSequence} M 
- * @param {number} j 
+ * @param {PairSequence} M
+ * @param {number} j
  * @returns {boolean}
  */
 function isAdmitted(M,j){
   return !isUnadmitted(M,j);
 }
 /**
- * @param {PairSequence} M 
+ * @param {PairSequence} M
  * @returns {number[]}
  */
 function findAdmitted(M){
@@ -279,8 +279,8 @@ function findAdmitted(M){
   return r;
 }
 /**
- * @param {PairSequence} M 
- * @param {number} j 
+ * @param {PairSequence} M
+ * @param {number} j
  * @returns {number}
  */
 function Adm(M,j){
@@ -290,23 +290,23 @@ function Adm(M,j){
   throw Error("Something went wrong");
 }
 /**
- * @param {PairSequence} M 
- * @param {number} m 
+ * @param {PairSequence} M
+ * @param {number} m
  * @returns {boolean}
  */
 function isMarkedPair(M,m){
   return isAdmitted(M,m)&&isAncestor(M,0,M.length-1,m);
 }
 /**
- * @param {PairSequence} M 
- * @param {number} m 
+ * @param {PairSequence} M
+ * @param {number} m
  * @returns {boolean}
  */
 function isMarkedReduced(M,m){
   return isReduced(M)&&isMarkedPair(M,m);
 }
 /**
- * @param {PairSequence[]} Q 
+ * @param {PairSequence[]} Q
  * @returns {number[]}
  */
 function IdxSum(Q){
@@ -319,7 +319,7 @@ function IdxSum(Q){
   return r;
 }
 /**
- * @param {PairSequence} M 
+ * @param {PairSequence} M
  * @returns {number}
  */
 function TrMax(M){
@@ -330,7 +330,7 @@ function TrMax(M){
   return M.length-1;
 }
 /**
- * @param {PairSequence} M 
+ * @param {PairSequence} M
  * @returns {PairSequence[]}
  */
 function Br(M){
@@ -338,7 +338,7 @@ function Br(M){
   return PPair(M.slice(TrMax(M)+1));
 }
 /**
- * @param {PairSequence} M 
+ * @param {PairSequence} M
  * @returns {number[]}
  */
 function FirstNodes(M){
@@ -347,7 +347,7 @@ function FirstNodes(M){
   return IdxSum(Br(M)).map(function(e){return d+e;});
 }
 /**
- * @param {PairSequence} M 
+ * @param {PairSequence} M
  * @returns {number[]}
  */
 function Joints(M){
@@ -355,8 +355,8 @@ function Joints(M){
   return FirstNodes(M).slice(0,-1).map(function(e){return findParent(M,0,e);});
 }
 /**
- * @param {number} j0 
- * @param {number} j1 
+ * @param {number} j0
+ * @param {number} j1
  * @returns {PairSequence}
  */
 function jjSeq(j0,j1){
@@ -366,7 +366,7 @@ function jjSeq(j0,j1){
   return r;
 }
 /**
- * @param {PairSequence} M 
+ * @param {PairSequence} M
  * @returns {PairSequence}
  */
 function Red(M){
@@ -402,15 +402,15 @@ function Red(M){
   }else return PPair(M).flatMap(Red);
 }
 /**
- * @param {PairSequence} M 
+ * @param {PairSequence} M
  * @returns {boolean}
  */
 function isReduced(M){
   return equalPair(Red(M),M);
 }
 /**
- * @param {PairSequence} M 
- * @param {number=} k 
+ * @param {PairSequence} M
+ * @param {number=} k
  * @returns {boolean}
  */
 function isStandardPair(M,k){
@@ -436,7 +436,7 @@ function isStandardPair(M,k){
   }
 }
 /**
- * @param {PairSequence[]} Q 
+ * @param {PairSequence[]} Q
  * @returns {boolean}
  */
 function isDescending(Q){
@@ -452,8 +452,8 @@ function isDescending(Q){
  */
 
 /**
- * @param {string|Scanner} s 
- * @param {number=} context 
+ * @param {string|Scanner} s
+ * @param {number=} context
  * @returns {BuchholzTerm}
  */
 function parseBuchholz(s,context){
@@ -589,7 +589,7 @@ function parseBuchholz(s,context){
   return rr;
 }
 /**
- * @param {BuchholzTerm} a 
+ * @param {BuchholzTerm} a
  * @returns {BuchholzTerm}
  */
 function normalizeBuchholz(a){
@@ -601,13 +601,13 @@ function normalizeBuchholz(a){
       else if (newTerm instanceof Array) Array.prototype.splice.apply(a,[i,1].concat(newTerm));
     }
     if (a.length==0) return BUCHHOLZ_ZERO;
-    else if (a.length==1) return normalizeBuchholz(a);
+    else if (a.length==1) return a[0];
   }else if (a instanceof Object) a.inner=normalizeBuchholz(a.inner);
   return a;
 }
 /**
- * @param {BuchholzTerm} a 
- * @param {boolean=} writeCommon 
+ * @param {BuchholzTerm} a
+ * @param {boolean=} writeCommon
  * @returns {string}
  */
 function stringifyBuchholz(a,writeCommon){
@@ -644,8 +644,8 @@ var BUCHHOLZ_ONE={sub:0,inner:BUCHHOLZ_ZERO};
 var BUCHHOLZ_SMALLOMEGA={sub:0,inner:BUCHHOLZ_ONE};
 
 /**
- * @param {BuchholzTerm} a 
- * @param {BuchholzTerm} b 
+ * @param {BuchholzTerm} a
+ * @param {BuchholzTerm} b
  * @returns {boolean}
  */
 function equalBuchholz(a,b){
@@ -655,8 +655,8 @@ function equalBuchholz(a,b){
   else return false;
 }
 /**
- * @param {BuchholzTerm} a 
- * @param {BuchholzTerm} b 
+ * @param {BuchholzTerm} a
+ * @param {BuchholzTerm} b
  * @returns {boolean}
  */
 function lessThanBuchholz(a,b){
@@ -677,22 +677,22 @@ function lessThanBuchholz(a,b){
   }else return true;
 }
 /**
- * @param {BuchholzTerm} a 
+ * @param {BuchholzTerm} a
  * @returns {boolean}
  */
 function isZeroBuchholz(a){
   return a==BUCHHOLZ_ZERO;
 }
 /**
- * @param {BuchholzTerm} a 
+ * @param {BuchholzTerm} a
  * @returns {boolean}
  */
 function isPrincipalBuchholz(a){
   return !(a instanceof Array)&&a instanceof Object;
 }
 /**
- * @param {BuchholzTerm} a 
- * @param {BuchholzTerm} b 
+ * @param {BuchholzTerm} a
+ * @param {BuchholzTerm} b
  * @returns {BuchholzTerm}
  */
 function plusBuchholz(a,b){
@@ -707,8 +707,8 @@ function plusBuchholz(a,b){
   }else return b;
 }
 /**
- * @param {BuchholzTerm} a 
- * @param {number} n 
+ * @param {BuchholzTerm} a
+ * @param {number} n
  * @returns {BuchholzTerm}
  */
 function timesBuchholz(a,n){
@@ -717,8 +717,8 @@ function timesBuchholz(a,n){
   return r;
 }
 /**
- * @param {BuchholzTerm} a 
- * @param {number} u 
+ * @param {BuchholzTerm} a
+ * @param {number} u
  * @returns {BuchholzTerm[]}
  */
 function G(a,u){
@@ -727,7 +727,7 @@ function G(a,u){
   else return [];
 }
 /**
- * @param {BuchholzTerm} a 
+ * @param {BuchholzTerm} a
  * @returns {boolean}
  */
 function isStandardBuchholz(a){
@@ -736,21 +736,21 @@ function isStandardBuchholz(a){
   else return true;
 }
 /**
- * @param {BuchholzTerm|number} a 
+ * @param {BuchholzTerm|number} a
  * @returns {BuchholzTerm}
  */
 function fromNumBuchholz(a){
   return a instanceof Object?a:a==0?BUCHHOLZ_ZERO:a==1?BUCHHOLZ_ONE:Array(a).fill(BUCHHOLZ_ONE);
 }
 /**
- * @param {BuchholzTerm|number} a 
+ * @param {BuchholzTerm|number} a
  * @returns {number}
  */
 function toNumBuchholz(a){
   return a instanceof Array?a.length:a instanceof Object?1:a;
 }
 /**
- * @param {BuchholzTerm} a 
+ * @param {BuchholzTerm} a
  * @returns {BuchholzTerm}
  */
 function domBuchholz(a){
@@ -766,8 +766,8 @@ function domBuchholz(a){
   }else return a;
 }
 /**
- * @param {BuchholzTerm} a 
- * @param {BuchholzTerm|number} z 
+ * @param {BuchholzTerm} a
+ * @param {BuchholzTerm|number} z
  * @returns {BuchholzTerm}
  */
 function fundBuchholz(a,z){
@@ -788,7 +788,7 @@ function fundBuchholz(a,z){
   }else throw Error("Undefined: 0[z]");
 }
 /**
- * @param {BuchholzTerm} t 
+ * @param {BuchholzTerm} t
  * @returns {BuchholzPTerm[]}
  */
 function PBuchholz(t){
@@ -797,7 +797,7 @@ function PBuchholz(t){
   else return [];
 }
 /**
- * @param {BuchholzTerm} t 
+ * @param {BuchholzTerm} t
  * @returns {number[]}
  */
 function RightNodes(t){
@@ -806,10 +806,10 @@ function RightNodes(t){
   else return [];
 }
 /**
- * @param {BuchholzTerm} t 
- * @param {string} s 
- * @param {string|BuchholzTerm} c 
- * @param {string} b 
+ * @param {BuchholzTerm} t
+ * @param {string} s
+ * @param {string|BuchholzTerm} c
+ * @param {string} b
  * @returns {boolean}
  */
 function isSCBDecomposition(t,s,c,b){
@@ -822,24 +822,24 @@ function isSCBDecomposition(t,s,c,b){
   return isPrincipalBuchholz(c)&&stringifyBuchholz(t)==s+stringifyBuchholz(c)+b;
 }
 /**
- * @param {number[]} rn 
+ * @param {number[]} rn
  * @returns {boolean}
  */
 function isType0SCBDecomposition_aux(rn){
   return rn.length==2&&rn[1]==0;
 }
 /**
- * @param {BuchholzTerm} c 
+ * @param {BuchholzTerm} c
  * @returns {boolean}
  */
 function isType0SCBDecomposition_aux2(c){
   return isType0SCBDecomposition_aux(RightNodes(c));
 }
 /**
- * @param {BuchholzTerm} t 
- * @param {string} s 
- * @param {string|BuchholzTerm} c 
- * @param {string} b 
+ * @param {BuchholzTerm} t
+ * @param {string} s
+ * @param {string|BuchholzTerm} c
+ * @param {string} b
  * @returns {boolean}
  */
 function isType0SCBDecomposition(t,s,c,b){
@@ -851,7 +851,7 @@ function isType0SCBDecomposition(t,s,c,b){
   return isSCBDecomposition(t,s,c,b)&&isType0SCBDecomposition_aux2(c);
 }
 /**
- * @param {number[]} rn 
+ * @param {number[]} rn
  * @returns {boolean}
  */
 function isType1SCBDecomposition_aux(rn){
@@ -863,17 +863,17 @@ function isType1SCBDecomposition_aux(rn){
   return true;
 }
 /**
- * @param {BuchholzTerm} c 
+ * @param {BuchholzTerm} c
  * @returns {boolean}
  */
 function isType1SCBDecomposition_aux2(c){
   return isType1SCBDecomposition_aux(RightNodes(c));
 }
 /**
- * @param {BuchholzTerm} t 
- * @param {string} s 
- * @param {string|BuchholzTerm} c 
- * @param {string} b 
+ * @param {BuchholzTerm} t
+ * @param {string} s
+ * @param {string|BuchholzTerm} c
+ * @param {string} b
  * @returns {boolean}
  */
 function isType1SCBDecomposition(t,s,c,b){
@@ -885,8 +885,8 @@ function isType1SCBDecomposition(t,s,c,b){
   return isSCBDecomposition(t,s,c,b)&&isType1SCBDecomposition_aux2(c);
 }
 /**
- * @param {BuchholzTerm} t 
- * @param {string|BuchholzTerm} c 
+ * @param {BuchholzTerm} t
+ * @param {string|BuchholzTerm} c
  * @returns {[string,string]?}
  */
 function SCBDecomposition(t,c){
@@ -903,9 +903,9 @@ function SCBDecomposition(t,c){
   return null;
 }
 /**
- * @param {BuchholzTerm} t 
- * @param {string|BuchholzTerm} c 
- * @param {string|BuchholzTerm} cc 
+ * @param {BuchholzTerm} t
+ * @param {string|BuchholzTerm} c
+ * @param {string|BuchholzTerm} cc
  * @returns {BuchholzTerm?}
  */
 function replaceSCBDecompositionMark(t,c,cc){
@@ -926,7 +926,7 @@ function replaceSCBDecompositionMark(t,c,cc){
   }else return null;
 }
 /**
- * @param {BuchholzTerm} t 
+ * @param {BuchholzTerm} t
  * @returns {BuchholzTerm?}
  */
 function nextMarkedBuchholz(t){
@@ -935,8 +935,8 @@ function nextMarkedBuchholz(t){
   else return null;
 }
 /**
- * @param {BuchholzTerm?} t 
- * @param {BuchholzTerm} c 
+ * @param {BuchholzTerm?} t
+ * @param {BuchholzTerm} c
  * @returns {boolean}
  */
 function isMarkedBuchholz(t,c){
@@ -947,7 +947,7 @@ function isMarkedBuchholz(t,c){
   return false;
 }
 /**
- * @param {BuchholzTerm} c 
+ * @param {BuchholzTerm} c
  * @returns {-1|0|1}
  */
 function isTypeNSCBDecompositionMark(c){
@@ -957,7 +957,7 @@ function isTypeNSCBDecompositionMark(c){
   return -1;
 }
 /**
- * @param {BuchholzTerm?} t 
+ * @param {BuchholzTerm?} t
  * @returns {[0|1,BuchholzTerm]?}
  */
 function typeNSCBDecompositionMark(t){
@@ -969,7 +969,7 @@ function typeNSCBDecompositionMark(t){
   return null;
 }
 /**
- * @param {BuchholzTerm} t 
+ * @param {BuchholzTerm} t
  * @returns {-1|0|1}
  */
 function isTypeNSCBDecomposable(t){
@@ -977,21 +977,21 @@ function isTypeNSCBDecomposable(t){
   return r?r[0]:-1;
 }
 /**
- * @param {BuchholzTerm} t 
+ * @param {BuchholzTerm} t
  * @returns {boolean}
  */
 function isType0SCBDecomposable(t){
   return isTypeNSCBDecomposable(t)==0;
 }
 /**
- * @param {BuchholzTerm} t 
+ * @param {BuchholzTerm} t
  * @returns {boolean}
  */
 function isType1SCBDecomposable(t){
   return isTypeNSCBDecomposable(t)==1;
 }
 /**
- * @param {BuchholzTerm} t 
+ * @param {BuchholzTerm} t
  * @returns {[0|1,string,BuchholzTerm,string]?}
  */
 function typeNSCBDecomposition(t){
@@ -1005,7 +1005,7 @@ function clearTransMemos(){
   return TransMemos.forEach(function(e){e.clear();});
 }
 /**
- * @param {PairSequence} M 
+ * @param {PairSequence} M
  * @returns {-3|-2|-1|0|1|2|3|4|5|6}
  */
 function TransType_internal(M){
@@ -1023,7 +1023,7 @@ function TransType_internal(M){
   }else return -3;
 }
 /**
- * @param {PairSequence} M 
+ * @param {PairSequence} M
  * @returns {-3|-2|-1|0|1|2|3|4|5|6}
  */
 function TransType(M){
@@ -1036,7 +1036,7 @@ function TransType(M){
   }
 }
 /**
- * @param {PairSequence} M 
+ * @param {PairSequence} M
  * @returns {BuchholzTerm}
  */
 function Trans_internal(M){
@@ -1073,7 +1073,7 @@ function Trans_internal(M){
   }
 }
 /**
- * @param {PairSequence} M 
+ * @param {PairSequence} M
  * @returns {BuchholzTerm}
  */
 function Trans(M){
@@ -1086,8 +1086,8 @@ function Trans(M){
   }
 }
 /**
- * @param {PairSequence} M 
- * @param {number} m 
+ * @param {PairSequence} M
+ * @param {number} m
  * @returns {BuchholzTerm}
  */
 function Mark_internal(M,m){
@@ -1130,8 +1130,8 @@ function Mark_internal(M,m){
   }
 }
 /**
- * @param {PairSequence} M 
- * @param {number} m 
+ * @param {PairSequence} M
+ * @param {number} m
  * @returns {BuchholzTerm}
  */
 function Mark(M,m){
@@ -1144,10 +1144,10 @@ function Mark(M,m){
   }
 }
 /**
- * @param {PairSequence} M 
- * @param {number} i 
- * @param {number} j 
- * @param {number=} k 
+ * @param {PairSequence} M
+ * @param {number} i
+ * @param {number} j
+ * @param {number=} k
  * @returns {number}
  */
 function findNextAdm(M,i,j,k){
@@ -1159,17 +1159,17 @@ function findNextAdm(M,i,j,k){
   return -1;
 }
 /**
- * @param {PairSequence} M 
- * @param {number} i 
- * @param {number} j 
- * @param {number} k 
+ * @param {PairSequence} M
+ * @param {number} i
+ * @param {number} j
+ * @param {number} k
  * @returns {boolean}
  */
 function isNextAdm(M,i,j,k){
   return k>=0&&k<M.length&&k==findNextAdm(M,i,j,k);
 }
 /**
- * @param {PairSequence} M 
+ * @param {PairSequence} M
  * @returns {number[]}
  */
 function RightAnces(M){
@@ -1191,14 +1191,14 @@ function RightAnces(M){
   }
 }
 /**
- * @param {PairSequence} M 
+ * @param {PairSequence} M
  * @returns {boolean}
  */
 function isStronglyPrincipal(M){
   return isPrincipalPair(M)&&isDescending(Br(M))&&isReduced(M);
 }
 /**
- * @param {PairSequence} M 
+ * @param {PairSequence} M
  * @returns {number}
  */
 function LastStep(M){
@@ -1217,7 +1217,7 @@ function LastStep(M){
   }
 }
 /**
- * @param {BuchholzTerm} t 
+ * @param {BuchholzTerm} t
  * @returns {PairSequence}
  */
 function TransRev(t){
@@ -1455,8 +1455,8 @@ function downloadFile(data,filename,type){
   a.click();
   setTimeout(function(){
     document.body.removeChild(a);
-    window.URL.revokeObjectURL(url);  
-  },0); 
+    window.URL.revokeObjectURL(url);
+  },0);
 }
 
 /** @type {[string,string,string,Function][]} */
