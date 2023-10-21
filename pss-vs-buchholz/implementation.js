@@ -562,7 +562,7 @@ function parseBuchholz(s,context){
       var peek=scanner.peek();
       if (context==PARENTHESIS&&peek==")"){
         state=EXIT;
-      }else if (context==PRINCIPALTERMINNER&&(peek==","||peek=="+"||peek=="⊕"||peek=="*"||peek=="×")){
+      }else if (context==PRINCIPALTERMINNER&&(peek==","||peek==")"||peek=="+"||peek=="⊕"||peek=="*"||peek=="×")){
         state=EXIT;
       }
     }
