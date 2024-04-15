@@ -256,7 +256,7 @@ function PPair(M){
  * @returns {boolean}
  */
 function isUnadmitted(M,j){
-  return j>=M.length||isParent(M,1,j,j-1)&&isParent(M,1,j+1,j);
+  return j>M.length||isParent(M,1,j,j-1)&&isParent(M,1,j+1,j);
 }
 /**
  * @param {PairSequence} M
@@ -273,7 +273,7 @@ function isAdmitted(M,j){
 function findAdmitted(M){
   /** @type {number[]} */
   var r=[];
-  for (var j0=1;j0<M.length-1;j0++){
+  for (var j0=0;j0<=M.length;j0++){
     if (isAdmitted(M,j0)) r.push(j0);
   }
   return r;
