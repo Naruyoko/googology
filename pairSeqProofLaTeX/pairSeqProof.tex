@@ -49,7 +49,7 @@
 	\theorembodyfont{\normalfont}
 	\theoremsymbol{\ensuremath{\Box}}
 	\newtheorem{hideableproof}{証明}
-	
+
 	\newcommand{\qedhere}{\hfill\hideableproofSymbol}
 \else
 	\excludecomment{hideableproof}
@@ -102,7 +102,7 @@
 
 \renewcommand{\thefootnote}{$\diamondsuit$}
 
-このドキュメントはp進大好きbot氏が公開したブログ記事\href{https://googology.fandom.com/ja/wiki/User\_blog:P\%E9\%80\%B2\%E5\%A4\%A7\%E5\%A5\%BD\%E3\%81\%8Dbot/\%E3\%83\%9A\%E3\%82\%A2\%E6\%95\%B0\%E5\%88\%97\%E3\%81\%AE\%E5\%81\%9C\%E6\%AD\%A2\%E6\%80\%A7}{ペア数列の停止性}を\LaTeX{}に変換したものです\footnote[0]{原文は\href{https://www.fandom.com/ja/licensing-ja}{CC-BY-SA 3.0 非移植ライセンスのもとで提供されています}。}。\iffull\else{このバージョンは要約版であり、序文や証明などが省かれています。}\fi 使用した版は\href{https://googology.fandom.com/ja/wiki/User\_blog:P\%E9\%80\%B2\%E5\%A4\%A7\%E5\%A5\%BD\%E3\%81\%8Dbot/\%E3\%83\%9A\%E3\%82\%A2\%E6\%95\%B0\%E5\%88\%97\%E3\%81\%AE\%E5\%81\%9C\%E6\%AD\%A2\%E6\%80\%A7?oldid=49288}{2022年7月26日の版}です。\href{https://creativecommons.org/licenses/by-sa/3.0/}{CC-BY-SA 3.0 非移植ライセンス}のもとで公開します。
+このドキュメントはp進大好きbot氏が公開したブログ記事\href{https://googology.fandom.com/ja/wiki/User\_blog:P\%E9\%80\%B2\%E5\%A4\%A7\%E5\%A5\%BD\%E3\%81\%8Dbot/\%E3\%83\%9A\%E3\%82\%A2\%E6\%95\%B0\%E5\%88\%97\%E3\%81\%AE\%E5\%81\%9C\%E6\%AD\%A2\%E6\%80\%A7}{ペア数列の停止性}を\LaTeX{}に変換したものです\footnote[0]{原文は\href{https://www.fandom.com/ja/licensing-ja}{CC-BY-SA 3.0 非移植ライセンスのもとで提供されています}。}。\iffull\else{このバージョンは要約版であり、序文や証明などが省かれています。}\fi 使用した版は\href{https://googology.fandom.com/ja/wiki/User\_blog:P\%E9\%80\%B2\%E5\%A4\%A7\%E5\%A5\%BD\%E3\%81\%8Dbot/\%E3\%83\%9A\%E3\%82\%A2\%E6\%95\%B0\%E5\%88\%97\%E3\%81\%AE\%E5\%81\%9C\%E6\%AD\%A2\%E6\%80\%A7?oldid=65412}{2024年4月28日の版}です。\href{https://creativecommons.org/licenses/by-sa/3.0/}{CC-BY-SA 3.0 非移植ライセンス}のもとで公開します。
 
 \renewcommand{\thefootnote}{\arabic{footnote}}
 
@@ -851,7 +851,7 @@ M & \mapsto & \textrm{Red}(M)
 \end{eqnarray*}
 を以下のように再帰的に定める：
 \begin{nenumerate}
-	\item \(M\)が零項ならば\(\textrm{Red}(M) := (0,0)\)である。
+	\item \(M\)が零項ならば\(\textrm{Red}(M) := ((0,0))\)である。
 	\item \(M\)が単項とする。
 	\begin{nenumerate}
 		\item \(j_1 := \textrm{Lng}(M) - 1\)と置く。
@@ -1663,12 +1663,12 @@ M & \mapsto & \textrm{Red}(M)
 	\item \(t \neq ()\)とする。
 	\begin{nenumerate}
 		\item \(j_1 := \textrm{Lng}(t)-1\)と置く。
-		\item \(s_0 := ()\)と置く。
+		\item \(s_0 := \underline{(}\)と置く。
 		\item \(0 < j < j_1\)を満たす各\(j \in \mathbb{N}\)に対して\(s_j := s_{j-1} t_{j-1} \underline{,}\)と置く。
 		\item \(t' := s_{j_1-1} t_{j_1} \underline{)} \in \Sigma\)と置く。
 	\end{nenumerate}
 \end{nenumerate}
-\(j_1 = -1\)ならば\(t' = 0 \in T_{\textrm{B}}\)である。\(j_1 = 0\)ならば\(t' = \underline{(} t_0 \underline{)}\)より縮約規則\(\{(p) = p \mid c \in PT_{\textrm{B}}\}\)の下で\(t'\)は\(t_0 \in PT_{\textrm{B}}\)と同一視される。\(j_1 > 0\)ならば\(t' \in T_{\textrm{B}} \setminus (\{0\} \cup PT_{\textrm{B}})\)である。従っていずれの場合も\(T_{\textrm{B}}\)の項を定め、それを\(\Sigma_{\textrm{B}} t\)と表記する。
+\(j_1 = -1\)ならば\(t' = 0 \in T_{\textrm{B}}\)である。\(j_1 = 0\)ならば\(t' = \underline{(} t_0 \underline{)}\)より縮約規則\(\{(p) = p \mid p \in PT_{\textrm{B}}\}\)の下で\(t'\)は\(t_0 \in PT_{\textrm{B}}\)と同一視される。\(j_1 > 0\)ならば\(t' \in T_{\textrm{B}} \setminus (\{0\} \cup PT_{\textrm{B}})\)である。従っていずれの場合も\(T_{\textrm{B}}\)の項を定め、それを\(\Sigma_{\textrm{B}} t\)と表記する。
 
 写像
 \begin{eqnarray*}
