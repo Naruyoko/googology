@@ -90,8 +90,8 @@ function compute(){
       mel.innerHTML+="\
         <p>\
           Trans(M)="+pTerms.map(function(e,i){return i>0&&equalPair(e,[[0,0]])?oneReplaceMark:stringifyBuchholz(Trans(e),writeCommonBuchholz);}).join("+")+"<br>\
-          ="+Trans(M)+"\
+          ="+stringifyBuchholz(Trans(M),writeCommonBuchholz)+"\
         </p>";
-    }else mel.innerHTML+="<p>Trans(M)="+Trans(M)+"</p>";
+    }else mel.innerHTML+="<p>Trans(M)="+stringifyBuchholz(Trans(M),writeCommonBuchholz)+"</p>";
   }
 }
