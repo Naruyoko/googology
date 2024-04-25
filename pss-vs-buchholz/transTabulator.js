@@ -24,9 +24,10 @@ function compute(){
   output.innerHTML="";
   var lines=input.split(lineBreakRegex);
   for (var l=0;l<lines.length;l++){
+    var M=parsePair(lines[l]);
+    if (M.length==0) break;
     var mel=document.createElement("div");
     output.appendChild(mel);
-    var M=parsePair(lines[l]);
     mel.innerHTML+="<p>"+stringifyPair(M,writeCommonPair)+"</p>";
     if (!isReduced(M)){
       M=Red(M);
@@ -83,6 +84,14 @@ function compute(){
         }
       }
     }
-    continue;
+    if (pTerms.length>1){
+      var oneReplaceMark="<del>"+stringifyBuchholz(BUCHHOLZ_ZERO,writeCommonBuchholz)+"</del>"+
+        "<ins>"+stringifyBuchholz(BUCHHOLZ_ONE,writeCommonBuchholz)+"</ins>";
+      mel.innerHTML+="\
+        <p>\
+          Trans(M)="+pTerms.map(function(e,i){return i>0&&equalPair(e,[[0,0]])?oneReplaceMark:stringifyBuchholz(Trans(e),writeCommonBuchholz);}).join("+")+"<br>\
+          ="+Trans(M)+"\
+        </p>";
+    }else mel.innerHTML+="<p>Trans(M)="+Trans(M)+"</p>";
   }
 }
