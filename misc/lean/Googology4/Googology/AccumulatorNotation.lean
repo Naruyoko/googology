@@ -6,9 +6,7 @@ import Mathlib.Logic.Relation
 #align_import accumulator_notation
 
 -- Lots of plagiarism from computability.turing_machine
--- Lots of plagiarism from computability.turing_machine
-/-- Structure holding the empression part and the accumulator part.
--/
+/-- Structure holding the empression part and the accumulator part. -/
 structure AccumulatorExpression (α : Type _) where
   expression : α
   accumulator : ℕ
@@ -36,15 +34,16 @@ def wrap : AccumulatorExpression α → AccumulatorExpression₀ α := fun ⟨T,
 
 @[simp]
 theorem nonterminal_wrap {p : AccumulatorExpression α} : ¬(wrap p).isTerminal := by
-  cases p <;> exact by decide
+  rw [← Bool.not_iff_not]
+  rfl
 
 def unwrapNonterminal : ∀ {p : AccumulatorExpression₀ α}, ¬p.isTerminal → AccumulatorExpression α
-  | ⟨none, n⟩, h => False.ndrec _ (h (by decide))
+  | ⟨none,   _⟩, h => absurd rfl h
   | ⟨some T, n⟩, _ => ⟨T, n⟩
 
 @[simp]
-theorem unwrap_wrap (p : AccumulatorExpression α) (h : ¬(wrap p).isTerminal) :
-    unwrapNonterminal h = p := by cases p <;> rfl
+theorem unwrap_wrap (p : AccumulatorExpression α) :
+  unwrapNonterminal (nonterminal_wrap (p := p)) = p := rfl
 
 end AccumulatorExpression₀
 
@@ -97,21 +96,18 @@ theorem dom_eval₀_step {p : AccumulatorExpression₀ α} (h : ¬p.isTerminal) 
     (eval₀ S p).Dom = (eval₀ S (S.step (AccumulatorExpression₀.unwrapNonterminal h))).Dom := by
   rw [eval₀_step_eq]
 
-def Eval₀IsTotalAt (T : Option α) : Prop :=
+def eval₀IsTotalAt (T : Option α) : Prop :=
   ∀ n, (eval₀ S ⟨T, n⟩).Dom
 
-def EvalIsTotalAt (T : α) : Prop :=
+def evalIsTotalAt (T : α) : Prop :=
   ∀ n, (eval S ⟨T, n⟩).Dom
 
 theorem dom_of_all_dom_eval₀_step {T : α} :
-    (∀ n, S.Eval₀IsTotalAt (S.step ⟨T, n⟩).expression) → S.EvalIsTotalAt T :=
-  by
+    (∀ n, S.eval₀IsTotalAt (S.step ⟨T, n⟩).expression) → S.evalIsTotalAt T := by
   intro h n
   rw [eval_eq_eval₀]
   rw [eval₀_step_eq S AccumulatorExpression₀.nonterminal_wrap]
-  specialize h n (S.step ⟨T, n⟩).accumulator
-  cases S.step ⟨T, n⟩
-  exact h
+  apply h
 
 end
 
@@ -134,41 +130,48 @@ theorem reachable_iff_exists_list_args {a b : Option α} :
       ∃ l : List β,
         (List.scanl (fun (c : Option α) d => c >>= fun c' => f c' d) a l).dropLast.all
             Option.isSome ∧
-          List.foldl (fun (c : Option α) d => c >>= fun c' => f c' d) a l = b :=
-  by
+          List.foldl (fun (c : Option α) d => c >>= fun c' => f c' d) a l = b := by
   have scanl_ne_nil : ∀ a l, List.scanl (fun (c : Option α) d => c >>= fun c' => f c' d) a l ≠ [] :=
-    by introv <;> cases l <;> tauto
-  unfold_coes
+    by introv ; cases l <;> tauto
+  simp only [Option.bind_eq_bind] at scanl_ne_nil ⊢
   constructor
   · intro hab
-    unfold reachable at hab
-    apply Relation.ReflTransGen.head_induction_on hab
-    · use[]; tauto
+    unfold Reachable at hab
+    refine Relation.ReflTransGen.head_induction_on hab ?_ ?_
+    · use List.nil
+      tauto
     · clear! a
       intro a c hac hcb IH
-      have ha_some : a.is_some := by cases a <;> tauto
-      obtain ⟨a, rfl⟩ := option.is_some_iff_exists.mp ha_some
+      have ha_some : a.isSome := by cases a <;> tauto
+      obtain ⟨a, rfl⟩ := Option.isSome_iff_exists.mp ha_some
       rcases hac with ⟨d, rfl⟩
       cases' IH with l hl
       use d :: l
-      unfold List.all at *
-      simp [hl, scanl_ne_nil (f a d) l]
+      simp only [List.scanl, Option.some_bind]
+      rw [List.dropLast_cons_of_ne_nil (scanl_ne_nil _ _)]
+      tauto
   · intro hab
     rcases hab with ⟨l, ⟨hsome, hl⟩⟩
-    unfold reachable
+    unfold Reachable
     induction' l with d l IH generalizing a
     · simp_all
-    · have ha_some : a.is_some := by
-        cases a
-        · unfold List.all at *
-          simp_all [scanl_ne_nil none l]
-        · exact rfl
-      obtain ⟨a, rfl⟩ := option.is_some_iff_exists.mp ha_some
+      triv
+    · simp only [List.scanl] at hsome
+      rw [List.dropLast_cons_of_ne_nil (scanl_ne_nil _ _)] at hsome
+      have ha_some : a.isSome := by
+        rw [← Option.ne_none_iff_isSome]
+        intro H
+        subst H
+        contradiction
+      obtain ⟨a, rfl⟩ := Option.isSome_iff_exists.mp ha_some
       rw [Relation.ReflTransGen.cases_head_iff]
       right
       use f a d
-      simp_all
-      exact IH hsome hl
+      constructor
+      · use d
+      · rw [List.foldl_cons, Option.some_bind] at hl
+        rw [List.all_cons, Bool.and_eq_true, Option.some_bind] at hsome
+        exact IH hsome.right hl
 
 end
 
@@ -219,8 +222,8 @@ theorem expandSelectPostStepByTerminating_of_isSome_expand {T : α} {n}
     expandSelectPostStepByTerminating expand expand_transform accumulator_step final_step T n =
       ⟨expand T <| expand_transform n, accumulator_step n⟩ :=
   by
-  obtain ⟨_, hT'⟩ := option.is_some_iff_exists.mp h
-  simp_rw [expand_select_post_step_by_terminating, hT']
+  obtain ⟨_, hT'⟩ := Option.isSome_iff_exists.mp h
+  simp_rw [expandSelectPostStepByTerminating, hT']
   rfl
 
 @[simp]
@@ -229,7 +232,7 @@ theorem expandSelectPostStepByTerminating_of_isNone_expand {T : α} {n}
     expandSelectPostStepByTerminating expand expand_transform accumulator_step final_step T n =
       ⟨none, final_step n⟩ :=
   by
-  simp_rw [expand_select_post_step_by_terminating, option.is_none_iff_eq_none.mp h]
+  simp_rw [expandSelectPostStepByTerminating, Option.isNone_iff_eq_none.mp h]
   rfl
 
 end
@@ -237,20 +240,20 @@ end
 section
 
 variable (expand : α → ℕ → Option α) (expand_transform : ℕ → ℕ) (accumulator_step : ℕ → ℕ)
-  (final_step : ℕ → ℕ) {limit_expression : α}
-  (decidable_eq_limit : ∀ T, Decidable (T = limit_expression)) (limit_transform : ℕ → ℕ)
+  (final_step : ℕ → ℕ) {limitExpression : α}
+  (decidable_eq_limit : ∀ T, Decidable (T = limitExpression)) (limit_transform : ℕ → ℕ)
   (limit_step : ℕ → ℕ)
 
 /-- Create an `accumulator_notation` admitting the following function \[\]:
 
 1. T\[n\] = `final_step`(n) (if terminates)
-2. `limit_expression`\[n\] = `expand`(T,`limit_transform`(n))\[`limit_step`(n)\]
+2. `limitExpression`\[n\] = `expand`(T,`limit_transform`(n))\[`limit_step`(n)\]
 3. T\[n\] = `expand`(T,`expand_transform`(n))\[`accumulator_step`(n)\] (otherwise)
 -/
 def mkPrepostapplyStepSpecialFinalLimit : AccumulatorNotation α :=
   { step := fun ⟨T, n⟩ =>
       let _ := decidable_eq_limit T
-      if T = limit_expression then
+      if T = limitExpression then
         expandSelectPostStepByTerminating expand limit_transform limit_step final_step T n
       else expandSelectPostStepByTerminating expand expand_transform accumulator_step final_step T n
     limitExpression }
@@ -259,7 +262,7 @@ def mkPrepostapplyStepSpecialFinalLimit : AccumulatorNotation α :=
 /-- Create an `accumulator_notation` admitting the following function \[\]:
 
 1. T\[n\] = n (if terminates)
-2. `limit_expression`\[n\] = `expand`(T,`limit_transform`(n))\[`limit_step`(n)\]
+2. `limitExpression`\[n\] = `expand`(T,`limit_transform`(n))\[`limit_step`(n)\]
 3. T\[n\] = `expand`(T,`expand_transform`(n))\[`accumulator_step`(n)\] (otherwise)
 -/
 def mkPrepostapplyStepSpecialLimit : AccumulatorNotation α :=
@@ -269,7 +272,7 @@ def mkPrepostapplyStepSpecialLimit : AccumulatorNotation α :=
 /-- Create an `accumulator_notation` admitting the following function \[\]:
 
 1. T\[n\] = n (if terminates)
-2. `limit_expression`\[n\] = `expand`(T,n)\[n\]
+2. `limitExpression`\[n\] = `expand`(T,n)\[n\]
 3. T\[n\] = `expand`(T,`expand_transform`(n))\[`accumulator_step`(n)\] (otherwise)
 -/
 def mkPrepostapplyStep : AccumulatorNotation α :=
@@ -278,7 +281,7 @@ def mkPrepostapplyStep : AccumulatorNotation α :=
 /-- Create an `accumulator_notation` admitting the following function \[\]:
 
 1. T\[n\] = n (if terminates)
-2. `limit_expression`\[n\] = `expand`(T,n)\[n\]
+2. `limitExpression`\[n\] = `expand`(T,n)\[n\]
 3. T\[n\] = `expand`(T,`accumulator_step`(n))\[`accumulator_step`(n)\] (otherwise)
 -/
 def mkPreapplyStep : AccumulatorNotation α :=
@@ -287,7 +290,7 @@ def mkPreapplyStep : AccumulatorNotation α :=
 /-- Create an `accumulator_notation` admitting the following function \[\]:
 
 1. T\[n\] = n (if terminates)
-2. `limit_expression`\[n\] = `expand`(T,n)\[n\]
+2. `limitExpression`\[n\] = `expand`(T,n)\[n\]
 3. T\[n\] = `expand`(T,n)\[`accumulator_step`(n)\] (otherwise)
 -/
 def mkPostapplyStep : AccumulatorNotation α :=
@@ -296,7 +299,7 @@ def mkPostapplyStep : AccumulatorNotation α :=
 /-- Create an `accumulator_notation` admitting the following function \[\]:
 
 1. T\[n\] = n (if terminates)
-2. `limit_expression`\[n\] = `expand`(T,n)\[n\]
+2. `limitExpression`\[n\] = `expand`(T,n)\[n\]
 3. T\[n\] = `expand`(T,n)\[`accumulator_step`(n)\] (otherwise)
 -/
 def mkIdStep : AccumulatorNotation α :=
@@ -324,12 +327,12 @@ theorem limitPointExtend_some (T : α) (n : ℕ) :
 theorem limitPointExtend_some_of_isSome_extend {T : α} {n : ℕ} (h : Option.isSome (expand T n)) :
     limitPointExtend expand limit_seq (some T) n = some (expand T n) :=
   by
-  obtain ⟨_, hT'⟩ := option.is_some_iff_exists.mp h
+  obtain ⟨_, hT'⟩ := Option.isSome_iff_exists.mp h
   simp [hT']
 
 @[simp]
 theorem limitPointExtend_some_of_isNone_extend {T : α} {n : ℕ} (h : Option.isNone (expand T n)) :
-    limitPointExtend expand limit_seq (some T) n = none := by simp [option.is_none_iff_eq_none.mp h]
+    limitPointExtend expand limit_seq (some T) n = none := by simp [Option.isNone_iff_eq_none.mp h]
 
 @[simp]
 theorem limitPointExtend_none (n : ℕ) :
@@ -343,16 +346,19 @@ theorem isSome_limitPointExtend_some_iff (T : α) (n : ℕ) :
   · contrapose h
     simp [Option.isNone_iff_eq_none] at *
     assumption
-  · simp [*]
+  · simp only [limitPointExtend_some, Option.map_eq_map]
+    revert h
+    cases expand T n <;> tauto
 
 theorem isNone_limitPointExtend_some_iff (T : α) (n : ℕ) :
     Option.isNone (limitPointExtend expand limit_seq (some T) n) ↔ Option.isNone (expand T n) :=
   by
   have : ∀ {α} {x : Option α}, Option.isNone x ↔ ¬Option.isSome x := by
-    intro _ x <;> cases x <;> tauto
+    intro _ x
+    cases x <;> tauto
   iterate 2 rw [this]
   rw [not_iff_not]
-  exact is_some_limit_point_extend_some_iff _ _ _ _
+  apply isSome_limitPointExtend_some_iff
 
 theorem isSome_limitPointExtend_none (n : ℕ) :
     Option.isSome (limitPointExtend expand limit_seq none n) := by tauto
@@ -364,7 +370,7 @@ theorem isSome_limit_point_iff (T : Option α) (n : ℕ) :
   cases T
   · tauto
   · simp [-AccumulatorNotation.limitPointExtend_some]
-    exact is_some_limit_point_extend_some_iff _ _ _ _
+    apply isSome_limitPointExtend_some_iff
 
 theorem isNone_limit_point_iff (T : Option α) (n : ℕ) :
     Option.isNone (limitPointExtend expand limit_seq T n) ↔
@@ -373,28 +379,33 @@ theorem isNone_limit_point_iff (T : Option α) (n : ℕ) :
   cases T
   · tauto
   · simp [-AccumulatorNotation.limitPointExtend_some]
-    exact is_none_limit_point_extend_some_iff _ _ _ _
+    apply isNone_limitPointExtend_some_iff
 
 theorem get_of_isSome_limitPointExtend {T : Option α} {n : ℕ}
     (h : Option.isSome (limitPointExtend expand limit_seq T n)) :
-    Option.get h = Option.elim' (limit_seq n) (fun x => expand x n) T :=
+    Option.get _ h = Option.elim' (some (limit_seq n)) (fun x => expand x n) T :=
   by
-  have hT := (is_some_limit_point_iff _ _ _ _).mp h
-  cases hT
-  · cases hT; simp [*]
-  · have := Option.eq_none_of_isNone hT
-    subst this
+  have hT := (isSome_limit_point_iff _ _ _ _).mp h
+  cases hT with
+  | inl hT =>
+    rcases hT with ⟨x, hx⟩
+    obtain ⟨y, hy⟩ := Option.isSome_iff_exists.mp hx.right
+    simp [*]
+  | inr hT =>
+    simp only [Option.eq_none_of_isNone hT]
     tauto
 
 theorem isSome_get_of_isSome_limitPointExtend {T : Option α} {n : ℕ}
-    (h : Option.isSome (limitPointExtend expand limit_seq T n)) : Option.isSome (Option.get h) :=
+    (h : Option.isSome (limitPointExtend expand limit_seq T n)) : Option.isSome (Option.get _ h) :=
   by
-  have hT := (is_some_limit_point_iff _ _ _ _).mp h
-  cases hT
-  · cases' hT with x hx
+  have hT := (isSome_limit_point_iff _ _ _ _).mp h
+  cases hT with
+  | inl hT =>
+    rcases hT with ⟨x, hx⟩
+    obtain ⟨y, hy⟩ := Option.isSome_iff_exists.mp hx.right
     simp [*]
-  · have := Option.eq_none_of_isNone hT
-    subst this
+  | inr hT =>
+    simp only [Option.eq_none_of_isNone hT]
     tauto
 
 /-- Create an `accumulator_notation` admitting the following function \[\] and limit function Lim:
@@ -416,8 +427,8 @@ Emulate Hardy hierarchy on top of set of terms `α`, "fundamental sequence" `fun
 2. H_T(n) = H_{`expand`(T,n)}(n+1) (if `is_succ`(T))
 3. H_T(n) = H_{`expand`(T,n)}(n) (otherwise)
 -/
-def simulateHardy (fund : α → ℕ → Option α) {is_succ : α → Prop}
-    (decidable_is_succ : DecidablePred is_succ) : AccumulatorPrenotation α
+def simulateHardy (fund : α → ℕ → Option α) {is_succ : α → Prop} [DecidablePred is_succ] :
+    AccumulatorPrenotation α
     where step := fun ⟨T, n⟩ => ⟨fund T n, if is_succ T then n + 1 else n⟩
 
 -- /--
@@ -428,5 +439,5 @@ def simulateHardy (fund : α → ℕ → Option α) {is_succ : α → Prop}
 -- -/
 -- def simulate_FGH (fund : α → ℕ → option α) {is_succ : α → Prop} (decidable_is_succ : decidable_pred is_succ) : accumulator_prenotation α :=
 -- { step := λ ⟨T, n⟩, (fund T n).map (λ T', ⟨T', if is_succ T then n+1 else n⟩) }
-end AccumulatorNotation
 
+end AccumulatorNotation
