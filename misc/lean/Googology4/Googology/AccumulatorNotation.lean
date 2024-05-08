@@ -155,7 +155,7 @@ theorem reachable_iff_exists_list_args {a b : Option α} :
     unfold Reachable
     induction' l with d l IH generalizing a
     · simp_all
-      triv
+      trivial
     · simp only [List.scanl] at hsome
       rw [List.dropLast_cons_of_ne_nil (scanl_ne_nil _ _)] at hsome
       have ha_some : a.isSome := by
@@ -339,26 +339,19 @@ theorem limitPointExtend_none (n : ℕ) :
     limitPointExtend expand limit_seq none n = some (some (limit_seq n)) :=
   rfl
 
-theorem isSome_limitPointExtend_some_iff (T : α) (n : ℕ) :
-    Option.isSome (limitPointExtend expand limit_seq (some T) n) ↔ Option.isSome (expand T n) :=
+theorem isSome_limitPointExtend_some_eq (T : α) (n : ℕ) :
+    Option.isSome (limitPointExtend expand limit_seq (some T) n) = Option.isSome (expand T n) :=
   by
-  constructor <;> intro h
-  · contrapose h
-    simp [Option.isNone_iff_eq_none] at *
-    assumption
-  · simp only [limitPointExtend_some, Option.map_eq_map]
-    revert h
-    cases expand T n <;> tauto
+  cases h : expand T n <;> simp [h]
 
-theorem isNone_limitPointExtend_some_iff (T : α) (n : ℕ) :
-    Option.isNone (limitPointExtend expand limit_seq (some T) n) ↔ Option.isNone (expand T n) :=
+theorem isNone_limitPointExtend_some_eq (T : α) (n : ℕ) :
+    Option.isNone (limitPointExtend expand limit_seq (some T) n) = Option.isNone (expand T n) :=
   by
-  have : ∀ {α} {x : Option α}, Option.isNone x ↔ ¬Option.isSome x := by
+  have : ∀ {α} {x : Option α}, Option.isNone x = !Option.isSome x := by
     intro _ x
     cases x <;> tauto
   iterate 2 rw [this]
-  rw [not_iff_not]
-  apply isSome_limitPointExtend_some_iff
+  rw [isSome_limitPointExtend_some_eq]
 
 theorem isSome_limitPointExtend_none (n : ℕ) :
     Option.isSome (limitPointExtend expand limit_seq none n) := by tauto
@@ -367,19 +360,13 @@ theorem isSome_limit_point_iff (T : Option α) (n : ℕ) :
     Option.isSome (limitPointExtend expand limit_seq T n) ↔
       (∃ x : α, T = some x ∧ Option.isSome (expand x n)) ∨ Option.isNone T :=
   by
-  cases T
-  · tauto
-  · simp [-AccumulatorNotation.limitPointExtend_some]
-    apply isSome_limitPointExtend_some_iff
+  cases T <;> simp [↓isSome_limitPointExtend_some_eq]
 
 theorem isNone_limit_point_iff (T : Option α) (n : ℕ) :
-    Option.isNone (limitPointExtend expand limit_seq T n) ↔
+    Option.isNone (limitPointExtend expand limit_seq T n) =
       ∃ x : α, T = some x ∧ Option.isNone (expand x n) :=
   by
-  cases T
-  · tauto
-  · simp [-AccumulatorNotation.limitPointExtend_some]
-    apply isNone_limitPointExtend_some_iff
+  cases T <;> simp [↓isNone_limitPointExtend_some_eq]
 
 theorem get_of_isSome_limitPointExtend {T : Option α} {n : ℕ}
     (h : Option.isSome (limitPointExtend expand limit_seq T n)) :

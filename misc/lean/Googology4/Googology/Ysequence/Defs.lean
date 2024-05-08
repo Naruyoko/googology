@@ -39,7 +39,7 @@ theorem iterateEventuallyNone_or_mem_of_iterateEventuallyNone {f : α → Option
   rcases hf (some x) with ⟨k, hk⟩
   use k
   rw [hk]
-  triv
+  trivial
 
 def findIndexIterateOfIterateEventuallyNone {f : α → Option α} (hf : IterateEventuallyNone f)
     {p : Set α} (_ : DecidablePred p) (x : α) : ℕ :=
@@ -474,8 +474,8 @@ theorem Index₂.eq_iff_fst_index_eq_and_snd_index_eq {m : List (List α)} (q : 
 
 theorem Index₂.ne_iff_fst_index_ne_or_snd_index_ne {m : List (List α)} (q : Index₂ m)
     (q' : Index₂ m) : q ≠ q' ↔ q.fst.index ≠ q'.fst.index ∨ q.snd.index ≠ q'.snd.index := by
-  rw [Ne.def, Index₂.eq_iff_fst_index_eq_and_snd_index_eq]
-  tauto
+  rw [Ne, Index₂.eq_iff_fst_index_eq_and_snd_index_eq]
+  apply Decidable.not_and_iff_or_not
 
 theorem Index₂.mk_eq_mk {m : List (List α)} {i : Index m} {j : Index i.val} {i' : Index m}
     {j' : Index i'.val} : (⟨i, j⟩ : Index₂ m) = ⟨i', j'⟩ ↔ i = i' ∧ HEq j j' :=
@@ -693,7 +693,7 @@ def ParentMountain.IsCoherent.indexAboveOfIsSome {P : ParentMountain} (hP : P.Is
         rw [lt_iff_le_and_ne]
         constructor
         · exact Nat.succ_le_of_lt q.snd_index_lt
-        · rw [← Ne.def, ← Nat.succ_ne_succ] at h
+        · rw [← Ne, ← Nat.succ_ne_succ] at h
           rw [← Nat.sub_add_cancel (List.length_pos_of_ne_nil (P.index_val_ne_nil _))]
           exact h⟩⟩,
     rfl⟩
@@ -723,10 +723,8 @@ theorem Mountain.base_value_eq_one_of_parents_isCoherent_of_isOrphanless_of_heig
   rw [← Option.ne_none_iff_isSome] at this
   apply this
   rw [h_coherent.val_eq_none_iff]
-  conv_rhs =>
-    rw [(x.pairable.symm.snd _).def]
-    simp only [Pairable.transfer]
-    erw [h]
+  conv_rhs => erw [(x.pairable.symm.snd _).def, h]
+  rfl
 
 theorem Mountain.head_value_eq_one_of_parents_isCoherent_of_isOrphanless_of_length_pos
     {x : Mountain} (h_coherent : x.parents.IsCoherent) (h_orphanless : x.IsOrphanless)
@@ -882,7 +880,7 @@ theorem Mountain.IsCrossCoherent.parent_eq_none_where_value_eq_one {x : Mountain
     (h : x.IsCrossCoherent) {q : Index₂ x.values.val} :
     q.val = 1 → (x.pairable.transfer q).val = none :=
   by
-  rw [← Decidable.not_imp_not, ← Ne.def, Option.ne_none_iff_isSome]
+  rw [← Decidable.not_imp_not, ← Ne, Option.ne_none_iff_isSome]
   exact h.value_ne_one_where_parent_isSome
 
 /-- 𝕄** = {x : Mountain // x.is_orphanless ∧ x.is_coherent} -/
@@ -1069,8 +1067,10 @@ theorem value_parent_lt_value {x : ValueParentListPair} {i : Index x.values.val}
   exact spec
 
 theorem parent_of_value_eq_none {x : ValueParentListPair} {i : Index x.values.val} {j : ℕ} :
-    value x i j = none → parent x i j = none := by contrapose;
-  simp_rw [← Ne.def, Option.ne_none_iff_isSome]; exact value_is_some_of_parent_is_some
+    value x i j = none → parent x i j = none := by
+  contrapose
+  iterate 2 rw [← Ne, Option.ne_none_iff_isSome]
+  exact value_isSome_of_parent_isSome
 
 @[simp]
 theorem value_zero (x : ValueParentListPair) (i : Index x.values.val) : value x i 0 = some i.val :=
@@ -1090,29 +1090,29 @@ theorem value_succ (x : ValueParentListPair) (i : Index x.values.val) (j : ℕ) 
 @[simp]
 theorem parent_zero (x : ValueParentListPair) (i : Index x.values.val) :
     parent x i 0 =
-      @findIterateOfToNoneOrLtId (inIndexElim (Index.val ∘ x.pairable.transfer) none)
+      findIterateOfToNoneOrLtId (f := inIndexElim (Index.val ∘ x.pairable.transfer) none)
         (by
-          apply to_none_or_lt_id_inIndexElim_yes_none_of_forall_index
+          apply toNoneOrLtId_inIndexElim_yes_none_of_forall_index
           intro
-          rw [← pairable.index_transfer x.pairable _]
+          rw [← Pairable.index_transfer x.pairable _]
           exact x.parents.property _)
-        ((Finset.univ.filterₓ fun p : Index x.values.val =>
-              Option.casesOn (Prod.mk <$> value x p 0 <*> value x i 0) False
-                (Function.uncurry (· < ·))).map
+        (p := (Finset.univ.filter fun p : Index x.values.val =>
+              Option.casesOn (Prod.mk <$> value x p 0 <*> value x i 0) False (Function.uncurry (· < ·))).map
           ⟨Index.index, Index.index_injective⟩)
-        (by infer_instance) i.index :=
+        (fun _ => decidable_of_decidable_of_iff Set.mem_def) i.index :=
+  by
   rfl
 
 @[simp]
 theorem parent_succ (x : ValueParentListPair) (i : Index x.values.val) (j : ℕ) :
     parent x i (j + 1) =
-      @findIterateOfToNoneOrLtId (inIndexElim (fun p => parent x p j) none)
+      findIterateOfToNoneOrLtId (f := inIndexElim (fun p => parent x p j) none)
         (toNoneOrLtId_parent x j)
-        ((Finset.univ.filterₓ fun p : Index x.values.val =>
+        (p := (Finset.univ.filter fun p : Index x.values.val =>
               Option.casesOn (Prod.mk <$> value x p (j + 1) <*> value x i (j + 1)) False
                 (Function.uncurry (· < ·))).map
           ⟨Index.index, Index.index_injective⟩)
-        (by infer_instance) i.index :=
+        (fun _ => decidable_of_decidable_of_iff Set.mem_def) i.index :=
   rfl
 
 theorem value_succ_isSome_iff_parent_isSome {x : ValueParentListPair} {i : Index x.values.val}
@@ -1129,8 +1129,8 @@ theorem value_succ_eq_none_iff_parent_eq_none {x : ValueParentListPair} {i : Ind
     {j : ℕ} : value x i (j + 1) = none ↔ parent x i j = none :=
   by
   rw [← not_iff_not]
-  simp_rw [← Ne.def, Option.ne_none_iff_isSome]
-  exact value_succ_is_some_iff_parent_is_some
+  iterate 2 rw [← Ne, Option.ne_none_iff_isSome]
+  exact value_succ_isSome_iff_parent_isSome
 
 theorem val_value_above_eq_of_parent_isSome {x : ValueParentListPair} {i : Index x.values.val}
     {j : ℕ} (h : (parent x i j).isSome) :
@@ -1221,7 +1221,7 @@ theorem value_isSome_iff_lt_height {x : ValueParentListPair} {i : Index x.values
 theorem value_eq_none_iff_height_le {x : ValueParentListPair} {i : Index x.values.val} {j : ℕ} :
     value x i j = none ↔ height x i ≤ j :=
   by
-  rw [← not_iff_not, ← Ne.def, Option.ne_none_iff_isSome, not_le]
+  rw [← not_iff_not, ← Ne, Option.ne_none_iff_isSome, not_le]
   exact value_is_some_iff_lt_height
 
 def buildMountain (x : ValueParentListPair) : Mountain
@@ -1236,7 +1236,7 @@ def buildMountain (x : ValueParentListPair) : Mountain
       intro _ h
       simp at h
       cases' h with i h
-      rw [← h, Ne.def, List.map_eq_nil, List.finRange_eq_nil, ← Ne.def]
+      rw [← h, Ne, List.map_eq_nil, List.finRange_eq_nil, ← Ne]
       exact ne_of_gt (height_pos x i)⟩
   parents :=
     ⟨(fun i : Index x.values.val =>
@@ -1246,7 +1246,7 @@ def buildMountain (x : ValueParentListPair) : Mountain
       intro _ h
       simp at h
       cases' h with i h
-      rw [← h, Ne.def, List.map_eq_nil, List.finRange_eq_nil, ← Ne.def]
+      rw [← h, Ne, List.map_eq_nil, List.finRange_eq_nil, ← Ne]
       exact ne_of_gt (height_pos x i)⟩
   Pairable := by simp [pairable₂, pairable, index.val]
 
@@ -1773,7 +1773,7 @@ theorem diagonalPreparentOf_isSome_iff {P : ParentMountain} (hP : P.IsCoherent) 
 theorem to_none_or_lt_diagonal_preparent {P : ParentMountain} (hP : P.IsCoherent) :
     ToNoneOrLtId <| inIndexElim (Option.map Index.index ∘ diagonalPreparentOf hP) none :=
   by
-  apply to_none_or_lt_id_inIndexElim_yes_none_of_forall_index
+  apply toNoneOrLtId_inIndexElim_yes_none_of_forall_index
   intro q
   exact descend_to_surface_to_none_or_lt_fst_index hP _
 
@@ -1847,7 +1847,7 @@ theorem diagonal_isOrphanless {x : Mountain} (h_coherent : x.parents.IsCoherent)
     rw [surface_at, Index.last] at h
     simp [(x.pairable.snd _).def, Pairable.transfer, H] at h
     replace h := h_orphanless _ h
-    rw [← Option.ne_none_iff_isSome, Ne.def, h_coherent.val_eq_none_iff] at h
+    rw [← Option.ne_none_iff_isSome, Ne, h_coherent.val_eq_none_iff] at h
     simp [Pairable.transfer, H] at h
     exact h
 
@@ -1929,7 +1929,7 @@ theorem diagonalRec_of_surface_ne_one (h_surface : surfaceAt (Index.last ne_nil)
   by
   rw [diagonal_rec, WellFounded.fix_eq]
   simp
-  rw [Ne.def] at h_surface
+  rw [Ne] at h_surface
   split_ifs
   rfl
 
