@@ -1,4 +1,3 @@
-import Mathlib.Tactic.LiftLets
 import Mathlib.Data.Fintype.Sigma
 import Mathlib.Data.Nat.WithBot
 import Mathlib.Data.Pnat.Basic
@@ -202,7 +201,7 @@ def Index.index {s : List α} (i : Index s) : ℕ :=
   i.val
 
 def Index.val {s : List α} (i : Index s) : α :=
-  s.nthLe i.index i.isLt
+  s.get i
 
 def Pairable (s : List α) (t : List β) : Prop :=
   s.length = t.length
@@ -212,11 +211,11 @@ theorem Index.index_lt {s : List α} (i : Index s) : i.index < s.length :=
 
 theorem Index.eq_of_index_eq {s : List α} {i : Index s} {i' : Index s} :
     i.index = i'.index → i = i' :=
-  Fin.eq_of_veq
+  Fin.eq_of_val_eq
 
 theorem Index.index_eq_of_eq {s : List α} {i : Index s} {i' : Index s} :
     i = i' → i.index = i'.index :=
-  Fin.veq_of_eq
+  Fin.val_eq_of_eq
 
 theorem Index.ne_of_index_ne {s : List α} {i : Index s} {i' : Index s} :
     i.index ≠ i'.index → i ≠ i' :=
@@ -243,7 +242,7 @@ theorem Index.index_injective {s : List α} : Function.Injective <| @Index.index
 
 theorem Index.eq_iff_index_eq {s : List α} (i : Index s) (i' : Index s) :
     i = i' ↔ i.index = i'.index :=
-  Fin.eq_iff_veq _ _
+  Fin.ext_iff
 
 theorem Index.ne_iff_index_ne {s : List α} (i : Index s) (i' : Index s) :
     i ≠ i' ↔ i.index ≠ i'.index :=
@@ -284,7 +283,7 @@ theorem Index.forall_iff {s : List α} {p : Index s → Prop} :
   Fin.forall_iff
 
 theorem Index.val_mem {s : List α} (i : Index s) : i.val ∈ s :=
-  List.nthLe_mem _ _ _
+  List.get_mem ..
 
 theorem Index.index_ne_pred_length_iff {s : List α} {i : Index s} :
     i.index ≠ s.length - 1 ↔ i.index < s.length - 1 :=
@@ -381,7 +380,7 @@ instance (s : List α) (t : List β) : Decidable <| Pairable s t :=
 
 theorem Pairable.list_ext {s t : List α} (h : Pairable s t)
     (h' : ∀ i : Index s, i.val = (h.transfer i).val) : s = t := by
-  apply List.ext_nthLe h
+  apply List.ext_get h
   intro n h₁ h₂
   rw [Index.forall_iff] at h'
   exact h' n h₁
@@ -1224,28 +1223,25 @@ theorem value_eq_none_iff_height_le {x : ValueParentListPair} {i : Index x.value
 def buildMountain (x : ValueParentListPair) : Mountain
     where
   values :=
-    ⟨(fun i : Index x.values.val =>
-          (fun j : Fin (height x i) =>
-              @Option.get _ (value x i j.val) (value_isSome_of_lt_height j.isLt)) <$>
-            List.finRange (height x i)) <$>
-        List.finRange x.values.val.length,
+    ⟨List.finRange x.values.val.length |>.map fun i =>
+        List.finRange (height x i) |>.map fun j =>
+          @Option.get _ (value x i j.val) (value_isSome_of_lt_height j.isLt),
       by
       intro _ h
       simp at h
-      cases' h with i h
-      rw [← h, Ne, List.map_eq_nil, List.finRange_eq_nil, ← Ne]
+      rcases h with ⟨i, h⟩
+      rw [← h, Ne, List.map_eq_nil, List.finRange_eq_nil]
       exact ne_of_gt (height_pos x i)⟩
   parents :=
-    ⟨(fun i : Index x.values.val =>
-          (fun j : Fin (height x i) => parent x i j.val) <$> List.finRange (height x i)) <$>
-        List.finRange x.values.val.length,
+    ⟨List.finRange x.values.val.length |>.map fun i =>
+        List.finRange (height x i) |>.map fun j => parent x i j.val,
       by
       intro _ h
       simp at h
-      cases' h with i h
-      rw [← h, Ne, List.map_eq_nil, List.finRange_eq_nil, ← Ne]
+      rcases h with ⟨i, h⟩
+      rw [← h, Ne, List.map_eq_nil, List.finRange_eq_nil]
       exact ne_of_gt (height_pos x i)⟩
-  pairable := by simp [Pairable₂, Pairable, Index.val]
+  pairable := by simp [Pairable₂, Pairable, Index.val, Pairable.transfer, Index.index]
 
 theorem mountain_length_eq (x : ValueParentListPair) :
     (buildMountain x).values.val.length = x.values.val.length := by simp [buildMountain]
@@ -1266,7 +1262,23 @@ theorem mountain_value_at_index_eq_value (x : ValueParentListPair)
           apply value_isSome_of_lt_height
           rw [← mountain_height_eq]
           exact q.snd_index_lt) :=
-  by simp [Pairable.transfer, Index₂.val, Index.val, buildMountain, Index.index]
+  by
+  simp [Index₂.val, Index.val, buildMountain] at q ⊢
+  rw [List.get_eq_iff, Option.eq_some_iff_get_eq]
+  simp only [List.get_map, List.get_finRange, List.get?_map, Option.get_map, Option.isSome_map]
+  constructor
+  · congr 2
+    conv_lhs =>
+      congr
+      congr
+      rw [List.get?_eq_get (by convert q.snd.isLt; simp [Index.val])]
+    simp [Index.index]
+  · rw [Option.isSome_iff_exists]
+    constructor
+    rw [List.get?_eq_some]
+    refine ⟨?_, rfl⟩
+    convert q.snd.isLt
+    simp [Index.val]
 
 theorem mountain_parent_at_index_eq_parent (x : ValueParentListPair)
     (q : Index₂ (buildMountain x).parents.val) :
@@ -1274,7 +1286,23 @@ theorem mountain_parent_at_index_eq_parent (x : ValueParentListPair)
       parent x
         (Pairable.transfer ((buildMountain x).pairable.fst.symm.trans (mountain_length_eq x)) q.fst)
         q.snd.index :=
-  by simp [Pairable.transfer, Index₂.val, Index.val, buildMountain, Index.index]
+  by
+  simp [Index₂.val, Index.val, buildMountain] at q ⊢
+  rw [List.get_eq_iff, Option.eq_some_iff_get_eq]
+  simp only [List.get_map, List.get_finRange, List.get?_map, Option.get_map, Option.isSome_map]
+  constructor
+  · congr 1
+    conv_lhs =>
+      congr
+      congr
+      rw [List.get?_eq_get (by convert q.snd.isLt; simp [Index.val])]
+    simp [Index.index]
+  · rw [Option.isSome_iff_exists]
+    constructor
+    rw [List.get?_eq_some]
+    refine ⟨?_, rfl⟩
+    convert q.snd.isLt
+    simp [Index.val]
 
 theorem mountain_parents_isCoherent (x : ValueParentListPair) :
     (buildMountain x).parents.IsCoherent :=
@@ -1736,16 +1764,14 @@ def diagonal {x : Mountain} (h_coherent : x.parents.IsCoherent) (h_orphanless : 
     ⟨surfaceAt <$> List.finRange x.values.val.length,
       by
       split_ifs with h
-      rw [Index.val]
-      conv in (surfaceAt <$> _) => rw [List.map_eq_map]
-      rw [List.nthLe_map', List.nthLe_finRange, surfaceAt, Index.last]
-      simp only [Index.index_mk]
+      simp only [Index.val, surfaceAt, List.map_eq_map, List.get_map]
       rw [List.map_eq_map, List.length_map, List.length_finRange] at h
-      have h' := (x.pairable.symm.snd _) ▸ (h_coherent.head_length <| x.pairable.fst.def ▸ h)
-      dsimp [Pairable.transfer] at h'
-      simp only [h']
-      exact Mountain.head_value_eq_one_of_parents_isCoherent_of_isOrphanless_of_length_pos
-        h_coherent h_orphanless h⟩
+      convert Mountain.head_value_eq_one_of_parents_isCoherent_of_isOrphanless_of_length_pos
+        h_coherent h_orphanless h
+      · rw [List.get_finRange]
+      · simp only [Index.last, List.map_eq_map, List.get_finRange]
+        have h' := x.pairable.symm.snd _ ▸ (h_coherent.head_length <| x.pairable.fst.def ▸ h)
+        erw [h']⟩
   parents :=
     ⟨(Option.map Index.index ∘ diagonalPreparentOf h_coherent) <$>
         List.finRange x.parents.val.length,
@@ -1766,7 +1792,7 @@ theorem diagonal_length_eq {x : Mountain} (h_coherent : x.parents.IsCoherent)
 theorem diagonal_value_at {x : Mountain} (h_coherent : x.parents.IsCoherent)
     (h_orphanless : x.IsOrphanless) (i : Index (diagonal h_coherent h_orphanless).values.val) :
     i.val = surfaceAt (Pairable.transfer (diagonal_length_eq _ _) i) := by
-  simp [Pairable.transfer, Index.val, diagonal]
+  simp [Pairable.transfer, Index.val, diagonal]; rfl
 
 @[simp]
 theorem diagonal_parent_at {x : Mountain} (h_coherent : x.parents.IsCoherent)
@@ -1779,7 +1805,7 @@ theorem diagonal_parent_at {x : Mountain} (h_coherent : x.parents.IsCoherent)
                   (diagonal_length_eq h_coherent h_orphanless)).trans
               x.pairable.fst)
             i) :=
-  by simp [Pairable.transfer, Index.val, diagonal]
+  by simp [Pairable.transfer, Index.val, diagonal]; rfl
 
 theorem diagonal_isOrphanless {x : Mountain} (h_coherent : x.parents.IsCoherent)
     (h_orphanless : x.IsOrphanless) : (diagonal h_coherent h_orphanless).IsOrphanless :=
