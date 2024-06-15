@@ -1404,8 +1404,7 @@ theorem mountain_orphanless_isOrphanless {x : ValueParentListPair} (h : x.IsOrph
     simp_rw [this]
     exact hk
 
-theorem mountain_orphanless_isCrossCoherent {x : ValueParentListPair} (_ : x.IsOrphanless) :
-    (buildMountain x).IsCrossCoherent :=
+theorem mountain_isCrossCoherent (x : ValueParentListPair) : (buildMountain x).IsCrossCoherent :=
   by
   use mountain_parents_isCoherent x
   rintro ⟨⟨i, hi⟩, ⟨j, hj⟩⟩ hq
@@ -1426,7 +1425,7 @@ theorem mountain_orphanless_isCrossCoherent {x : ValueParentListPair} (_ : x.IsO
 
 theorem mountain_orphanless_isCoherent {x : ValueParentListPair} (h : x.IsOrphanless) :
     (buildMountain x).IsCoherent :=
-  ⟨mountain_orphanless_isOrphanless h, mountain_orphanless_isCrossCoherent h⟩
+  ⟨mountain_orphanless_isOrphanless h, mountain_isCrossCoherent x⟩
 
 end Build
 
