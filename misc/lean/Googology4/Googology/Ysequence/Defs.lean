@@ -203,9 +203,6 @@ def Index.get {s : List α} (i : Index s) : α :=
 def Pairable (s : List α) (t : List β) : Prop :=
   s.length = t.length
 
-theorem Index.val_lt {s : List α} (i : Index s) : i.val < s.length :=
-  i.isLt
-
 theorem Index.eq_iff_val_eq {s : List α} (i : Index s) (i' : Index s) :
     i = i' ↔ i.val = i'.val :=
   Fin.ext_iff
@@ -229,7 +226,7 @@ theorem Index.get_mem {s : List α} (i : Index s) : i.get ∈ s :=
 
 theorem Index.val_ne_pred_length_iff {s : List α} {i : Index s} :
     i.val ≠ s.length - 1 ↔ i.val < s.length - 1 :=
-  ne_iff_lt_iff_le.mpr (Nat.le_pred_of_lt i.val_lt)
+  ne_iff_lt_iff_le.mpr (Nat.le_pred_of_lt i.isLt)
 
 def Index.last {s : List α} (h : s ≠ []) : Index s :=
   ⟨s.length - 1, Nat.sub_lt (List.length_pos_of_ne_nil h) (Nat.succ_pos 0)⟩
@@ -247,7 +244,7 @@ def inIndexElim {s : List α} (f : Index s → β) (g : β) (i : ℕ) : β :=
 @[simp]
 theorem inIndexElim_yes {s : List α} (f : Index s → β) (g : β) (i : Index s) :
     inIndexElim f g i.val = f i := by
-  simp [inIndexElim, i.val_lt]
+  simp [inIndexElim, i.isLt]
 
 theorem inIndexElim_of_lt {s : List α} (f : Index s → β) (g : β) {i : ℕ} (hi : i < s.length) :
     inIndexElim f g i = f ⟨i, hi⟩ :=
@@ -303,7 +300,7 @@ theorem Pairable.trans {s : List α} {t : List β} {u : List γ} :
   Eq.trans
 
 def Pairable.transfer {s : List α} {t : List β} (h : Pairable s t) (i : Index s) : Index t :=
-  ⟨i.val, lt_of_lt_of_eq i.val_lt h⟩
+  ⟨i.val, lt_of_lt_of_eq i.isLt h⟩
 
 @[simp]
 theorem Pairable.val_transfer {s : List α} {t : List β} (h : Pairable s t) (i : Index s) :
@@ -338,10 +335,10 @@ def Pairable₂ (m₁ : List (List α)) (m₂ : List (List β)) : Prop :=
   ∃ h : Pairable m₁ m₂, ∀ i : Index m₁, Pairable i.get (h.transfer i).get
 
 theorem Index₂.fst_val_lt {m : List (List α)} (q : Index₂ m) : q.fst.val < m.length :=
-  q.fst.val_lt
+  q.fst.isLt
 
 theorem Index₂.snd_val_lt {m : List (List α)} (q : Index₂ m) : q.snd.val < q.fst.get.length :=
-  q.snd.val_lt
+  q.snd.isLt
 
 @[simp]
 theorem Index₂.val_fst {m : List (List α)} (q : Index₂ m) : q.val.fst = q.fst.val :=
@@ -442,8 +439,8 @@ theorem Index₂.val_mk_mk {m : List (List α)} {i : ℕ} {hi : i < m.length} {j
   rfl
 
 theorem Index₂.mk_mk_val {m : List (List α)} (q : Index₂ m) :
-    (⟨⟨q.fst.val, q.fst.val_lt⟩, ⟨q.snd.val, q.snd.val_lt⟩⟩ : Index₂ m) = q :=
-  Index₂.eta₂' _ _ q.snd.val_lt
+    (⟨⟨q.fst.val, q.fst.isLt⟩, ⟨q.snd.val, q.snd.isLt⟩⟩ : Index₂ m) = q :=
+  Index₂.eta₂' _ _ q.snd.isLt
 
 theorem Index₂.exists_iff {m : List (List α)} {p : Index₂ m → Prop} :
     (∃ q : Index₂ m, p q) ↔ ∃ (i : Index m) (j : Index i.get), p ⟨i, j⟩ :=
@@ -483,7 +480,7 @@ theorem Pairable₂.fst_val_transfer {m₁ : List (List α)} {m₂ : List (List 
   rfl
 
 @[simp]
-theorem Pairable₂.snd_val_transfer {m₁ : List (List α)} {m₂ : List (List β)}
+theorem Pairable₂.val₂_snd_transfer {m₁ : List (List α)} {m₂ : List (List β)}
     (h : Pairable₂ m₁ m₂) (q : Index₂ m₁) : (h.transfer q).snd.val = q.snd.val :=
   rfl
 
@@ -1252,14 +1249,14 @@ theorem mountain_parents_isCoherent (x : ValueParentListPair) :
     simp [Pairable.transfer] at iheight
     rw [← iheight, eq_comm, add_left_inj, or_iff_right_iff_imp]
     intro h
-    exact absurd j.val_lt (not_lt_of_le h)
+    exact absurd j.isLt (not_lt_of_le h)
   · refine' lt_of_eq_of_lt _ (toNoneOrLtId_parent x j.val i.val)
     symm
     simp only [inIndexElim]
     rw [dite_eq_iff', and_iff_left]
     swap
     · intro h
-      refine' absurd (lt_of_lt_of_eq i.val_lt _) h
+      refine' absurd (lt_of_lt_of_eq i.isLt _) h
       exact (buildMountain x).pairable.fst.symm.trans (mountain_length_eq x)
     intro
     rw [mountain_parent_at_index_eq_parent]
