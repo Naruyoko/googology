@@ -829,17 +829,16 @@ def buildRowBuilder (x : ValueParentListPair) (value : Index x.values.val → Op
     RowBuilder x :=
   let parent : Index x.values.val → Option ℕ := fun i =>
     findIterateOfToNoneOrLtId toNoneOrLtId_parentCandidateNext
-      (p := (Finset.univ.filter fun p : Index x.values.val =>
-        ∃ m ∈ value p, ∃ n ∈ value i, m < n).map ⟨Fin.val, Fin.val_injective⟩)
-      (fun _ => decidable_of_decidable_of_iff Set.mem_def) i.val
+      (fun p => Finset.decidableMem p <|
+        (Finset.univ.filter fun p : Index x.values.val =>
+          ∃ m ∈ value p, ∃ n ∈ value i, m < n).map ⟨Fin.val, Fin.val_injective⟩)
+      i.val
   have toNoneOrLtId_parent : ToNoneOrLtId (inIndexElim parent none) :=
     by
     apply toNoneOrLtId_inIndexElim_yes_none_of_forall_index
     intro
     apply toNoneOrLtId_findIterate_of_not_mem
-    simp [Fin.val_inj]
-    intros
-    simp_all
+    simp_all [Set.mem_def, Fin.val_inj]
   let parentAsIndex :
     ∀ {i : Index x.values.val} (h : (parent i).isSome),
       { p : Index x.values.val // p.val = (parent i).get h } :=
@@ -981,9 +980,10 @@ theorem parent_zero (x : ValueParentListPair) (i : Index x.values.val) :
           intro
           rw [← Pairable.val_transfer x.pairable _]
           exact x.parents.property _)
-        (p := (Finset.univ.filter fun p : Index x.values.val =>
-          ∃ m ∈ value x p 0, ∃ n ∈ value x i 0, m < n).map ⟨Fin.val, Fin.val_injective⟩)
-        (fun _ => decidable_of_decidable_of_iff Set.mem_def) i.val :=
+        (fun p => Finset.decidableMem p <|
+          (Finset.univ.filter fun p : Index x.values.val =>
+            ∃ m ∈ value x p 0, ∃ n ∈ value x i 0, m < n).map ⟨Fin.val, Fin.val_injective⟩)
+        i.val :=
   by
   rfl
 
@@ -995,10 +995,11 @@ theorem parent_succ (x : ValueParentListPair) (i : Index x.values.val) (j : ℕ)
     parent x i (j + 1) =
       findIterateOfToNoneOrLtId (f := inIndexElim (fun p => parent x p j) none)
         (toNoneOrLtId_parent x j)
-        (p := (Finset.univ.filter fun p : Index x.values.val =>
-            ∃ m ∈ value x p (j + 1), ∃ n ∈ value x i (j + 1), m < n)
-          |>.map ⟨Fin.val, Fin.val_injective⟩)
-        (fun _ => decidable_of_decidable_of_iff Set.mem_def) i.val :=
+        (fun p => Finset.decidableMem p <|
+          (Finset.univ.filter fun p : Index x.values.val =>
+              ∃ m ∈ value x p (j + 1), ∃ n ∈ value x i (j + 1), m < n)
+            |>.map ⟨Fin.val, Fin.val_injective⟩)
+        i.val :=
   rfl
 
 theorem value_succ_isSome_iff_parent_isSome {x : ValueParentListPair} {i : Index x.values.val}
@@ -1509,7 +1510,7 @@ def descendToSurface {P : ParentMountain} (hP : P.IsCoherent) (q : Index₂ P.va
   Sigma.fst <$>
     findIterateOfIterateEventuallyNone
       (descend_finite hP)
-      (fun p => Finset.decidableMem' p <|
+      (fun p => Finset.decidableMem p <|
         Finset.univ.filter fun p : Index₂ P.val => p.get = none ∧ p.fst ≠ q.fst)
       q
 
@@ -1554,7 +1555,7 @@ theorem descendToSurface_isSome_iff {P : ParentMountain} (hP : P.IsCoherent) (q 
   simp only [Option.map_eq_some, Sigma.exists, exists_and_right, exists_eq_right]
   rw [← Index₂.exists_iff (p := fun q' => _ = some q'), ← Option.isSome_iff_exists,
     findIterate_isSome_iff]
-  simp only [Finset.coe_filter, Finset.mem_univ, true_and, Set.mem_setOf_eq]
+  simp only [Finset.mem_filter, Finset.mem_univ, true_and, Set.mem_setOf_eq]
   constructor
   · rintro ⟨k, hk₁, hk₂⟩
     have k_ne_zero : k ≠ 0 := by
