@@ -12,20 +12,6 @@ section Intro
 
 variable {α β γ : Type}
 
-instance (p : Prop) [Decidable p] (q : α → Prop) [DecidablePred q] :
-    DecidablePred <| Option.elim' p q := by
-  intro o
-  cases o <;> simp <;> infer_instance
-
-instance Option.CasesOn.decidable (o : Option α) (p : Prop) [Decidable p] (q : α → Prop)
-    [DecidablePred q] : Decidable <| Option.casesOn o p q := by
-  cases o <;> simp <;> infer_instance
-
-instance Option.CasesOn.decidablePred (p : Prop) [Decidable p] (q : α → Prop) [DecidablePred q] :
-    DecidablePred fun o => Option.casesOn o p q := by
-  intro o
-  cases o <;> simp <;> infer_instance
-
 instance (r : α → α → Prop) [DecidableRel r] : DecidablePred <| Function.uncurry r := by
   unfold Function.uncurry
   infer_instance
@@ -35,11 +21,12 @@ def IterateEventuallyNone (f : α → Option α) : Prop :=
 
 theorem iterateEventuallyNone_or_mem_of_iterateEventuallyNone {f : α → Option α}
     (hf : IterateEventuallyNone f) (p : Set α) (x : α) :
-    ∃ k : ℕ, Option.elim' True p <| (flip bind f)^[k] <| some x := by
+    ∃ k : ℕ, ∀ y ∈ (flip bind f)^[k] <| some x, p y := by
   rcases hf (some x) with ⟨k, hk⟩
   use k
   rw [hk]
-  trivial
+  intros
+  contradiction
 
 def findIndexIterateOfIterateEventuallyNone {f : α → Option α} (hf : IterateEventuallyNone f)
     {p : Set α} (_ : DecidablePred p) (x : α) : ℕ :=
@@ -47,21 +34,20 @@ def findIndexIterateOfIterateEventuallyNone {f : α → Option α} (hf : Iterate
 
 theorem findIndexIterate_spec {f : α → Option α} (hf : IterateEventuallyNone f) {p : Set α}
     (decidable_p : DecidablePred p) (x : α) :
-    Option.elim' True p <|
-      (flip bind f)^[findIndexIterateOfIterateEventuallyNone hf decidable_p x] <| some x :=
+    ∀ y ∈ (flip bind f)^[findIndexIterateOfIterateEventuallyNone hf decidable_p x] <| some x, p y :=
   Nat.find_spec (iterateEventuallyNone_or_mem_of_iterateEventuallyNone hf p x)
 
 theorem findIndexIterate_min {f : α → Option α} (hf : IterateEventuallyNone f) {p : Set α}
     (decidable_p : DecidablePred p) (x : α) {k : ℕ} :
     k < findIndexIterateOfIterateEventuallyNone hf decidable_p x →
-      ¬(Option.elim' True p <| (flip bind f)^[k] <| some x) :=
+      ¬∀ y ∈ (flip bind f)^[k] <| some x, p y :=
   Nat.find_min (iterateEventuallyNone_or_mem_of_iterateEventuallyNone hf p x)
 
 theorem findIndexIterate_eq_iff {f : α → Option α} (hf : IterateEventuallyNone f) {p : Set α}
     (decidable_p : DecidablePred p) (x : α) (k : ℕ) :
     findIndexIterateOfIterateEventuallyNone hf decidable_p x = k ↔
-      (Option.elim' True p <| (flip bind f)^[k] <| some x) ∧
-        ∀ l < k, ¬(Option.elim' True p <| (flip bind f)^[l] <| some x) :=
+      (∀ y ∈ (flip bind f)^[k] <| some x, p y) ∧
+        ∀ l < k, ¬∀ y ∈ (flip bind f)^[l] <| some x, p y :=
   Nat.find_eq_iff (iterateEventuallyNone_or_mem_of_iterateEventuallyNone hf p x)
 
 def findIterateOfIterateEventuallyNone {f : α → Option α} (hf : IterateEventuallyNone f) {p : Set α}
@@ -70,7 +56,7 @@ def findIterateOfIterateEventuallyNone {f : α → Option α} (hf : IterateEvent
 
 theorem findIterate_spec {f : α → Option α} (hf : IterateEventuallyNone f) {p : Set α}
     (decidable_p : DecidablePred p) (x : α) :
-    Option.elim' True p <| findIterateOfIterateEventuallyNone hf decidable_p x :=
+    ∀ y ∈ findIterateOfIterateEventuallyNone hf decidable_p x, p y :=
   findIndexIterate_spec _ _ _
 
 theorem findIterate_isSome_iff {f : α → Option α} (hf : IterateEventuallyNone f) {p : Set α}
@@ -81,26 +67,26 @@ theorem findIterate_isSome_iff {f : α → Option α} (hf : IterateEventuallyNon
   · intro h
     refine' ⟨_, h, _⟩
     obtain ⟨y, hy⟩ := Option.isSome_iff_exists.mp h
-    conv in Option.get _ _ =>
-      congr
-      change findIterateOfIterateEventuallyNone hf decidable_p x
+    conv in (_^[_] _) => change findIterateOfIterateEventuallyNone hf decidable_p x
     have := findIterate_spec hf decidable_p x
-    simp_rw [hy] at this ⊢
+    simp [hy] at this ⊢
     exact this
   · intro h
     rcases h with ⟨k, hk₁, hk₂⟩
     by_contra H
     apply findIndexIterate_min hf decidable_p x (k := k)
     · clear hk₂
-      contrapose hk₁ with H'
-      rw [not_lt] at H'
-      refine' Nat.le_induction H _ k H'
+      apply lt_of_not_ge
+      rw [← Option.ne_none_iff_isSome] at hk₁
+      intro H'
+      apply hk₁
+      refine Nat.le_induction (Option.not_isSome_iff_eq_none.mp H) ?_ k H'
       intro k _ IH
-      rw [Option.not_isSome_iff_eq_none] at IH ⊢
       rw [Function.iterate_succ_apply', IH]
       rfl
-    · obtain ⟨y, hy⟩ := Option.isSome_iff_exists.mp hk₁
-      simp_rw [hy] at hk₂ ⊢
+    · intro y hy
+      rw [Option.mem_def] at hy
+      simp_rw [hy] at hk₂
       exact hk₂
 
 theorem findIterate_eq_none_iff {f : α → Option α} (hf : IterateEventuallyNone f) {p : Set α}
@@ -118,7 +104,7 @@ theorem findIndexIterate_pos_of_not_mem {f : α → Option α} (hf : IterateEven
   rw [pos_iff_ne_zero]
   intro H
   have := findIndexIterate_spec hf decidable_p x
-  rw [H] at this
+  simp [H] at this
   contradiction
 
 def ToNoneOrLtId (f : ℕ → Option ℕ) : Prop :=
@@ -274,17 +260,11 @@ theorem toNoneOrLtId_inIndexElim_yes_none_forall_index_of {s : List α} (f : Ind
 
 theorem not_map_isSome_and_lt_same {s : List α} (f : Index s → Option ℕ+) (i : Index s) :
     i.val ∉
-      (Finset.toSet <| Finset.image Fin.val <| Finset.univ.filter fun j : Index s =>
-        Option.casesOn (Prod.mk <$> f j <*> f i) False (Function.uncurry LT.lt)) := by
-  dsimp
-  simp
-  intro j hj
-  contrapose! hj
-  rw [← Index.eq_iff_val_eq] at hj
-  rw [hj]
-  cases f i <;> dsimp [Seq.seq]
-  · exact not_false
-  · exact irrefl _
+      ((Finset.univ.filter fun j : Index s => ∃ m ∈ f j, ∃ n ∈ f i, m < n)
+        |>.map ⟨Fin.val, Fin.val_injective⟩) := by
+  simp [Fin.val_inj]
+  intros
+  simp_all
 
 theorem Pairable.def {s : List α} {t : List β} : Pairable s t → s.length = t.length :=
   id
@@ -555,9 +535,8 @@ def ParentMountain.IsCoherent (P : ParentMountain) : Prop :=
   ∀ q : Index₂ P.val,
     let i := q.val.fst
     let j := q.val.snd
-    (q.get = none ↔ j = q.fst.get.length - 1) ∧
-      WithBot.lt.lt q.get i ∧
-        Option.elim' True (fun p => ∃ q' : Index₂ P.val, q'.val = (p, j)) q.get
+    (q.get = none ↔ j = q.fst.get.length - 1) ∧ WithBot.lt.lt q.get i ∧
+      ∀ p ∈ q.get, ∃ q' : Index₂ P.val, q'.val = (p, j)
 
 theorem ParentMountain.IsCoherent.get_eq_none_iff {P : ParentMountain} (hP : P.IsCoherent)
     (q : Index₂ P.val) : q.get = none ↔ q.val.snd = q.fst.get.length - 1 :=
@@ -567,9 +546,8 @@ theorem ParentMountain.IsCoherent.get_lt {P : ParentMountain} (hP : P.IsCoherent
     (q : Index₂ P.val) : WithBot.lt.lt q.get q.val.fst :=
   (hP q).right.left
 
-theorem ParentMountain.IsCoherent.elim'_exists_index {P : ParentMountain} (hP : P.IsCoherent)
-    (q : Index₂ P.val) :
-    Option.elim' True (fun p => ∃ q' : Index₂ P.val, q'.val = (p, q.val.snd)) q.get :=
+theorem ParentMountain.IsCoherent.exists_index_eq_val {P : ParentMountain} (hP : P.IsCoherent)
+    (q : Index₂ P.val) : ∀ p ∈ q.get, ∃ q' : Index₂ P.val, q'.val = (p, q.val.snd) :=
   (hP q).right.right
 
 instance : DecidablePred ParentMountain.IsCoherent := fun _ => Fintype.decidableForallFintype
@@ -581,10 +559,7 @@ theorem ParentMountain.IsCoherent.get_isSome_iff {P : ParentMountain} (hP : P.Is
 theorem ParentMountain.IsCoherent.exists_index_of_isSome {P : ParentMountain} (hP : P.IsCoherent)
     {q : Index₂ P.val} (hq : q.get.isSome) :
     ∃ q' : Index₂ P.val, q'.val = (q.get.get hq, q.val.snd) :=
-  by
-  have := hP.elim'_exists_index q
-  rw [← Option.some_get hq] at this
-  exact this
+  by simp [hP.exists_index_eq_val]
 
 theorem ParentMountain.IsCoherent.head_eq_none {P : ParentMountain} (hP : P.IsCoherent)
     (h : 0 < P.val.length) (j : Index (Index.get (⟨0, h⟩ : Index P.val))) :
@@ -840,7 +815,7 @@ structure RowBuilder (x : ValueParentListPair) : Type where
   parent_spec :
     ∀ {i : Index x.values.val} (h : (parent i).isSome),
       let p := (parentAsIndex h).val
-      (Option.casesOn (Prod.mk <$> value p <*> value i) False (Function.uncurry (· < ·)) : Prop)
+      ∃ m ∈ value p, ∃ n ∈ value i, m < n
   value_isSome_of_parent_isSome : ∀ {i : Index x.values.val}, (parent i).isSome → (value i).isSome
   value_parent_isSome_of_parent_isSome :
     ∀ {i : Index x.values.val} (h : (parent i).isSome),
@@ -855,22 +830,16 @@ def buildRowBuilder (x : ValueParentListPair) (value : Index x.values.val → Op
   let parent : Index x.values.val → Option ℕ := fun i =>
     findIterateOfToNoneOrLtId toNoneOrLtId_parentCandidateNext
       (p := (Finset.univ.filter fun p : Index x.values.val =>
-            Option.casesOn (Prod.mk <$> value p <*> value i) False (Function.uncurry (· < ·))).map
-        ⟨Fin.val, Fin.val_injective⟩)
+        ∃ m ∈ value p, ∃ n ∈ value i, m < n).map ⟨Fin.val, Fin.val_injective⟩)
       (fun _ => decidable_of_decidable_of_iff Set.mem_def) i.val
   have toNoneOrLtId_parent : ToNoneOrLtId (inIndexElim parent none) :=
     by
     apply toNoneOrLtId_inIndexElim_yes_none_of_forall_index
-    intro i
+    intro
     apply toNoneOrLtId_findIterate_of_not_mem
-    simp
-    intro k
-    contrapose!
-    intro hk
-    rw [Fin.eq_of_val_eq hk]
-    cases value i
-    · exact not_false
-    · dsimp; exact irrefl _
+    simp [Fin.val_inj]
+    intros
+    simp_all
   let parentAsIndex :
     ∀ {i : Index x.values.val} (h : (parent i).isSome),
       { p : Index x.values.val // p.val = (parent i).get h } :=
@@ -886,17 +855,15 @@ def buildRowBuilder (x : ValueParentListPair) (value : Index x.values.val → Op
   have parent_spec :
     ∀ {i : Index x.values.val} (h : (parent i).isSome),
       let p := (parentAsIndex h).val
-      Option.casesOn (Prod.mk <$> value p <*> value i) False (Function.uncurry (· < ·)) :=
+      ∃ m ∈ value p, ∃ n ∈ value i, m < n :=
     by
     intro i h
     obtain ⟨k, hk⟩ := Option.isSome_iff_exists.mp h
     rcases parentAsIndex h with ⟨⟨p, hp₁⟩, hp₂⟩
     simp only [hk, Option.get_some] at hp₂
     subst hp₂
-    have spec : Option.elim' True _ (parent i) := findIterate_spec _ _ _
-    simp only [hk, Option.elim'] at spec
-    replace spec := Set.mem_def.mpr spec
-    simp at spec
+    have spec : ∀ y ∈ parent i, _ := findIterate_spec _ _ _
+    simp [hk] at spec
     rcases spec with ⟨⟨p', hp'₁⟩, hp'₂, hp'₃⟩
     subst hp'₃
     exact hp'₂
@@ -913,12 +880,9 @@ def buildRowBuilder (x : ValueParentListPair) (value : Index x.values.val → Op
       let p := (parentAsIndex h).val
       (value p).isSome :=
     by
-    intro i h p
-    replace parent_spec : Option.casesOn (Prod.mk <$> value p <*> value i) _ _ := parent_spec h
-    contrapose parent_spec with H
-    rw [Option.not_isSome_iff_eq_none] at H
-    rw [H, Option.map_none, seq_eq_bind, Option.bind_eq_bind, Option.none_bind]
-    exact not_false
+    intro _ h
+    cases parent_spec h
+    simp_all
   { value := value
     parent := parent
     toNoneOrLtId_parent := toNoneOrLtId_parent
@@ -965,8 +929,7 @@ def parentAsIndex {x : ValueParentListPair} {i : Index x.values.val} {j : ℕ}
 theorem parent_spec {x : ValueParentListPair} {i : Index x.values.val} {j : ℕ}
     (h : (parent x i j).isSome) :
     let p := (parentAsIndex h).val
-    (Option.casesOn (Prod.mk <$> value x p j <*> value x i j) False (Function.uncurry (· < ·)) :
-      Prop) :=
+    ∃ m ∈ value x p j, ∃ n ∈ value x i j, m < n :=
   (mountainBuilder x j).parent_spec h
 
 theorem value_isSome_of_parent_isSome {x : ValueParentListPair} {i : Index x.values.val} {j : ℕ} :
@@ -985,15 +948,8 @@ theorem value_parent_lt_value {x : ValueParentListPair} {i : Index x.values.val}
     (value x p j).get (value_parent_isSome_of_parent_isSome h) <
       (value x i j).get (value_isSome_of_parent_isSome h) :=
   by
-  intro p
-  have spec := parent_spec h
-  generalize_proofs hvp₀ hvt₀
-  obtain ⟨m, hm⟩ := Option.isSome_iff_exists.mp hvp₀
-  obtain ⟨n, hn⟩ := Option.isSome_iff_exists.mp hvt₀
-  simp only [Option.get_some, parent, hm, hn]
-  replace spec : Option.casesOn (Prod.mk <$> value x _ j <*> value x i j) _ _ := spec
-  rw [hm, hn] at spec
-  exact spec
+  rcases parent_spec h with ⟨_, _, _, _⟩
+  simp_all
 
 theorem parent_of_value_eq_none {x : ValueParentListPair} {i : Index x.values.val} {j : ℕ} :
     value x i j = none → parent x i j = none := by
@@ -1026,21 +982,22 @@ theorem parent_zero (x : ValueParentListPair) (i : Index x.values.val) :
           rw [← Pairable.val_transfer x.pairable _]
           exact x.parents.property _)
         (p := (Finset.univ.filter fun p : Index x.values.val =>
-              Option.casesOn (Prod.mk <$> value x p 0 <*> value x i 0) False (Function.uncurry (· < ·))).map
-          ⟨Fin.val, Fin.val_injective⟩)
+          ∃ m ∈ value x p 0, ∃ n ∈ value x i 0, m < n).map ⟨Fin.val, Fin.val_injective⟩)
         (fun _ => decidable_of_decidable_of_iff Set.mem_def) i.val :=
   by
   rfl
 
 @[simp]
 theorem parent_succ (x : ValueParentListPair) (i : Index x.values.val) (j : ℕ) :
+    haveI : DecidablePred fun m =>
+        ∃ n ∈ value x i (j + 1), m < n :=
+      fun _ => Option.decidableExistsMem ..
     parent x i (j + 1) =
       findIterateOfToNoneOrLtId (f := inIndexElim (fun p => parent x p j) none)
         (toNoneOrLtId_parent x j)
         (p := (Finset.univ.filter fun p : Index x.values.val =>
-              Option.casesOn (Prod.mk <$> value x p (j + 1) <*> value x i (j + 1)) False
-                (Function.uncurry (· < ·))).map
-          ⟨Fin.val, Fin.val_injective⟩)
+            ∃ m ∈ value x p (j + 1), ∃ n ∈ value x i (j + 1), m < n)
+          |>.map ⟨Fin.val, Fin.val_injective⟩)
         (fun _ => decidable_of_decidable_of_iff Set.mem_def) i.val :=
   rfl
 
@@ -1259,15 +1216,16 @@ theorem mountain_parents_isCoherent (x : ValueParentListPair) :
     rw [mountain_parent_at_index_eq_parent]
     rfl
   · cases' h : Index₂.get _ with k
-    · trivial
+    · intros; simp_all
     · rw [mountain_parent_at_index_eq_parent] at h
       have parent_isSome := Option.isSome_iff_exists.mpr ⟨k, h⟩
       let q := parentAsIndex parent_isSome
-      let p := q.val
-      refine'
-        ⟨⟨Pairable.transfer ((mountain_length_eq x).symm.trans (buildMountain x).pairable.fst) p,
-            ⟨j.val, _⟩⟩,
-          _⟩
+      intro _ hp
+      rw [Option.mem_def, Option.some_inj] at hp
+      subst hp
+      refine
+        ⟨⟨Pairable.transfer ((mountain_length_eq x).symm.trans (buildMountain x).pairable.fst) q.val,
+            ⟨j.val, ?_⟩⟩, ?_⟩
       · apply Eq.subst ((mountain_height_eq' x _).symm.trans ((buildMountain x).pairable.snd _))
         rw [← value_isSome_iff_lt_height]
         exact value_parent_isSome_of_parent_isSome parent_isSome
@@ -1565,7 +1523,7 @@ theorem exists_iterate_descend_spec_of_descendToSurface_isSome {P : ParentMounta
   have hi' := hi'
   simp [descendToSurface] at hi'
   rcases hi' with ⟨j', hi'j'⟩
-  refine' ⟨_, Option.isSome_iff_exists.mpr ⟨_, hi'j'⟩, _⟩
+  refine ⟨_, Option.isSome_iff_exists.mpr ⟨_, hi'j'⟩, ?_⟩
   have hi'j' := hi'j'
   dsimp [findIterateOfIterateEventuallyNone] at hi'j'
   conv in (occs := *) (_^[_] _) => erw [hi'j']
@@ -1573,7 +1531,7 @@ theorem exists_iterate_descend_spec_of_descendToSurface_isSome {P : ParentMounta
   clear hi'j'
   constructor
   · exact Option.eq_some_iff_get_eq.mp hi' |>.snd.symm
-  · have := hi'j' ▸ findIterate_spec ..
+  · have := hi'j' ▸ findIterate_spec _ _ q
     simpa
 
 theorem descendToSurface_to_none_or_lt_val_fst {P : ParentMountain} (hP : P.IsCoherent)
