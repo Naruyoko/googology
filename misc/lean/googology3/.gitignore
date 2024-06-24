@@ -1,6 +1,0 @@
-*.olean
-*.olean.lock
-*.tlean
-*.ast.json
-/_target
-/leanpkg.path
