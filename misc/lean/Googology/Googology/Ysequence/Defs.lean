@@ -1655,12 +1655,10 @@ def diagonal {x : Mountain} (h_coherent : x.parents.IsCoherent) (h_orphanless : 
     ⟨(Option.map Fin.val ∘ diagonalPreparentOf h_coherent) <$>
         List.finRange x.parents.val.length,
       by
-      have :=
-        toNoneOrLtId_inIndexElim_yes_none_forall_index_of _
-          (to_none_or_lt_diagonal_preparent h_coherent)
-      rintro ⟨i, hi⟩
+      rintro ⟨_, _⟩
       simp [Index.get]
-      exact this _⟩
+      exact toNoneOrLtId_inIndexElim_yes_none_forall_index_of _
+        (to_none_or_lt_diagonal_preparent h_coherent) _⟩
   pairable := by simp [Pairable]; exact x.pairable.fst
 
 theorem diagonal_length_eq {x : Mountain} (h_coherent : x.parents.IsCoherent)
@@ -1680,9 +1678,9 @@ theorem diagonal_parent_at {x : Mountain} (h_coherent : x.parents.IsCoherent)
       Fin.val <$>
         diagonalPreparentOf h_coherent
           (Pairable.transfer
-            (((diagonal h_coherent h_orphanless).pairable.symm.trans
-                  (diagonal_length_eq h_coherent h_orphanless)).trans
-              x.pairable.fst)
+            ((diagonal h_coherent h_orphanless).pairable.symm
+              |>.trans (diagonal_length_eq h_coherent h_orphanless)
+              |>.trans x.pairable.fst)
             i) :=
   by simp [Pairable.transfer, Index.get, diagonal]
 
@@ -1706,7 +1704,7 @@ theorem diagonal_lt_base_of_orphanless_of_ne_one {x : Mountain} (h_coherent : x.
     {i :
       Index
         (diagonal h_coherent.to_isCrossCoherent.to_parent_isCoherent
-              h_coherent.to_isOrphanless).values.val}
+          h_coherent.to_isOrphanless).values.val}
     (h_surface : i.get ≠ 1) :
     i.get <
       Index₂.get
@@ -1730,6 +1728,15 @@ variable {C : Mountain → Sort _}
   {x : Mountain} (ne_nil : x.values.val ≠ []) (h_coherent : x.IsCoherent)
 set_option linter.unusedVariables true
 
+lemma buildMountain_diagonal_ne_nil_of_ne_nil {x : Mountain} (ne_nil : x.values.val ≠ [])
+    (h_coherent : x.IsCoherent) :
+      (buildMountain
+          (diagonal h_coherent.to_isCrossCoherent.to_parent_isCoherent h_coherent.to_isOrphanless)
+        |>.values.val) ≠ [] :=
+  by
+  rw [← List.length_pos_iff_ne_nil] at ne_nil ⊢
+  rwa [mountain_length_eq, diagonal_length_eq]
+
 def diagonalRec : C x :=
   @WellFounded.fix { x : Mountain // x.values.val ≠ [] } (fun ⟨x, _⟩ => x.IsCoherent → C x)
     (LT.lt on fun ⟨x, ne_nil⟩ =>
@@ -1747,9 +1754,7 @@ def diagonalRec : C x :=
             (f
               ⟨buildMountain
                   (diagonal h_coherent.to_isCrossCoherent.to_parent_isCoherent h_coherent.to_isOrphanless),
-                by
-                rw [← List.length_pos_iff_ne_nil] at ne_nil ⊢
-                rwa [mountain_length_eq, diagonal_length_eq]⟩
+                buildMountain_diagonal_ne_nil_of_ne_nil ne_nil h_coherent⟩
               (by
                 simp [Function.onFun, mountain_value_at_index_eq_value, Pairable.transfer_last]
                 exact surfaceAt_lt_base_of_orphanless_of_ne_one h_coherent h_surface)
@@ -1765,9 +1770,7 @@ theorem diagonalRec_of_surface_eq_one (h_surface : surfaceAt (Index.last ne_nil)
 theorem diagonalRec_of_surface_ne_one (h_surface : surfaceAt (Index.last ne_nil) ≠ 1) :
     diagonalRec base rec ne_nil h_coherent =
       rec ne_nil h_coherent h_surface (diagonalRec base rec
-        (by
-          rw [← List.length_pos_iff_ne_nil] at ne_nil ⊢
-          rwa [mountain_length_eq, diagonal_length_eq])
+        (buildMountain_diagonal_ne_nil_of_ne_nil ne_nil h_coherent)
         (mountain_orphanless_isCoherent (diagonal_isOrphanless _ _))) :=
   by
   rw [diagonalRec, diagonalRec, WellFounded.fix_eq]
@@ -1777,9 +1780,7 @@ theorem diagonalRec_eq_dite :
     diagonalRec base rec ne_nil h_coherent =
       if h_surface : surfaceAt (Index.last ne_nil) = 1 then base ne_nil h_coherent h_surface
       else rec ne_nil h_coherent h_surface (diagonalRec base rec
-        (by
-          rw [← List.length_pos_iff_ne_nil] at ne_nil ⊢
-          rwa [mountain_length_eq, diagonal_length_eq])
+        (buildMountain_diagonal_ne_nil_of_ne_nil ne_nil h_coherent)
         (mountain_orphanless_isCoherent (diagonal_isOrphanless _ _))) :=
   by
   symm
@@ -1794,36 +1795,41 @@ end Diagonal
 
 section Badroot
 
+def parentIndexSecondFromTopOfLast {x : Mountain} (ne_nil : x.values.val ≠ []) :
+    Index₂ x.parents.val :=
+  ⟨x.pairable.fst.transfer (Index.last ne_nil),
+    ⟨(x.pairable.fst.transfer (Index.last ne_nil)).get.length - 2,
+      Nat.sub_lt (List.length_pos_of_ne_nil (x.parents.index_get_ne_nil _)) two_pos⟩⟩
+
+lemma parentIndexSecondFromTopOfLast_get_isSome_of_last_height_ne_one {x : Mountain}
+    (ne_nil : x.values.val ≠ []) (h_coherent : x.IsCoherent)
+    (h_last_length : (x.pairable.fst.transfer (Index.last ne_nil)).get.length ≠ 1) :
+    (parentIndexSecondFromTopOfLast ne_nil).get.isSome :=
+  by
+  have h_parent_isCoherent := h_coherent.to_isCrossCoherent.to_parent_isCoherent
+  rw [h_parent_isCoherent.get_isSome_iff]
+  simp
+  apply Nat.ne_of_lt
+  apply Nat.sub_succ_lt_self
+  rw [Nat.one_lt_iff_ne_zero_and_ne_one]
+  exact
+    ⟨Ne.symm <| ne_of_lt <| List.length_pos_of_ne_nil <| x.parents.index_get_ne_nil _,
+      h_last_length⟩
+
 /-- `@badroot x _ _` contains (↓BadRoot(x),↓BadRootHeight(x)) -/
 def badroot : ∀ {x : Mountain}, x.values.val ≠ [] → x.IsCoherent → Option (Index₂ x.values.val) :=
   diagonalRec (C := fun x => Option (Index₂ x.values.val))
     (fun x ne_nil h_coherent _ =>
       if h_last_length : (x.pairable.fst.transfer (Index.last ne_nil)).get.length = 1 then none
       else
-        have h_parent_isCoherent := h_coherent.to_isCrossCoherent.to_parent_isCoherent
-        some <| x.pairable.symm.transfer <| Subtype.val <| h_parent_isCoherent.indexParentOfIsSome
-          (q :=
-            ⟨x.pairable.fst.transfer (Index.last ne_nil),
-              ⟨(x.pairable.fst.transfer (Index.last ne_nil)).get.length - 2,
-                Nat.sub_lt
-                  (List.length_pos_of_ne_nil (x.parents.index_get_ne_nil _))
-                  two_pos⟩⟩)
-          (by
-            rw [h_parent_isCoherent.get_isSome_iff]
-            simp
-            apply Nat.ne_of_lt
-            apply Nat.sub_succ_lt_self
-            rw [Nat.one_lt_iff_ne_zero_and_ne_one]
-            exact
-              ⟨Ne.symm <| ne_of_lt <| List.length_pos_of_ne_nil <| x.parents.index_get_ne_nil _,
-                h_last_length⟩))
-    (by
-      intro x ne_nil h_coherent _ p
-      exact
-        p.map fun p =>
-          let i : Index x.values.val :=
-            Pairable.transfer (by rw [Pairable, mountain_length_eq, diagonal_length_eq]) p.fst
-          ⟨i, Index.last (x.values.index_get_ne_nil _)⟩)
+        some <| x.pairable.symm.transfer <| Subtype.val <|
+          h_coherent.to_isCrossCoherent.to_parent_isCoherent.indexParentOfIsSome <|
+          parentIndexSecondFromTopOfLast_get_isSome_of_last_height_ne_one ne_nil h_coherent
+            h_last_length)
+    (fun x ne_nil h_coherent _ p => p.map fun p =>
+      let i : Index x.values.val :=
+        Pairable.transfer (by rw [Pairable, mountain_length_eq, diagonal_length_eq]) p.fst
+      ⟨i, Index.last (x.values.index_get_ne_nil _)⟩)
 
 theorem badroot_of_last_height_eq_one {x : Mountain} (ne_nil : x.values.val ≠ [])
     (h_coherent : x.IsCoherent)
@@ -1851,22 +1857,10 @@ theorem badroot_of_last_height_ne_one_of_last_surface_eq_one {x : Mountain}
     (h_last_length : (x.pairable.fst.transfer (Index.last ne_nil)).get.length ≠ 1)
     (h_surface : surfaceAt (Index.last ne_nil) = 1) :
     badroot ne_nil h_coherent =
-      have h_parent_isCoherent := h_coherent.to_isCrossCoherent.to_parent_isCoherent
-      some <| x.pairable.symm.transfer <| Subtype.val <|
-        h_parent_isCoherent.indexParentOfIsSome
-          (q :=
-            ⟨x.pairable.fst.transfer (Index.last ne_nil),
-              ⟨(x.pairable.fst.transfer (Index.last ne_nil)).get.length - 2,
-                Nat.sub_lt (List.length_pos_of_ne_nil (x.parents.index_get_ne_nil _)) two_pos⟩⟩) <|
-          by
-            rw [h_parent_isCoherent.get_isSome_iff]
-            simp
-            apply Nat.ne_of_lt
-            apply Nat.sub_succ_lt_self
-            rw [Nat.one_lt_iff_ne_zero_and_ne_one]
-            exact
-              ⟨Ne.symm <| ne_of_lt <| List.length_pos_of_ne_nil <| x.parents.index_get_ne_nil _,
-                h_last_length⟩ :=
+      (some <| x.pairable.symm.transfer <| Subtype.val <|
+        h_coherent.to_isCrossCoherent.to_parent_isCoherent.indexParentOfIsSome <|
+        parentIndexSecondFromTopOfLast_get_isSome_of_last_height_ne_one ne_nil h_coherent
+          h_last_length) :=
   by rw [badroot, diagonalRec_eq_dite]; split_ifs; rfl
 
 theorem badroot_of_last_surface_ne_one {x : Mountain} (ne_nil : x.values.val ≠ [])
@@ -1876,9 +1870,7 @@ theorem badroot_of_last_surface_ne_one {x : Mountain} (ne_nil : x.values.val ≠
           (x := buildMountain
             (diagonal h_coherent.to_isCrossCoherent.to_parent_isCoherent
               h_coherent.to_isOrphanless))
-          (by
-            rw [← List.length_pos_iff_ne_nil] at ne_nil ⊢
-            rwa [mountain_length_eq, diagonal_length_eq])
+          (buildMountain_diagonal_ne_nil_of_ne_nil ne_nil h_coherent)
           (mountain_orphanless_isCoherent (diagonal_isOrphanless _ _))
         |>.map fun p =>
           let i : Index x.values.val :=
