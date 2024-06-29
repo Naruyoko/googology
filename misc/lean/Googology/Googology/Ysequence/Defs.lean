@@ -624,8 +624,8 @@ def Mountain.IsOrphanless (x : Mountain) : Prop :=
   ∀ i : Index x.values.val,
     1 < (Index₂.get ⟨i, ⟨0, List.length_pos_of_ne_nil (x.values.index_get_ne_nil _)⟩⟩).val →
       (Index₂.get
-          ⟨x.pairable.fst.transfer i,
-            ⟨0, List.length_pos_of_ne_nil (x.parents.index_get_ne_nil _)⟩⟩).isSome
+        ⟨x.pairable.fst.transfer i,
+          ⟨0, List.length_pos_of_ne_nil (x.parents.index_get_ne_nil _)⟩⟩).isSome
 
 instance : DecidablePred Mountain.IsOrphanless := fun _ => Fintype.decidableForallFintype
 
@@ -1940,6 +1940,22 @@ theorem Mountain.IsLimit.iff_last_length_ne_one {x : Mountain} :
           (((Mountain.pairable _).snd _).def.trans H)
       simpa only [mountain_value_at_index_eq_value, Pairable.transfer_last, Index₂.mk_val_snd,
         value_zero, diagonal_value_at]
+
+/-- `@cutChild x _` contains CutHeight(x) -/
+def cutChild {V : ValueMountain} (ne_nil : V.val ≠ []) : Index (Index.last ne_nil).get :=
+  if surfaceAt (Index.last ne_nil) = 1
+  then
+    ⟨(Index.last ne_nil).get.length - 2,
+      Nat.sub_lt (List.length_pos_of_ne_nil (V.index_get_ne_nil _)) two_pos⟩
+  else Index.last (V.index_get_ne_nil _)
+
+/-- `@cutChild x _` contains CutHeight(x) -/
+def cutChild.val_eq {V : ValueMountain} (ne_nil : V.val ≠ []) :
+    (cutChild ne_nil).val =
+      if surfaceAt (Index.last ne_nil) = 1
+      then (Index.last ne_nil).get.length - 2
+      else (Index.last ne_nil).get.length - 1 :=
+  by unfold cutChild ; split_ifs <;> rfl
 
 end Badroot
 
