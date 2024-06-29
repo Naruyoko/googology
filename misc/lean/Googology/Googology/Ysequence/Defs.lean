@@ -303,6 +303,14 @@ theorem Pairable.list_ext {s t : List α} (h : Pairable s t)
   rw [Index.forall_iff] at h'
   exact h' n h₁
 
+theorem List.eq_nil_iff_of_length_eq {s : List α} {t : List β} (h : s.length = t.length) :
+    s = [] ↔ t = [] :=
+  List.length_eq_zero.symm.trans <| Eq.congr h rfl |>.trans List.length_eq_zero
+
+theorem List.ne_nil_iff_of_length_eq {s : List α} {t : List β} (h : s.length = t.length) :
+    s ≠ [] ↔ t ≠ [] :=
+  not_congr (List.eq_nil_iff_of_length_eq h)
+
 def Index₂ (m : List (List α)) : Type :=
   Σ i : Index m, Index <| Index.get i
 
@@ -495,7 +503,7 @@ def ValueList : Type :=
 def ParentList : Type :=
   { t : List (Option ℕ) // ∀ i : Index t, WithBot.lt.lt i.get i.val }
 
-theorem ParentList.head_eq_none {t : ParentList} (h : 0 < t.val.length) :
+lemma ParentList.head_eq_none {t : ParentList} (h : 0 < t.val.length) :
     Index.get (⟨0, h⟩ : Index t.val) = none :=
   Nat.WithBot.lt_zero_iff.mp (t.property _)
 
@@ -516,19 +524,19 @@ example : { x : ValueParentListPair // ValueParentListPair.IsOrphanless x } :=
   let t := [none, some 0, some 1]
   ⟨⟨⟨s, by decide⟩, ⟨t, by decide⟩, by decide⟩, by decide⟩
 
+def GenericMountain (α : Type) : Type :=
+  { m : List (List α) // ∀ c ∈ m, c ≠ [] }
+
+lemma GenericMountain.index_get_ne_nil (α : Type) {m : GenericMountain α} (i : Index m.val) : i.get ≠ [] :=
+  m.property _ (Index.get_mem i)
+
 /-- 𝕄ᵥ -/
 def ValueMountain : Type :=
-  { V : List (List ℕ+) // ∀ c ∈ V, c ≠ [] }
-
-theorem ValueMountain.index_get_ne_nil (V : ValueMountain) (i : Index V.val) : i.get ≠ [] :=
-  V.property _ (Index.get_mem i)
+  GenericMountain ℕ+
 
 /-- 𝕄ₚ⁻ -/
 def ParentMountain : Type :=
-  { P : List (List (Option ℕ)) // ∀ c ∈ P, c ≠ [] }
-
-theorem ParentMountain.index_get_ne_nil (P : ParentMountain) (i : Index P.val) : i.get ≠ [] :=
-  P.property _ (Index.get_mem i)
+  GenericMountain (Option ℕ)
 
 /-- 𝕄ₚ = {P : 𝕄ₚ⁻ // P.IsCoherent} -/
 def ParentMountain.IsCoherent (P : ParentMountain) : Prop :=
@@ -538,15 +546,15 @@ def ParentMountain.IsCoherent (P : ParentMountain) : Prop :=
     (q.get = none ↔ j = q.fst.get.length - 1) ∧ WithBot.lt.lt q.get i ∧
       ∀ p ∈ q.get, ∃ q' : Index₂ P.val, q'.val = (p, j)
 
-theorem ParentMountain.IsCoherent.get_eq_none_iff {P : ParentMountain} (hP : P.IsCoherent)
+lemma ParentMountain.IsCoherent.get_eq_none_iff {P : ParentMountain} (hP : P.IsCoherent)
     (q : Index₂ P.val) : q.get = none ↔ q.val.snd = q.fst.get.length - 1 :=
   (hP q).left
 
-theorem ParentMountain.IsCoherent.get_lt {P : ParentMountain} (hP : P.IsCoherent)
+lemma ParentMountain.IsCoherent.get_lt {P : ParentMountain} (hP : P.IsCoherent)
     (q : Index₂ P.val) : WithBot.lt.lt q.get q.val.fst :=
   (hP q).right.left
 
-theorem ParentMountain.IsCoherent.exists_index_eq_val {P : ParentMountain} (hP : P.IsCoherent)
+lemma ParentMountain.IsCoherent.exists_index_eq_val {P : ParentMountain} (hP : P.IsCoherent)
     (q : Index₂ P.val) : ∀ p ∈ q.get, ∃ q' : Index₂ P.val, q'.val = (p, q.val.snd) :=
   (hP q).right.right
 
@@ -652,11 +660,11 @@ def Mountain.IsCrossCoherent (x : Mountain) : Prop :=
         (x.pairable.symm.transfer q).get.val -
           (x.pairable.symm.transfer (hP.indexParentOfIsSome hq).val).get.val
 
-theorem Mountain.IsCrossCoherent.to_parent_isCoherent {x : Mountain} (h : x.IsCrossCoherent) :
+lemma Mountain.IsCrossCoherent.to_parent_isCoherent {x : Mountain} (h : x.IsCrossCoherent) :
     x.parents.IsCoherent :=
   h.fst
 
-theorem Mountain.IsCrossCoherent.get_value_above_eq_of_parent_isSome {x : Mountain}
+lemma Mountain.IsCrossCoherent.get_value_above_eq_of_parent_isSome {x : Mountain}
     (h : x.IsCrossCoherent) {q : Index₂ x.parents.val} (hq : q.get.isSome) :
     have hP : x.parents.IsCoherent := h.to_parent_isCoherent
     (x.pairable.symm.transfer (hP.indexAboveOfIsSome hq).val).get.val =
@@ -794,10 +802,10 @@ theorem Mountain.IsCrossCoherent.parent_eq_none_where_value_eq_one {x : Mountain
 def Mountain.IsCoherent (x : Mountain) : Prop :=
   x.IsOrphanless ∧ x.IsCrossCoherent
 
-theorem Mountain.IsCoherent.to_isOrphanless {x : Mountain} (h : x.IsCoherent) : x.IsOrphanless :=
+lemma Mountain.IsCoherent.to_isOrphanless {x : Mountain} (h : x.IsCoherent) : x.IsOrphanless :=
   h.left
 
-theorem Mountain.IsCoherent.to_isCrossCoherent {x : Mountain} (h : x.IsCoherent) :
+lemma Mountain.IsCoherent.to_isCrossCoherent {x : Mountain} (h : x.IsCoherent) :
     x.IsCrossCoherent :=
   h.right
 
@@ -1663,7 +1671,8 @@ def diagonal {x : Mountain} (h_coherent : x.parents.IsCoherent) (h_orphanless : 
 
 theorem diagonal_length_eq {x : Mountain} (h_coherent : x.parents.IsCoherent)
     (h_orphanless : x.IsOrphanless) :
-    (diagonal h_coherent h_orphanless).values.val.length = x.values.val.length := by simp [diagonal]
+    (diagonal h_coherent h_orphanless).values.val.length = x.values.val.length :=
+  by simp [diagonal]
 
 @[simp]
 theorem diagonal_value_at {x : Mountain} (h_coherent : x.parents.IsCoherent)
@@ -1734,8 +1743,8 @@ lemma buildMountain_diagonal_ne_nil_of_ne_nil {x : Mountain} (ne_nil : x.values.
           (diagonal h_coherent.to_isCrossCoherent.to_parent_isCoherent h_coherent.to_isOrphanless)
         |>.values.val) ≠ [] :=
   by
-  rw [← List.length_pos_iff_ne_nil] at ne_nil ⊢
-  rwa [mountain_length_eq, diagonal_length_eq]
+  apply (List.ne_nil_iff_of_length_eq _).mp ne_nil
+  rw [mountain_length_eq, diagonal_length_eq]
 
 def diagonalRec : C x :=
   @WellFounded.fix { x : Mountain // x.values.val ≠ [] } (fun ⟨x, _⟩ => x.IsCoherent → C x)
@@ -1795,16 +1804,15 @@ end Diagonal
 
 section Badroot
 
-def parentIndexSecondFromTopOfLast {x : Mountain} (ne_nil : x.values.val ≠ []) :
-    Index₂ x.parents.val :=
-  ⟨x.pairable.fst.transfer (Index.last ne_nil),
-    ⟨(x.pairable.fst.transfer (Index.last ne_nil)).get.length - 2,
-      Nat.sub_lt (List.length_pos_of_ne_nil (x.parents.index_get_ne_nil _)) two_pos⟩⟩
+def indexSecondFromTopOfLast {α : Type} {m : GenericMountain α} (ne_nil : m.val ≠ []) :
+    Index₂ m.val :=
+  ⟨Index.last ne_nil, ⟨(Index.last ne_nil).get.length - 2,
+    Nat.sub_lt (List.length_pos_of_ne_nil (m.index_get_ne_nil _)) two_pos⟩⟩
 
-lemma parentIndexSecondFromTopOfLast_get_isSome_of_last_height_ne_one {x : Mountain}
+lemma indexSecondFromTopOfLast_parents_val_get_isSome_of_last_height_ne_one {x : Mountain}
     (ne_nil : x.values.val ≠ []) (h_coherent : x.IsCoherent)
     (h_last_length : (x.pairable.fst.transfer (Index.last ne_nil)).get.length ≠ 1) :
-    (parentIndexSecondFromTopOfLast ne_nil).get.isSome :=
+    (indexSecondFromTopOfLast <| List.ne_nil_iff_of_length_eq x.pairable.fst |>.mp ne_nil).get.isSome :=
   by
   have h_parent_isCoherent := h_coherent.to_isCrossCoherent.to_parent_isCoherent
   rw [h_parent_isCoherent.get_isSome_iff]
@@ -1814,7 +1822,7 @@ lemma parentIndexSecondFromTopOfLast_get_isSome_of_last_height_ne_one {x : Mount
   rw [Nat.one_lt_iff_ne_zero_and_ne_one]
   exact
     ⟨Ne.symm <| ne_of_lt <| List.length_pos_of_ne_nil <| x.parents.index_get_ne_nil _,
-      h_last_length⟩
+      x.pairable.fst.transfer_last _ ▸ h_last_length⟩
 
 /-- `@badroot x _ _` contains (↓BadRoot(x),↓BadRootHeight(x)) -/
 def badroot : ∀ {x : Mountain}, x.values.val ≠ [] → x.IsCoherent → Option (Index₂ x.values.val) :=
@@ -1824,7 +1832,7 @@ def badroot : ∀ {x : Mountain}, x.values.val ≠ [] → x.IsCoherent → Optio
       else
         some <| x.pairable.symm.transfer <| Subtype.val <|
           h_coherent.to_isCrossCoherent.to_parent_isCoherent.indexParentOfIsSome <|
-          parentIndexSecondFromTopOfLast_get_isSome_of_last_height_ne_one ne_nil h_coherent
+          indexSecondFromTopOfLast_parents_val_get_isSome_of_last_height_ne_one ne_nil h_coherent
             h_last_length)
     (fun x ne_nil h_coherent _ p => p.map fun p =>
       let i : Index x.values.val :=
@@ -1859,7 +1867,7 @@ theorem badroot_of_last_height_ne_one_of_last_surface_eq_one {x : Mountain}
     badroot ne_nil h_coherent =
       (some <| x.pairable.symm.transfer <| Subtype.val <|
         h_coherent.to_isCrossCoherent.to_parent_isCoherent.indexParentOfIsSome <|
-        parentIndexSecondFromTopOfLast_get_isSome_of_last_height_ne_one ne_nil h_coherent
+        indexSecondFromTopOfLast_parents_val_get_isSome_of_last_height_ne_one ne_nil h_coherent
           h_last_length) :=
   by rw [badroot, diagonalRec_eq_dite]; split_ifs; rfl
 
@@ -1882,19 +1890,31 @@ theorem badroot_of_last_surface_ne_one {x : Mountain} (ne_nil : x.values.val ≠
 def Mountain.IsLimit (x : Mountain) : Prop :=
   ∃ (ne_nil : x.values.val ≠ []) (h_coherent : x.IsCoherent), (badroot ne_nil h_coherent).isSome
 
-theorem Mountain.IsLimit.badroot_isSome {x : Mountain} (h : x.IsLimit) :
-    (badroot h.fst h.snd.fst).isSome :=
+lemma Mountain.IsLimit.to_values_val_ne_nil {x : Mountain} (h : x.IsLimit) : x.values.val ≠ [] :=
+  h.fst
+
+lemma Mountain.IsLimit.to_isCoherent {x : Mountain} (h : x.IsLimit) : x.IsCoherent :=
+  h.snd.fst
+
+lemma Mountain.IsLimit.badroot_isSome {x : Mountain} (h : x.IsLimit) :
+    (badroot h.to_values_val_ne_nil h.to_isCoherent).isSome :=
   h.snd.snd
 
-theorem Mountain.IsLimit.iff_last_length_ne_one {x : Mountain} (ne_nil : x.values.val ≠ [])
-    (h_coherent : x.IsCoherent) :
-    x.IsLimit ↔ (x.pairable.fst.transfer (Index.last ne_nil)).get.length ≠ 1 :=
+theorem Mountain.IsLimit.last_length_ne_one {x : Mountain} (h : x.IsLimit) :
+  (x.pairable.fst.transfer (Index.last h.to_values_val_ne_nil)).get.length ≠ 1 :=
+  fun H => absurd h.badroot_isSome <| Option.not_isSome_iff_eq_none.mpr <|
+    badroot_of_last_height_eq_one h.to_values_val_ne_nil h.to_isCoherent H
+
+theorem Mountain.IsLimit.iff_last_length_ne_one {x : Mountain} :
+    x.IsLimit ↔
+      ∃ (ne_nil : x.values.val ≠ []),
+        x.IsCoherent ∧ (x.pairable.fst.transfer (Index.last ne_nil)).get.length ≠ 1 :=
   by
   constructor
-  · intro h H
-    exact absurd h.badroot_isSome <| Option.not_isSome_iff_eq_none.mpr <|
-      badroot_of_last_height_eq_one ne_nil h_coherent H
-  · refine diagonalRec ?base ?rec ne_nil h_coherent
+  · exact fun h => ⟨h.to_values_val_ne_nil, ⟨h.to_isCoherent, h.last_length_ne_one⟩⟩
+  · rintro ⟨ne_nil, ⟨h_coherent, h⟩⟩
+    revert h
+    refine diagonalRec ?base ?rec ne_nil h_coherent
         (C := fun x => ∀ (ne_nil : x.values.val ≠ []),
           (x.pairable.fst.transfer (Index.last ne_nil)).get.length ≠ 1 → x.IsLimit)
         ne_nil
