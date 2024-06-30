@@ -1010,26 +1010,19 @@ theorem parent_succ (x : ValueParentListPair) (i : Index x.values.val) (j : ℕ)
         i.val :=
   rfl
 
-theorem value_succ_isSome_iff_parent_isSome {x : ValueParentListPair} {i : Index x.values.val}
-    {j : ℕ} : (value x i (j + 1)).isSome ↔ (parent x i j).isSome :=
-  by
-  constructor
-  · contrapose
-    intro H
-    simp [H]
-  · intro h
-    simp [h]
+theorem value_succ_isSome {x : ValueParentListPair} {i : Index x.values.val}
+    {j : ℕ} : (value x i (j + 1)).isSome = (parent x i j).isSome :=
+  by rw [value_succ]; split_ifs <;> simp_all only [Option.isSome_some, Option.isSome_none]
 
 theorem value_succ_eq_none_iff_parent_eq_none {x : ValueParentListPair} {i : Index x.values.val}
     {j : ℕ} : value x i (j + 1) = none ↔ parent x i j = none :=
   by
-  rw [← not_iff_not]
-  iterate 2 rw [← Ne, Option.ne_none_iff_isSome]
-  exact value_succ_isSome_iff_parent_isSome
+  rw [← Decidable.not_iff_not, ← Ne, Option.ne_none_iff_isSome, value_succ_isSome]
+  exact Option.ne_none_iff_isSome.symm
 
 theorem get_value_above_eq_of_parent_isSome {x : ValueParentListPair} {i : Index x.values.val}
     {j : ℕ} (h : (parent x i j).isSome) :
-    ((value x i (j + 1)).get (value_succ_isSome_iff_parent_isSome.mpr h)).val =
+    ((value x i (j + 1)).get (value_succ_isSome.symm ▸ h)).val =
       let p := (parentAsIndex h).val
       ((value x i j).get (value_isSome_of_parent_isSome h)).val -
         ((value x p j).get (value_parent_isSome_of_parent_isSome h)).val :=
@@ -1037,7 +1030,7 @@ theorem get_value_above_eq_of_parent_isSome {x : ValueParentListPair} {i : Index
 
 theorem value_above_lt_value_of_parent_isSome {x : ValueParentListPair} {i : Index x.values.val}
     {j : ℕ} (h : (parent x i j).isSome) :
-    ((value x i (j + 1)).get (value_succ_isSome_iff_parent_isSome.mpr h)).val <
+    ((value x i (j + 1)).get (value_succ_isSome.symm ▸ h)).val <
       ((value x i j).get (value_isSome_of_parent_isSome h)).val :=
   by
   rw [get_value_above_eq_of_parent_isSome h]
