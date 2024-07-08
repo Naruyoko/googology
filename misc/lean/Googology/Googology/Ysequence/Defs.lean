@@ -1,4 +1,5 @@
 import Mathlib.Data.Fintype.Sigma
+import Mathlib.Data.List.Intervals
 import Mathlib.Data.Nat.WithBot
 import Mathlib.Data.Pnat.Basic
 import Mathlib.Order.Iterate
@@ -62,7 +63,8 @@ theorem findIterate_spec {f : α → Option α} (hf : IterateEventuallyNone f) {
 theorem findIterate_isSome_iff {f : α → Option α} (hf : IterateEventuallyNone f) {p : Set α}
     (decidable_p : DecidablePred p) (x : α) :
     (findIterateOfIterateEventuallyNone hf decidable_p x).isSome ↔
-      ∃ (k : ℕ) (h : ((flip bind f)^[k] <| some x).isSome), Option.get _ h ∈ p := by
+      ∃ (k : ℕ) (h : ((flip bind f)^[k] <| some x).isSome), Option.get _ h ∈ p :=
+  by
   constructor
   · intro h
     refine' ⟨_, h, _⟩
@@ -111,7 +113,8 @@ def ToNoneOrLtId (f : ℕ → Option ℕ) : Prop :=
   ∀ n : ℕ, WithBot.lt.lt (f n) (some n)
 
 theorem iterateEventuallyNone_of_toNoneOrLtId {f : ℕ → Option ℕ} (hf : ToNoneOrLtId f) :
-    IterateEventuallyNone f := by
+    IterateEventuallyNone f :=
+  by
   refine fun n => IsWellFounded.induction WithBot.lt.lt
     (C := fun n => ∃ k, (flip bind f)^[k] n = none) n ?_
   intro n IH
@@ -126,6 +129,25 @@ def findIterateOfToNoneOrLtId {f : ℕ → Option ℕ} (hf : ToNoneOrLtId f) {p 
 
 theorem iterate_bind_none (f : α → Option α) : ∀ n : ℕ, (flip bind f)^[n] none = none :=
   Nat.rec rfl fun n IH => (by rw [Function.iterate_succ_apply', IH]; rfl)
+
+theorem iterate_bind_eq_none_ge {f : α → Option α} {m n : ℕ} (hmn : m ≤ n) {x : Option α}
+    (h : (flip bind f)^[m] x = none) : (flip bind f)^[n] x = none :=
+  by rw [← Nat.sub_add_cancel hmn, Function.iterate_add_apply, h, iterate_bind_none]
+
+theorem isSome_of_iterate_bind_isSome {f : α → Option α} {n : ℕ} {x : Option α}
+    (h : ((flip bind f)^[n] x).isSome) : x.isSome :=
+  by
+  rw [← Option.ne_none_iff_isSome] at h ⊢
+  intro H
+  apply h
+  rw [H]
+  apply iterate_bind_none
+
+theorem iterate_bind_isSome_le {f : α → Option α} {m n : ℕ} (hmn : m ≤ n) {x : Option α}
+    (h : ((flip bind f)^[n] x).isSome) : ((flip bind f)^[m] x).isSome :=
+  by
+  rw [← Nat.sub_add_cancel hmn, Function.iterate_add_apply] at h
+  exact isSome_of_iterate_bind_isSome h
 
 theorem toNoneOrLtId_iterate_succ {f : ℕ → Option ℕ} (hf : ToNoneOrLtId f) (n k : ℕ) :
     WithBot.lt.lt ((flip bind f)^[k + 1] <| some n) (some n) := by
@@ -218,7 +240,7 @@ def Index.last {s : List α} (h : s ≠ []) : Index s :=
   ⟨s.length - 1, Nat.sub_lt (List.length_pos_of_ne_nil h) (Nat.succ_pos 0)⟩
 
 @[simp]
-theorem Index.last_val {s : List α} (h : s ≠ []) : (Index.last h).val = s.length - 1 :=
+lemma Index.last_val {s : List α} (h : s ≠ []) : (Index.last h).val = s.length - 1 :=
   rfl
 
 instance (s : List α) : Fintype (Index s) :=
@@ -512,6 +534,14 @@ structure ValueParentListPair where
   values : ValueList
   parents : ParentList
   pairable : Pairable values.val parents.val
+
+theorem toNoneOrLtId_parent_list_get (x : ValueParentListPair) :
+    ToNoneOrLtId (inIndexElim (Index.get ∘ x.pairable.transfer) none) :=
+  by
+  apply toNoneOrLtId_inIndexElim_yes_none_of_forall_index
+  intro
+  rw [← Pairable.val_transfer x.pairable _]
+  exact x.parents.property _
 
 /-- 𝕊⁽²⁾* = {x : 𝕊⁽²⁾ // x.is_orphanless} -/
 def ValueParentListPair.IsOrphanless (x : ValueParentListPair) : Prop :=
@@ -832,8 +862,7 @@ structure RowBuilder (x : ValueParentListPair) : Type where
 
 def buildRowBuilder (x : ValueParentListPair) (value : Index x.values.val → Option ℕ+)
     (parentCandidateNext : Index x.values.val → Option ℕ)
-    (toNoneOrLtId_parentCandidateNext :
-      ToNoneOrLtId (inIndexElim parentCandidateNext none)) :
+    (toNoneOrLtId_parentCandidateNext : ToNoneOrLtId (inIndexElim parentCandidateNext none)) :
     RowBuilder x :=
   let parent : Index x.values.val → Option ℕ := fun i =>
     findIterateOfToNoneOrLtId toNoneOrLtId_parentCandidateNext
@@ -900,12 +929,8 @@ def buildRowBuilder (x : ValueParentListPair) (value : Index x.values.val → Op
 
 def mountainBuilder (x : ValueParentListPair) : ℕ → RowBuilder x
   | 0 =>
-    buildRowBuilder x (some ∘ Index.get) (Index.get ∘ x.pairable.transfer)
-      (by
-        apply toNoneOrLtId_inIndexElim_yes_none_of_forall_index
-        intro
-        rw [← Pairable.val_transfer x.pairable _]
-        exact x.parents.property _)
+    buildRowBuilder x (some ∘ Index.get)
+      (Index.get ∘ x.pairable.transfer) (toNoneOrLtId_parent_list_get x)
   | j + 1 =>
     let prev := mountainBuilder x j
     buildRowBuilder x
@@ -997,8 +1022,7 @@ theorem parent_zero (x : ValueParentListPair) (i : Index x.values.val) :
 
 @[simp]
 theorem parent_succ (x : ValueParentListPair) (i : Index x.values.val) (j : ℕ) :
-    haveI : DecidablePred fun m =>
-        ∃ n ∈ value x i (j + 1), m < n :=
+    haveI : DecidablePred fun m => ∃ n ∈ value x i (j + 1), m < n :=
       fun _ => Option.decidableExistsMem ..
     parent x i (j + 1) =
       findIterateOfToNoneOrLtId (f := inIndexElim (fun p => parent x p j) none)
@@ -1035,6 +1059,78 @@ theorem value_above_lt_value_of_parent_isSome {x : ValueParentListPair} {i : Ind
   by
   rw [get_value_above_eq_of_parent_isSome h]
   exact Nat.sub_lt (PNat.pos _) (PNat.pos _)
+
+lemma exists_iterate_parent_list_get_eq_parent_zero {x : ValueParentListPair} (i : Index x.values.val) :
+    ∃ (k : ℕ), ((flip bind (inIndexElim (Index.get ∘ x.pairable.transfer) none))^[k] <| some i.val) =
+      parent x i 0 :=
+  by exact ⟨_, rfl⟩
+
+lemma exists_iterate_parent_eq_parent_succ {x : ValueParentListPair} (i : Index x.values.val)
+    (j : ℕ) :
+    ∃ (k : ℕ), ((flip bind (inIndexElim (fun p => parent x p j) none))^[k] <| some i.val) =
+      parent x i (j + 1) :=
+  by exact ⟨_, rfl⟩
+
+theorem exists_iterate_parent_eq_parent_upwards {x : ValueParentListPair} (i : Index x.values.val)
+    {j₁ j₂ : ℕ} (hj : j₁ ≤ j₂) :
+    ∃ (k : ℕ), ((flip bind (inIndexElim (fun p => parent x p j₁) none))^[k] <| some i.val) =
+      parent x i j₂ :=
+  by
+  induction j₂, hj using Nat.le_induction generalizing i with
+  | base => exact ⟨1, inIndexElim_yes ..⟩
+  | succ j₂ _ IH₁ =>
+    by_cases h : (parent x i (j₂ + 1)).isSome
+    · obtain ⟨k, hk⟩ := exists_iterate_parent_eq_parent_succ i j₂
+      rw [← hk] at h ⊢
+      clear hk
+      induction k generalizing i with
+      | zero => exact ⟨0, rfl⟩
+      | succ k IH₂ =>
+        obtain ⟨p, hp⟩ :=
+          Option.isSome_iff_exists.mp <| iterate_bind_isSome_le (Nat.le_add_left 1 k) h
+        obtain ⟨k₁, hk₁⟩ := IH₁ i
+        rw [Function.iterate_add_apply, hp] at h ⊢
+        simp only [Option.bind_eq_bind, Function.iterate_one, flip, Option.some_bind,
+          inIndexElim_yes] at hp
+        have p_lt := toNoneOrLtId_parent x j₂ i
+        rw [inIndexElim_yes] at p_lt
+        obtain ⟨k₂, hk₂⟩ :=
+          IH₂ ⟨p, (WithBot.coe_lt_coe.mp (lt_of_eq_of_lt hp.symm p_lt)).trans i.isLt⟩ h
+        rw [← hk₂, ← hp, ← hk₁, ← Function.iterate_add_apply]
+        exact ⟨k₂ + k₁, rfl⟩
+    · rw [Option.not_isSome_iff_eq_none] at h
+      rw [h]
+      apply iterateEventuallyNone_of_toNoneOrLtId
+      apply toNoneOrLtId_parent
+
+theorem exists_iterate_parent_list_get_eq_parent {x : ValueParentListPair} (i : Index x.values.val)
+    (j : ℕ) :
+    ∃ (k : ℕ), ((flip bind (inIndexElim (Index.get ∘ x.pairable.transfer) none))^[k] <| some i.val) =
+      parent x i j :=
+  by
+  by_cases h : (parent x i j).isSome
+  · obtain ⟨k, hk⟩ := exists_iterate_parent_eq_parent_upwards i (Nat.zero_le j)
+    rw [← hk] at h ⊢
+    clear hk
+    induction k generalizing i with
+    | zero => exact ⟨0, rfl⟩
+    | succ k IH =>
+      obtain ⟨p, hp⟩ :=
+        Option.isSome_iff_exists.mp <| iterate_bind_isSome_le (Nat.le_add_left 1 k) h
+      obtain ⟨k₁, hk₁⟩ := exists_iterate_parent_list_get_eq_parent_zero i
+      rw [Function.iterate_add_apply, hp] at h ⊢
+      simp only [Option.bind_eq_bind, Function.iterate_one, flip, Option.some_bind,
+        inIndexElim_yes] at hp
+      have p_lt := toNoneOrLtId_parent x 0 i
+      rw [inIndexElim_yes] at p_lt
+      obtain ⟨k₂, hk₂⟩ :=
+        IH ⟨p, (WithBot.coe_lt_coe.mp (lt_of_eq_of_lt hp.symm p_lt)).trans i.isLt⟩ h
+      rw [← hk₂, ← hp, ← hk₁, ← Function.iterate_add_apply]
+      exact ⟨k₂ + k₁, rfl⟩
+  · rw [Option.not_isSome_iff_eq_none] at h
+    rw [h]
+    apply iterateEventuallyNone_of_toNoneOrLtId
+    apply toNoneOrLtId_parent_list_get
 
 def height_finite (x : ValueParentListPair) (i : Index x.values.val) :
     ∃ j : ℕ, value x i j = none :=
@@ -1125,7 +1221,6 @@ def buildMountain (x : ValueParentListPair) : Mountain :=
       forall_apply_eq_imp_iff, List.map_eq_nil, List.finRange_eq_nil]
     intro
     exact ne_of_gt (height_pos ..)
-
 
 theorem mountain_length_eq (x : ValueParentListPair) :
     (buildMountain x).values.val.length = x.values.val.length := by simp [buildMountain]
@@ -1311,6 +1406,93 @@ theorem mountain_orphanless_isCoherent {x : ValueParentListPair} (h : x.IsOrphan
     (buildMountain x).IsCoherent :=
   ⟨mountain_orphanless_isOrphanless h, mountain_isCrossCoherent x⟩
 
+theorem iterate_mountain_indexParentOfIsSome_map_val_snd_eq_of_isSome {x : ValueParentListPair}
+    (q : Index₂ (buildMountain x).parents.val) (k : ℕ) h :
+    (((flip bind (fun q =>
+        if h : q.get.isSome then some ((mountain_parents_isCoherent x).indexParentOfIsSome h)
+        else none))^[k] <| some q).map (·.val.snd)).get h =
+      q.val.snd :=
+  by
+  rw [← Option.some_inj, Option.some_get]
+  induction k with
+  | zero => rfl
+  | succ k IH =>
+    rw [Option.isSome_map] at h
+    have h' := iterate_bind_isSome_le (Nat.le_succ k) h
+    specialize IH <| (Option.isSome_map ..).symm ▸ h'
+    rw [Function.iterate_succ_apply'] at h ⊢
+    set q' := _^[k] _
+    rw [← Option.some_get h'] at h IH ⊢
+    simp [flip, -Option.some_get,
+      ((mountain_parents_isCoherent x).indexParentOfIsSome _).property] at h ⊢
+    constructor
+    · apply Decidable.of_not_not
+      intro
+      simp_all only [dite_false, Option.isSome_none]
+    · exact Option.some_inj.mp IH
+
+theorem iterate_mountain_indexParentOfIsSome_map_val_fst_eq_iterate_mountain_parent {x : ValueParentListPair}
+    (q : Index₂ (buildMountain x).parents.val) (k : ℕ) :
+    ((flip bind (fun q =>
+        if h : q.get.isSome then some ((mountain_parents_isCoherent x).indexParentOfIsSome h)
+        else none))^[k] <| some q).map (·.val.fst) =
+      ((flip bind (inIndexElim (fun p => parent x p q.val.snd) none))^[k] <| some q.val.fst) :=
+  by
+  induction k with
+  | zero => rfl
+  | succ k IH =>
+    rw [Function.iterate_succ_apply', Function.iterate_succ_apply', ← IH]
+    set q' := _^[k] _
+    by_cases h : q'.isSome
+    · have := iterate_mountain_indexParentOfIsSome_map_val_snd_eq_of_isSome q k <|
+        (Option.isSome_map ..).symm ▸ h
+      rw [Option.get_map] at this
+      change (q'.get h).val.snd = _ at this
+      rw [← Option.some_get h]
+      simp [flip, -Option.some_get]
+      erw [inIndexElim_of_lt _ _ <| Nat.lt_of_lt_of_eq (q'.get h).val_fst_lt <|
+          (buildMountain x).pairable.symm.fst.trans (mountain_length_eq x),
+        ← this, ← mountain_parent_at_index_eq_parent x (q'.get h)]
+      split_ifs with h'
+      · rw [Option.map_some', ((mountain_parents_isCoherent x).indexParentOfIsSome _).property]
+        exact Option.some_get _
+      · symm
+        exact Option.not_isSome_iff_eq_none.mp h'
+    · rw [Option.not_isSome_iff_eq_none] at h
+      rw [h]
+      rfl
+
+theorem exists_iterate_indexParentOfIsSome_map_val_fst_eq_mountain_parent_upwards
+    {x : ValueParentListPair} (i : Index (buildMountain x).parents.val) {j₁ j₂ : Index i.get} :
+    j₁ ≤ j₂ →
+    ∃ (k : ℕ),
+      ((flip bind (fun q : Index₂ (buildMountain x).parents.val =>
+          if h : q.get.isSome then some ((mountain_parents_isCoherent x).indexParentOfIsSome h)
+          else none))^[k] <| some ⟨i, j₁⟩).map (·.val.fst) =
+        j₂.get :=
+  by
+  conv in _ = _ =>
+    congr
+    · rw [iterate_mountain_indexParentOfIsSome_map_val_fst_eq_iterate_mountain_parent]
+    · change Index₂.get ⟨i, j₂⟩; rw [mountain_parent_at_index_eq_parent]
+  exact exists_iterate_parent_eq_parent_upwards ⟨i.val,
+    Nat.lt_of_lt_of_eq i.isLt <| (buildMountain x).pairable.symm.fst.trans (mountain_length_eq x)⟩
+
+theorem exists_ancestor_eq_map_val_fst_of_mountain_parent_upwards {x : ValueParentListPair}
+    (i : Index (buildMountain x).parents.val) {j₁ j₂ : Index i.get} : j₁ ≤ j₂ →
+    ∃ (k : ℕ),
+      ((flip bind (fun q : Index₂ (buildMountain x).parents.val =>
+          if h : q.get.isSome then some ((mountain_parents_isCoherent x).indexParentOfIsSome h)
+          else none))^[k] <| some ⟨i, j₁⟩).map (·.val.fst) =
+        j₂.get :=
+  by
+  conv in _ = _ =>
+    congr
+    · rw [iterate_mountain_indexParentOfIsSome_map_val_fst_eq_iterate_mountain_parent]
+    · change Index₂.get ⟨i, j₂⟩; rw [mountain_parent_at_index_eq_parent]
+  exact exists_iterate_parent_eq_parent_upwards ⟨i.val,
+    Nat.lt_of_lt_of_eq i.isLt <| (buildMountain x).pairable.symm.fst.trans (mountain_length_eq x)⟩
+
 end Build
 
 section Diagonal
@@ -1494,9 +1676,8 @@ theorem descend_finite {P : ParentMountain} (hP : P.IsCoherent) :
   · exact ⟨0, rfl⟩
   · cases' h : descend hP q with q'
     · exact ⟨1, h⟩
-    · specialize IH (descend hP q) <|
-        by
-        simp [r, h]
+    · specialize IH (descend hP q) _
+      · simp [r, h]
         have h' := descend_lt_and_eq_or_eq_and_lt_of_it_isSome (Option.isSome_iff_exists.mpr ⟨_, h⟩)
         simp_rw [← Index₂.snd_val] at h'
         simp [h] at h'
@@ -1800,7 +1981,12 @@ section Badroot
 def indexSecondFromTopOfLast {α : Type} {m : GenericMountain α} (ne_nil : m.val ≠ []) :
     Index₂ m.val :=
   ⟨Index.last ne_nil, ⟨(Index.last ne_nil).get.length - 2,
-    Nat.sub_lt (List.length_pos_of_ne_nil (m.index_get_ne_nil _)) two_pos⟩⟩
+    Nat.sub_lt (List.length_pos_of_ne_nil (m.index_get_ne_nil _)) Nat.two_pos⟩⟩
+
+@[simp]
+lemma indexSecondFromTopOfLast_val {α : Type} {m : GenericMountain α} (ne_nil : m.val ≠ []) :
+    (indexSecondFromTopOfLast ne_nil).val = (m.val.length - 1, (Index.last ne_nil).get.length - 2) :=
+  rfl
 
 lemma indexSecondFromTopOfLast_parents_val_get_isSome_of_last_height_ne_one {x : Mountain}
     (ne_nil : x.values.val ≠ []) (h_coherent : x.IsCoherent)
@@ -1828,9 +2014,8 @@ def badroot : ∀ {x : Mountain}, x.values.val ≠ [] → x.IsCoherent → Optio
           indexSecondFromTopOfLast_parents_val_get_isSome_of_last_height_ne_one ne_nil h_coherent
             h_last_length)
     (fun x ne_nil h_coherent _ p => p.map fun p =>
-      let i : Index x.values.val :=
-        Pairable.transfer (by rw [Pairable, mountain_length_eq, diagonal_length_eq]) p.fst
-      ⟨i, Index.last (x.values.index_get_ne_nil _)⟩)
+      ⟨Pairable.transfer (by rw [Pairable, mountain_length_eq, diagonal_length_eq]) p.fst,
+        Index.last (x.values.index_get_ne_nil _)⟩)
 
 theorem badroot_of_last_height_eq_one {x : Mountain} (ne_nil : x.values.val ≠ [])
     (h_coherent : x.IsCoherent)
@@ -1874,9 +2059,8 @@ theorem badroot_of_last_surface_ne_one {x : Mountain} (ne_nil : x.values.val ≠
           (buildMountain_diagonal_ne_nil_of_ne_nil ne_nil h_coherent)
           (mountain_orphanless_isCoherent (diagonal_isOrphanless _ _))
         |>.map fun p =>
-          let i : Index x.values.val :=
-            Pairable.transfer (by rw [Pairable, mountain_length_eq, diagonal_length_eq]) p.fst
-          ⟨i, Index.last (x.values.index_get_ne_nil _)⟩) :=
+          ⟨Pairable.transfer (by rw [Pairable, mountain_length_eq, diagonal_length_eq]) p.fst,
+            Index.last (x.values.index_get_ne_nil _)⟩) :=
   by rw [badroot, diagonalRec_of_surface_ne_one (h_surface := h_surface)]; rfl
 
 /-- 𝕄ᴸ = {x : Mountain // x.IsLimit} -/
@@ -1939,7 +2123,7 @@ def cutChild {V : ValueMountain} (ne_nil : V.val ≠ []) : Index (Index.last ne_
   if surfaceAt (Index.last ne_nil) = 1
   then
     ⟨(Index.last ne_nil).get.length - 2,
-      Nat.sub_lt (List.length_pos_of_ne_nil (V.index_get_ne_nil _)) two_pos⟩
+      Nat.sub_lt (List.length_pos_of_ne_nil (V.index_get_ne_nil _)) Nat.two_pos⟩
   else Index.last (V.index_get_ne_nil _)
 
 /-- `@cutChild x _` contains CutHeight(x) -/
