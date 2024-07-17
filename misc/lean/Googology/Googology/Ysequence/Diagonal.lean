@@ -27,15 +27,7 @@ theorem surfaceAt_lt_base_of_orphanless_of_ne_one {x : Mountain} (h_coherent : x
     rw [← Decidable.not_imp_not, Option.not_isSome_iff_eq_none, not_lt] at h'
     specialize h' h
     erw [PNat.coe_le_coe _ 1, PNat.le_one_iff] at h'
-    rw [surfaceAt] at h_surface
-    conv at h_surface =>
-      lhs
-      congr
-      congr
-      rw [Index.last]
-      congr
-      rw [(x.pairable.snd _).def, H]
-      simp
+    simp_rw [surfaceAt, Index.last, (x.pairable.snd _).def, H] at h_surface
     contradiction
 
 def descend {P : ParentMountain} (hP : P.IsCoherent) (q : Index₂ P.val) : Option (Index₂ P.val) :=
@@ -195,37 +187,36 @@ theorem descend_finite {P : ParentMountain} (hP : P.IsCoherent) :
       exact ⟨k + 1, hk⟩
 
 def descendToSurface {P : ParentMountain} (hP : P.IsCoherent) (q : Index₂ P.val) :
-    Option (Index P.val) :=
-  Sigma.fst <$>
-    findIterateOfIterateEventuallyNone
-      (descend_finite hP)
-      (fun p => Finset.decidableMem p <|
-        Finset.univ.filter fun p : Index₂ P.val => p.get = none ∧ p.fst ≠ q.fst)
-      q
+    Option (Index₂ P.val) :=
+  findIterateOfIterateEventuallyNone
+    (descend_finite hP)
+    (fun p => Finset.decidableMem p <|
+      Finset.univ.filter fun p : Index₂ P.val => p.get = none ∧ p.fst ≠ q.fst)
+    q
+
+theorem descendToSurface_eq_last {P : ParentMountain} (hP : P.IsCoherent) (q : Index₂ P.val)
+    (h : (descendToSurface hP q).isSome) :
+    (descendToSurface hP q).get h =
+      ⟨((descendToSurface hP q).get h).fst, Index.last (P.index_get_ne_nil _)⟩ :=
+  by
+  ext
+  · rfl
+  · rw [Index₂.mk_val_snd, Index.last_val, ← hP.get_eq_none_iff]
+    have := findIndexIterate_spec _ _ _ _ (Option.get_mem h)
+    exact Finset.mem_filter.mp this |>.right.left
 
 theorem exists_iterate_descend_spec_of_descendToSurface_isSome {P : ParentMountain}
     (hP : P.IsCoherent) (q : Index₂ P.val) (h : (descendToSurface hP q).isSome) :
     ∃ (k : ℕ) (hk : ((flip bind (descend hP))^[k] <| some q).isSome),
-      (Option.get _ hk).fst = (descendToSurface hP q).get h ∧
+      Option.get _ hk = (descendToSurface hP q).get h ∧
         (Option.get _ hk).get = none ∧ (Option.get _ hk).fst ≠ q.fst :=
   by
-  obtain ⟨i', hi'⟩ := Option.isSome_iff_exists.mp h
-  have hi' := hi'
-  simp [descendToSurface] at hi'
-  rcases hi' with ⟨j', hi'j'⟩
-  refine ⟨_, Option.isSome_iff_exists.mpr ⟨_, hi'j'⟩, ?_⟩
-  have hi'j' := hi'j'
-  dsimp [findIterateOfIterateEventuallyNone] at hi'j'
-  conv in (occs := *) (_^[_] _) => erw [hi'j']
-  dsimp
-  clear hi'j'
-  constructor
-  · exact Option.eq_some_iff_get_eq.mp hi' |>.snd.symm
-  · have := hi'j' ▸ findIterate_spec _ _ q
-    simpa
+  refine ⟨_, h, ⟨rfl, ?_⟩⟩
+  have := findIndexIterate_spec _ _ _ _ (Option.get_mem h)
+  exact Finset.mem_filter.mp this |>.right
 
 theorem descendToSurface_to_none_or_lt_val_fst {P : ParentMountain} (hP : P.IsCoherent)
-    (q : Index₂ P.val) : WithBot.lt.lt ((descendToSurface hP q).map Fin.val) q.val.fst :=
+    (q : Index₂ P.val) : WithBot.lt.lt ((descendToSurface hP q).map (·.val.fst)) q.val.fst :=
   by
   cases h : descendToSurface hP q
   · exact WithBot.bot_lt_coe _
@@ -239,11 +230,7 @@ theorem descendToSurface_to_none_or_lt_val_fst {P : ParentMountain} (hP : P.IsCo
 theorem descendToSurface_isSome_iff {P : ParentMountain} (hP : P.IsCoherent) (q : Index₂ P.val) :
     (descendToSurface hP q).isSome ↔ 0 < q.val.snd ∨ q.get.isSome :=
   by
-  rw [descendToSurface, Option.isSome_iff_exists]
-  generalize_proofs descend_finite
-  simp only [Option.map_eq_some, Sigma.exists, exists_and_right, exists_eq_right]
-  rw [← Index₂.exists_iff (p := fun q' => _ = some q'), ← Option.isSome_iff_exists,
-    findIterate_isSome_iff]
+  rw [descendToSurface, findIterate_isSome_iff]
   simp only [Finset.mem_filter, Finset.mem_univ, true_and, Set.mem_setOf_eq]
   constructor
   · rintro ⟨k, hk₁, hk₂⟩
@@ -252,20 +239,17 @@ theorem descendToSurface_isSome_iff {P : ParentMountain} (hP : P.IsCoherent) (q 
       subst H
       simp [Set.mem_def] at hk₂
     obtain ⟨k, rfl⟩ := Nat.exists_eq_succ_of_ne_zero k_ne_zero
-    clear k_ne_zero hk₂
-    by_contra H
-    rcases q with ⟨⟨i, hi⟩, ⟨j, hj⟩⟩
-    rw [Decidable.or_iff_not_and_not, Decidable.not_not] at H
-    rcases H with ⟨H', H⟩
-    simp only [not_lt, nonpos_iff_eq_zero] at H'
-    subst H'
-    induction k with
-    | zero => simp [flip, descend, H] at hk₁
-    | succ k IH =>
-      rw [imp_false, Option.not_isSome_iff_eq_none] at IH
-      rw [Function.iterate_succ_apply', IH] at hk₁
-      contradiction
-  · have descend_finite_on_q := descend_finite (some q)
+    clear hk₂
+    revert hk₁
+    rw [← Option.ne_none_iff_isSome, ← Option.ne_none_iff_isSome, Nat.pos_iff_ne_zero, ← Decidable.not_and_iff_or_not]
+    apply mt
+    intro H
+    apply iterate_bind_eq_none_ge <| Nat.succ_le_succ <| Nat.zero_le k
+    simp only [Option.bind_eq_bind, Function.iterate_one, flip, descend, Option.some_bind, H,
+      Option.isSome_none, ↓reduceDite]
+    rw [← Index₂.snd_val] at H
+    split <;> simp_all
+  · have descend_finite_on_q := descend_finite hP (some q)
     generalize k_def : Nat.find descend_finite_on_q = k
     obtain ⟨hk_eq, hk_lt⟩ := (Nat.find_eq_iff descend_finite_on_q).mp k_def
     have k_ne_zero : k ≠ 0 := by
@@ -275,8 +259,8 @@ theorem descendToSurface_isSome_iff {P : ParentMountain} (hP : P.IsCoherent) (q 
     obtain ⟨k, rfl⟩ := Nat.exists_eq_succ_of_ne_zero k_ne_zero
     clear k_ne_zero
     intro h
-    have last_isSome := Option.ne_none_iff_isSome.mp (hk_lt k (lt_add_one k))
-    refine' ⟨k, last_isSome, _⟩
+    have last_isSome := Option.ne_none_iff_isSome.mp (hk_lt k (Nat.lt_succ_self k))
+    refine ⟨k, last_isSome, ?_⟩
     rw [Set.mem_def]
     have last_pairwise_le := iterate_descend_pairwise_le_of_it_isSome last_isSome
     extract_lets i j r i' j' at last_pairwise_le
@@ -305,7 +289,7 @@ theorem descendToSurface_isSome_iff {P : ParentMountain} (hP : P.IsCoherent) (q 
         | inr h => exact absurd hk_eq.left (Option.ne_none_iff_isSome.mpr h)
 
 def diagonalPreparentOf {P : ParentMountain} (hP : P.IsCoherent) (i : Index P.val) :
-    Option (Index P.val) :=
+    Option (Index₂ P.val) :=
   descendToSurface hP ⟨i, Index.last (P.index_get_ne_nil i)⟩
 
 theorem diagonalPreparentOf_isSome_iff {P : ParentMountain} (hP : P.IsCoherent) (i : Index P.val) :
@@ -319,7 +303,7 @@ theorem diagonalPreparentOf_isSome_iff {P : ParentMountain} (hP : P.IsCoherent) 
   simp [hP.get_eq_none_iff]
 
 theorem to_none_or_lt_diagonal_preparent {P : ParentMountain} (hP : P.IsCoherent) :
-    ToNoneOrLtId <| inIndexElim (Option.map Fin.val ∘ diagonalPreparentOf hP) none :=
+    ToNoneOrLtId <| inIndexElim (Option.map (·.val.fst) ∘ diagonalPreparentOf hP) none :=
   by
   apply toNoneOrLtId_inIndexElim_yes_none_of_forall_index
   intro q
@@ -341,7 +325,7 @@ def diagonal {x : Mountain} (h_coherent : x.parents.IsCoherent) (h_orphanless : 
         have h' := x.pairable.symm.snd _ ▸ (h_coherent.head_length <| x.pairable.fst.def ▸ h)
         erw [h']⟩
   parents :=
-    ⟨(Option.map Fin.val ∘ diagonalPreparentOf h_coherent) <$>
+    ⟨(Option.map (·.val.fst) ∘ diagonalPreparentOf h_coherent) <$>
         List.finRange x.parents.val.length,
       by
       rintro ⟨_, _⟩
@@ -365,7 +349,7 @@ theorem diagonal_value_at {x : Mountain} (h_coherent : x.parents.IsCoherent)
 theorem diagonal_parent_at {x : Mountain} (h_coherent : x.parents.IsCoherent)
     (h_orphanless : x.IsOrphanless) (i : Index (diagonal h_coherent h_orphanless).parents.val) :
     i.get =
-      Fin.val <$>
+      (·.val.fst) <$>
         diagonalPreparentOf h_coherent
           (Pairable.transfer
             ((diagonal h_coherent h_orphanless).pairable.symm

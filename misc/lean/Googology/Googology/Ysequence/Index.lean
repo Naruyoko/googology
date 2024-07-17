@@ -377,6 +377,9 @@ theorem Index₂.get_mem {m : List (List α)} (q : Index₂ m) : ∃ c ∈ m, q.
 instance (m : List (List α)) : Fintype (Index₂ m) :=
   Sigma.instFintype
 
+instance (m : List (List α)) : DecidableEq (Index₂ m) :=
+  Sigma.instDecidableEqSigma
+
 instance (m₁ : List (List α)) (m₂ : List (List β)) : Decidable <| Pairable₂ m₁ m₂ :=
   exists_prop_decidable _
 
