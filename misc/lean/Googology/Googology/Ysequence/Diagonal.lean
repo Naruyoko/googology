@@ -288,6 +288,98 @@ theorem descendToSurface_isSome_iff {P : ParentMountain} (hP : P.IsCoherent) (q 
         | inl h => exact absurd hk_eq.right (ne_of_lt h).symm
         | inr h => exact absurd hk_eq.left (Option.ne_none_iff_isSome.mpr h)
 
+theorem exists_iterate_parent_eq_descendToSurface_from_result_height_of_isSome
+    {x : ValueParentListPair} (q : Index₂ (buildMountain x).parents.val)
+    (h : (descendToSurface (mountain_parents_isCoherent x) q).isSome) :
+    ∃ (k : ℕ),
+      (Option.get _ h).val.fst ∈
+        ((flip bind (inIndexElim (fun p => parent x p (Option.get _ h).val.snd) none))^[k] <|
+          some q.val.fst) :=
+  by
+  unfold descendToSurface findIterateOfIterateEventuallyNone at *
+  generalize findIndexIterateOfIterateEventuallyNone .. = k at *
+  suffices ∀ j ≤ _, ∃ k, (flip bind (inIndexElim (fun p => parent x p j) none))^[k] _ = _
+    from this _ (Nat.le_refl _)
+  induction k with
+  | zero => intros; exact ⟨0, rfl⟩
+  | succ k IH =>
+    intro j hj
+    have h' := iterate_bind_isSome_le (Nat.le_succ k) h
+    specialize IH h' j (Nat.le_trans hj _)
+    · conv in _^[_] _ => rw [Function.iterate_succ_apply', ← Option.some_get h']
+      exact (descend_pairwise_le_of_it_isSome _).right
+    rcases IH with ⟨k₁, hk₁⟩
+    refine Exists.casesOn ?_ fun k' hk' => ⟨k' + k₁, hk'⟩
+    conv in _ = _ => rw [Function.iterate_add_apply, hk₁]
+    have t_eq := Eq.refl <| (flip bind (descend (mountain_parents_isCoherent x)))^[k + 1] <| some q
+    conv_rhs at t_eq =>
+      rw [Function.iterate_succ_apply', ← Option.some_get h']
+      conv in bind => rw [Option.bind_eq_bind]
+      rw [flip, Option.some_bind]
+      conv in (occs := 1) descend => unfold descend
+    split_ifs at t_eq
+    · simp only [t_eq, Option.get_some,
+        ((mountain_parents_isCoherent x).indexParentOfIsSome _).property,
+        mountain_parent_at_index_eq_parent, Option.some_get]
+      convert exists_iterate_parent_eq_parent_upwards _ _; · rfl
+      refine Nat.le_trans hj ?_
+      conv in _^[_] _ => rw [Function.iterate_succ_apply', ← Option.some_get h']
+      exact (descend_pairwise_le_of_it_isSome _).right
+    · split at t_eq
+      · rw [t_eq] at h
+        contradiction
+      · use 0
+        simp only [t_eq]
+        rfl
+
+theorem exists_iterate_mountain_indexParentOfIsSome_eq_descendToSurface_from_result_height
+    {x : ValueParentListPair} (q : Index₂ (buildMountain x).parents.val)
+    (h : (descendToSurface (mountain_parents_isCoherent x) q).isSome) :
+    let q' : Index₂ _ :=
+      ⟨q.fst, ⟨(Option.get _ h).val.snd,
+        lt_of_le_of_lt (iterate_descend_pairwise_le_of_it_isSome h).right q.val_snd_lt⟩⟩
+    ∃ (k : ℕ),
+      Option.get _ h ∈
+        ((flip bind (fun q =>
+          if h : q.get.isSome then some ((mountain_parents_isCoherent x).indexParentOfIsSome h)
+          else none))^[k] <| some q') :=
+  by
+  intro q'
+  have ⟨k', hk'⟩ :=
+    exists_iterate_parent_eq_descendToSurface_from_result_height_of_isSome _ h
+  use k'
+  rw [Option.mem_def, Option.eq_some_iff_get_eq]
+  refine have h' := ?_; ⟨h', ?_⟩
+  · rw [← Option.isSome_map (·.val.fst),
+      iterate_mountain_indexParentOfIsSome_map_val_fst_eq_iterate_mountain_parent,
+      Option.isSome_iff_exists]
+    exact ⟨_, hk'⟩
+  · rw [Index₂.eq_iff_val_fst_eq_and_val_snd_eq,
+      ← Option.get_map (·.val.fst) ((Option.isSome_map ..).trans h'),
+      ← Option.get_map (·.val.snd) ((Option.isSome_map ..).trans h'),
+      iterate_mountain_indexParentOfIsSome_map_val_snd_eq_of_isSome]
+    simp only [iterate_mountain_indexParentOfIsSome_map_val_fst_eq_iterate_mountain_parent]
+    exact ⟨Option.get_of_mem _ hk', rfl⟩
+
+theorem exists_iterate_parent_list_get_eq_descendToSurface_from_result_height_of_isSome
+    {x : ValueParentListPair} (q : Index₂ (buildMountain x).parents.val) :
+    ∃ (k : ℕ),
+      ((flip bind (inIndexElim (Index.get ∘ x.pairable.transfer) none))^[k] <| some q.val.fst) =
+        (descendToSurface (mountain_parents_isCoherent x) q).map (·.val.fst) :=
+  by
+  have he : IterateEventuallyNone (inIndexElim (Index.get ∘ x.pairable.transfer) none) :=
+    by
+    apply iterateEventuallyNone_of_toNoneOrLtId
+    apply toNoneOrLtId_parent_list_get
+  by_cases h : (descendToSurface (mountain_parents_isCoherent x) q).isSome
+  · rw [← Option.some_get h, Option.map_some']
+    exact exists_iterate_bind_inIndexElim_trans_of_iterateEventuallyNone rfl he
+      (exists_iterate_parent_list_get_eq_parent · _)
+      (exists_iterate_parent_eq_descendToSurface_from_result_height_of_isSome q h)
+  · rw [Option.not_isSome_iff_eq_none] at h
+    rw [h, Option.map_none']
+    exact he _
+
 def diagonalPreparentOf {P : ParentMountain} (hP : P.IsCoherent) (i : Index P.val) :
     Option (Index₂ P.val) :=
   descendToSurface hP ⟨i, Index.last (P.index_get_ne_nil i)⟩
@@ -305,7 +397,7 @@ theorem diagonalPreparentOf_isSome_iff {P : ParentMountain} (hP : P.IsCoherent) 
 theorem to_none_or_lt_diagonal_preparent {P : ParentMountain} (hP : P.IsCoherent) :
     ToNoneOrLtId <| inIndexElim (Option.map (·.val.fst) ∘ diagonalPreparentOf hP) none :=
   by
-  apply toNoneOrLtId_inIndexElim_yes_none_of_forall_index
+  apply toNoneOrLtId_inIndexElim_val_none_of_forall_index
   intro q
   exact descendToSurface_to_none_or_lt_val_fst hP _
 
@@ -330,7 +422,7 @@ def diagonal {x : Mountain} (h_coherent : x.parents.IsCoherent) (h_orphanless : 
       by
       rintro ⟨_, _⟩
       simp [Index.get]
-      exact toNoneOrLtId_inIndexElim_yes_none_forall_index_of _
+      exact toNoneOrLtId_inIndexElim_val_none_forall_index_of _
         (to_none_or_lt_diagonal_preparent h_coherent) _⟩
   pairable := by simp [Pairable]; exact x.pairable.fst
 
@@ -618,7 +710,7 @@ def cutChild {V : ValueMountain} (ne_nil : V.val ≠ []) : Index (Index.last ne_
   else Index.last (V.index_get_ne_nil _)
 
 /-- `@cutChild x _` contains CutHeight(x) -/
-def cutChild.val_eq {V : ValueMountain} (ne_nil : V.val ≠ []) :
+def cutChild_val {V : ValueMountain} (ne_nil : V.val ≠ []) :
     (cutChild ne_nil).val =
       if surfaceAt (Index.last ne_nil) = 1
       then (Index.last ne_nil).get.length - 2

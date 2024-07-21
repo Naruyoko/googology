@@ -52,23 +52,24 @@ instance (s : List α) : Fintype (Index s) :=
 def inIndexElim {s : List α} (f : Index s → β) (g : β) (i : ℕ) : β :=
   if h : i < s.length then f ⟨i, h⟩ else g
 
+theorem inIndexElim_of_lt {s : List α} (f : Index s → β) (g : β) {i : ℕ} (hi : i < s.length) :
+    inIndexElim f g i = f ⟨i, hi⟩ :=
+  dif_pos hi
+
+theorem inIndexElim_of_not_lt {s : List α} (f : Index s → β) (g : β) {i : ℕ} (hi : ¬i < s.length) :
+    inIndexElim f g i = g :=
+  dif_neg hi
+
+theorem inIndexElim_of_ge {s : List α} (f : Index s → β) (g : β) {i : ℕ} (hi : i ≥ s.length) :
+    inIndexElim f g i = g :=
+  inIndexElim_of_not_lt f g <| Nat.not_lt_of_ge hi
+
 @[simp]
-theorem inIndexElim_yes {s : List α} (f : Index s → β) (g : β) (i : Index s) :
+theorem inIndexElim_val {s : List α} (f : Index s → β) (g : β) (i : Index s) :
     inIndexElim f g i.val = f i := by
   simp [inIndexElim, i.isLt]
 
-theorem inIndexElim_of_lt {s : List α} (f : Index s → β) (g : β) {i : ℕ} (hi : i < s.length) :
-    inIndexElim f g i = f ⟨i, hi⟩ :=
-  inIndexElim_yes f g ⟨i, hi⟩
-
-@[simp]
-theorem inIndexElim_no {s : List α} (f : Index s → β) (g : β) (i : ℕ)
-    (h : ¬∃ i' : Index s, i'.val = i) : inIndexElim f g i = g := by
-  simp only [inIndexElim, dite_eq_right_iff]
-  intro hi
-  exact absurd ⟨⟨i, hi⟩, rfl⟩ h
-
-theorem toNoneOrLtId_inIndexElim_yes_none_of_forall_index {s : List α} (f : Index s → Option ℕ)
+theorem toNoneOrLtId_inIndexElim_val_none_of_forall_index {s : List α} (f : Index s → Option ℕ)
     (h : ∀ i : Index s, WithBot.lt.lt (f i) ↑i.val) : ToNoneOrLtId (inIndexElim f none) := by
   intro i
   rw [inIndexElim]
@@ -76,11 +77,11 @@ theorem toNoneOrLtId_inIndexElim_yes_none_of_forall_index {s : List α} (f : Ind
   · exact h ⟨i, h'⟩
   · exact WithBot.bot_lt_coe i
 
-theorem toNoneOrLtId_inIndexElim_yes_none_forall_index_of {s : List α} (f : Index s → Option ℕ)
+theorem toNoneOrLtId_inIndexElim_val_none_forall_index_of {s : List α} (f : Index s → Option ℕ)
     (h : ToNoneOrLtId (inIndexElim f none)) : ∀ i : Index s, WithBot.lt.lt (f i) ↑i.val := by
   intro i
   specialize h i.val
-  rw [inIndexElim_yes] at h
+  rw [inIndexElim_val] at h
   exact h
 
 theorem Pairable.def {s : List α} {t : List β} : Pairable s t → s.length = t.length :=
@@ -149,7 +150,7 @@ theorem flip_bind_inIndexElim_val_eq_iff_of_pairable {s : List α} {t : List β}
     (flip bind (inIndexElim f g) <| some i.val) = (flip bind (inIndexElim f' g) <| some i.val) ↔
       f i = f' (h.transfer i) :=
   by
-  simp only [flip, Option.bind_eq_bind, Option.some_bind, inIndexElim_yes,
+  simp only [flip, Option.bind_eq_bind, Option.some_bind, inIndexElim_val,
     inIndexElim_of_lt f' _ <| lt_of_lt_of_eq i.isLt h]
   rfl
 
@@ -160,20 +161,66 @@ theorem flip_bind_inIndexElim_forall_eq_iff_of_pairable {s : List α} {t : List 
   ⟨fun h' _ => flip_bind_inIndexElim_val_eq_iff_of_pairable .. |>.mp (h' _),
     fun h' => Option.rec rfl fun _ => dite_congr (congrArg _ h) (fun _ => h' _) (fun _ => rfl)⟩
 
-theorem flip_bind_inIndexElim_yes_none_val_apply {s : List α} (f : Index s → Option ℕ) (i : Index s) :
+theorem flip_bind_inIndexElim_val_none_val_apply {s : List α} (f : Index s → Option ℕ) (i : Index s) :
     (flip bind (inIndexElim f none) <| some i.val) = f i :=
-  by simp only [flip, Option.bind_eq_bind, Option.some_bind, inIndexElim_yes]
+  by simp only [flip, Option.bind_eq_bind, Option.some_bind, inIndexElim_val]
 
-theorem flip_bind_inIndexElim_yes_none_val {s : List α} (f : Index s → Option ℕ) :
+theorem flip_bind_inIndexElim_val_none_val {s : List α} (f : Index s → Option ℕ) :
     (fun i => flip bind (inIndexElim f none) <| some i.val) = f :=
-  funext fun _ => flip_bind_inIndexElim_yes_none_val_apply ..
+  funext fun _ => flip_bind_inIndexElim_val_none_val_apply ..
 
 theorem flip_bind_inIndexElim_to_none_of_lt {s : List α} (f : Index s → Option ℕ) {i : ℕ}
     (hi : i < s.length) :
     (flip bind (inIndexElim f none) <| some i) = f ⟨i, hi⟩ :=
-  flip_bind_inIndexElim_yes_none_val_apply f ⟨i, hi⟩
+  flip_bind_inIndexElim_val_none_val_apply f ⟨i, hi⟩
 
-theorem exists_iterate_bind_join_dependent_of_iterateEventuallyNone {s : List α} {f : Index s → Option ℕ}
+theorem exists_iterate_bind_join_dependent_of_iterateEventuallyNone {f : α → Option α}
+    (hf : IterateEventuallyNone f) (g : α → ℕ) (x : Option α) (k : ℕ) :
+    ∃ (k' : ℕ), (flip bind f)^[k'] x = (flip bind (fun i => (flip bind f)^[g i] <| some i))^[k] x :=
+  by
+  induction k generalizing x with
+  | zero => exact ⟨0, rfl⟩
+  | succ k IH =>
+    set y := _^[k + 1] _
+    by_cases h : y.isSome
+    · obtain ⟨p, hp⟩ :=
+        Option.isSome_iff_exists.mp <| iterate_bind_isSome_le (Nat.le_add_left 1 k) h
+      unfold_let y
+      obtain ⟨k'', hk''⟩ := IH (some p)
+      rw [Function.iterate_add_apply, hp, ← hk'']
+      cases x with
+      | none => contradiction
+      | some x =>
+        simp only [Option.bind_eq_bind, Function.iterate_one, flip, inIndexElim,
+          Option.some_bind] at hp
+        exact hp ▸ ⟨k'' + g _, Function.iterate_add_apply ..⟩
+    · rw [Option.not_isSome_iff_eq_none] at h
+      rw [h]
+      exact hf _
+
+theorem exists_iterate_bind_trans_of_iterateEventuallyNone
+    {f : α → Option α} {g : α → Option α} (hf : IterateEventuallyNone f)
+    (hg : ∀ (x : α), ∃ (k : ℕ), ((flip bind f)^[k] <| some x) = g x)
+    {x : α} {y : Option α} (hy : ∃ (k : ℕ), ((flip bind g)^[k] <| some x) = y) :
+    ∃ (k' : ℕ), ((flip bind f)^[k'] <| some x) = y :=
+  by
+  have ⟨k, hk⟩ := hy
+  choose g hg using hg
+  simp_rw [← hk, ← funext hg]
+  exact exists_iterate_bind_join_dependent_of_iterateEventuallyNone hf ..
+
+theorem exists_iterate_bind_eq_inIndexElim_iterate_bind_dependent_none_of_iterateEventuallyNone
+    {s : List α} {f : ℕ → Option ℕ} (hf : IterateEventuallyNone f) (g : Index s → ℕ) (n : ℕ):
+    ∃ (k' : ℕ),
+      ((flip bind f)^[k'] <| some n) =
+        inIndexElim (fun i => (flip bind f)^[g i] <| some i.val) none n :=
+  by
+  unfold inIndexElim
+  split
+  · exact ⟨_, rfl⟩
+  · exact hf _
+
+theorem exists_iterate_bind_inIndexElim_join_dependent_of_iterateEventuallyNone {s : List α} {f : Index s → Option ℕ}
     (hf : IterateEventuallyNone (inIndexElim f none)) (g : Index s → ℕ) (n : Option ℕ) (k : ℕ) :
     ∃ (k' : ℕ),
       (flip bind (inIndexElim f none))^[k'] n =
@@ -202,19 +249,19 @@ theorem exists_iterate_bind_join_dependent_of_iterateEventuallyNone {s : List α
       rw [h]
       exact hf _
 
-theorem exists_iterate_bind_trans_of_iterateEventuallyNone {s : List α} {t : List β} {u : List γ}
-    {f₁ : Index s → Option ℕ} {f₂ : Index t → Option ℕ} {f₃ : Index u → Option ℕ}
-    (hst : Pairable s t)
-    (hf₁ : IterateEventuallyNone (inIndexElim f₁ none))
-    (hf₂ : ∀ (i : Index t), ∃ (k : ℕ), ((flip bind (inIndexElim f₁ none))^[k] <| some i.val) = f₂ i)
-    (i : Index u) (hf₃ : ∃ (k : ℕ), ((flip bind (inIndexElim f₂ none))^[k] <| some i.val) = f₃ i) :
-    ∃ (k' : ℕ), ((flip bind (inIndexElim f₁ none))^[k'] <| some i.val) = f₃ i :=
+theorem exists_iterate_bind_inIndexElim_trans_of_iterateEventuallyNone {s : List α} {t : List β} {u : List γ}
+    {f : Index s → Option ℕ} {g : Index t → Option ℕ} (hst : Pairable s t)
+    (hf : IterateEventuallyNone (inIndexElim f none))
+    (hg : ∀ (i : Index t), ∃ (k : ℕ), ((flip bind (inIndexElim f none))^[k] <| some i.val) = g i)
+    {i : Index u} {y : Option ℕ}
+    (hy : ∃ (k : ℕ), ((flip bind (inIndexElim g none))^[k] <| some i.val) = y) :
+    ∃ (k' : ℕ), ((flip bind (inIndexElim f none))^[k'] <| some i.val) = y :=
   by
-  have ⟨k, hk⟩ := hf₃
-  choose g hg using hf₂
+  have ⟨k, hk⟩ := hy
+  choose g hg using hg
   simp_rw [← hk, ← funext hg]
-  have ⟨k', hk'⟩ := exists_iterate_bind_join_dependent_of_iterateEventuallyNone
-    hf₁ (g ∘ hst.transfer) (some i.val) k
+  have ⟨k', hk'⟩ := exists_iterate_bind_inIndexElim_join_dependent_of_iterateEventuallyNone
+    hf (g ∘ hst.transfer) (some i.val) k
   use k'
   rw [hk']
   congr

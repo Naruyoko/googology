@@ -25,7 +25,7 @@ structure ValueParentListPair where
 theorem toNoneOrLtId_parent_list_get (x : ValueParentListPair) :
     ToNoneOrLtId (inIndexElim (Index.get ∘ x.pairable.transfer) none) :=
   by
-  apply toNoneOrLtId_inIndexElim_yes_none_of_forall_index
+  apply toNoneOrLtId_inIndexElim_val_none_of_forall_index
   intro
   rw [← Pairable.val_transfer x.pairable _]
   exact x.parents.property _
@@ -341,7 +341,7 @@ def buildRowBuilder (x : ValueParentListPair) (value : Index x.values.val → Op
       i.val
   have toNoneOrLtId_parent : ToNoneOrLtId (inIndexElim parent none) :=
     by
-    apply toNoneOrLtId_inIndexElim_yes_none_of_forall_index
+    apply toNoneOrLtId_inIndexElim_val_none_of_forall_index
     intro
     apply toNoneOrLtId_findIterate_of_not_mem
     simp_all [Set.mem_def, Fin.val_inj]
@@ -477,7 +477,7 @@ theorem parent_zero (x : ValueParentListPair) (i : Index x.values.val) :
     parent x i 0 =
       findIterateOfToNoneOrLtId (f := inIndexElim (Index.get ∘ x.pairable.transfer) none)
         (by
-          apply toNoneOrLtId_inIndexElim_yes_none_of_forall_index
+          apply toNoneOrLtId_inIndexElim_val_none_of_forall_index
           intro
           rw [← Pairable.val_transfer x.pairable _]
           exact x.parents.property _)
@@ -545,9 +545,9 @@ theorem exists_iterate_parent_eq_parent_upwards {x : ValueParentListPair} (i : I
       parent x i j₂ :=
   by
   induction j₂, hj using Nat.le_induction generalizing i with
-  | base => exact ⟨1, inIndexElim_yes ..⟩
+  | base => exact ⟨1, inIndexElim_val ..⟩
   | succ j₂ _ IH =>
-    refine exists_iterate_bind_trans_of_iterateEventuallyNone rfl ?_ IH _ ?_
+    refine exists_iterate_bind_inIndexElim_trans_of_iterateEventuallyNone rfl ?_ IH ?_
     · apply iterateEventuallyNone_of_toNoneOrLtId
       apply toNoneOrLtId_parent
     · apply exists_iterate_parent_eq_parent_succ
@@ -557,8 +557,8 @@ theorem exists_iterate_parent_list_get_eq_parent {x : ValueParentListPair} (i : 
     ∃ (k : ℕ), ((flip bind (inIndexElim (Index.get ∘ x.pairable.transfer) none))^[k] <| some i.val) =
       parent x i j :=
   by
-  refine exists_iterate_bind_trans_of_iterateEventuallyNone rfl ?_
-    exists_iterate_parent_list_get_eq_parent_zero _ ?_
+  refine exists_iterate_bind_inIndexElim_trans_of_iterateEventuallyNone rfl ?_
+    exists_iterate_parent_list_get_eq_parent_zero ?_
   · apply iterateEventuallyNone_of_toNoneOrLtId
     apply toNoneOrLtId_parent_list_get
   · exact exists_iterate_parent_eq_parent_upwards i (Nat.zero_le j)
@@ -793,7 +793,7 @@ theorem mountain_orphanless_isOrphanless {x : ValueParentListPair} (h : x.IsOrph
       by
       dsimp [flip]
       conv in i => change i_on_lv.val
-      rw [inIndexElim_yes]
+      rw [inIndexElim_val]
       rfl
     simp_rw [this]
     exact ⟨h _ value_gt_one, p_on_lv, h', rfl⟩
@@ -809,7 +809,7 @@ theorem mountain_orphanless_isOrphanless {x : ValueParentListPair} (h : x.IsOrph
       dsimp [flip]
       congr
       conv in i => change i_on_lv.val
-      rw [inIndexElim_yes]
+      rw [inIndexElim_val]
       exact hp.symm
     simp_rw [this]
     exact hk
