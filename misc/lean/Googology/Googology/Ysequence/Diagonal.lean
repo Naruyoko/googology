@@ -772,6 +772,7 @@ def cutChild {V : ValueMountain} (ne_nil : V.val ≠ []) : Index (Index.last ne_
   else Index.last (V.index_get_ne_nil _)
 
 /-- `@cutChild x _` contains CutHeight(x) -/
+@[simp]
 def cutChild_val {V : ValueMountain} (ne_nil : V.val ≠ []) :
     (cutChild ne_nil).val =
       if surfaceAt (Index.last ne_nil) = 1
@@ -888,8 +889,8 @@ theorem exists_iterate_descend_last_last_eq_badroot
       by
       rw [← hk]
       clear hk
-      symm; trans; trans; on_goal 2 =>
-        exact congrArg (Option.map Fin.val) <|
+      symm; trans; trans; swap
+      · exact congrArg (Option.map Fin.val) <|
           iterate_bind_diagonalPreparentOf_eq_iterate_bind_descendToSurface_last_get_map_fst
             hP (Index.last <| List.ne_nil_iff_of_length_eq x.pairable.fst |>.mp ne_nil) k
       · induction k with
@@ -958,6 +959,72 @@ theorem exists_iterate_descend_last_last_eq_badroot
         rw [descendToSurface_eq_fst_last] at q_eq
         simp_rw [q_eq]
         rfl
+
+theorem badroot_fst_ne_last_of_isLimit {x : Mountain} (h : x.IsLimit) :
+    ((badroot ..).get h.badroot_isSome).fst ≠ Index.last h.to_values_val_ne_nil :=
+  by
+  refine diagonalRec ?base ?rec h.to_values_val_ne_nil h.to_isCoherent h
+      (C := fun x => ∀ h, ((badroot ..).get h.badroot_isSome).fst ≠ Index.last h.to_values_val_ne_nil)
+     <;> clear! x <;> intro x _ _ h_surface
+  case base =>
+    intro h
+    simp_rw [badroot_of_last_height_ne_one_of_last_surface_eq_one
+        (h_last_length := h.last_length_ne_one) (h_surface := h_surface)]
+    rw [Fin.ne_iff_vne]
+    apply Nat.ne_of_lt
+    have hP := h.to_isCoherent.to_isCrossCoherent.to_parent_isCoherent
+    simp [(hP.indexParentOfIsSome _).property]
+    rw [← WithBot.coe_lt_coe, WithBot.some, Option.some_get, x.pairable.fst]
+    apply hP.get_lt
+  case rec =>
+    intro IH h
+    simp_rw [badroot_of_last_surface_ne_one (h_surface := h_surface)]
+    generalize_proofs
+    specialize IH ⟨_, _, Option.isSome_map .. ▸ show Option.isSome _ by assumption⟩
+    rw [Fin.ne_iff_vne] at IH ⊢
+    rw [Index₂.fst_val, Option.get_map, Index₂.mk_val_fst, Pairable.val_transfer, Index.last_val]
+    conv_rhs at IH => rw [Index.last_val, mountain_length_eq, diagonal_length_eq]
+    exact IH
+
+theorem badroot_val_snd_le_cutChild_val_of_isLimit {x : Mountain} (h : x.IsLimit) :
+    ((badroot ..).get h.badroot_isSome).val.snd ≤ (cutChild h.to_values_val_ne_nil).val :=
+  by
+  have ⟨k, hk⟩ := exists_iterate_descend_last_last_eq_badroot h.to_values_val_ne_nil h.to_isCoherent
+  have k_ne_zero : k ≠ 0 :=
+    by
+    intro H
+    subst H
+    apply badroot_fst_ne_last_of_isLimit h
+    ext
+    simp only [← hk, Function.iterate_zero_apply, Option.map_some', Option.get_some, Index₂.fst_val,
+      Pairable₂.val_transfer, Index₂.mk_val_fst, Pairable.transfer_last, Index.last_val]
+    rw [x.pairable.fst]
+  obtain ⟨k, rfl⟩ := Nat.exists_eq_succ_of_ne_zero k_ne_zero
+  rw [Function.iterate_succ_apply] at hk
+  have h' := h.badroot_isSome
+  rw [← hk, Option.isSome_map] at h'
+  replace h' := isSome_of_iterate_bind_isSome h'
+  rw [← Option.some_get h'] at hk
+  simp only [cutChild_val, ← hk, Option.get_map, Pairable₂.val_transfer]
+  refine Nat.le_trans (iterate_descend_pairwise_le_of_it_isSome _).right ?_
+  dsimp [flip]
+  unfold descend
+  simp [h.to_isCoherent.to_isCrossCoherent.to_parent_isCoherent.get_isSome_iff]
+  trans; swap
+  · split_ifs; rfl; exact Nat.sub_le_sub_left (Nat.le_succ _) _
+  rcases hj :
+      id <| Index.last <| x.parents.index_get_ne_nil <|
+        x.pairable.fst.transfer <| Index.last h.to_values_val_ne_nil
+    with ⟨j, _⟩ -- work around a weird bug that makes "split"/"cases"/"match" fail
+  dsimp at hj
+  simp [hj]
+  cases j <;> simp only
+  case zero => generalize_proofs; contradiction
+  case succ =>
+    have hj := congrArg Fin.val hj
+    simp only [Index.last_val, Pairable.transfer_last, Nat.pred_eq_succ_iff] at hj
+    rw [x.pairable.snd]
+    simp [hj]
 
 end Badroot
 
