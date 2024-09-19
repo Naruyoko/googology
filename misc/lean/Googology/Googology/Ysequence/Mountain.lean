@@ -419,7 +419,7 @@ def parent (x : ValueParentListPair) (i : Index x.values.val) (j : ℕ) : Option
   (mountainBuilder x j).parent i
 
 theorem toNoneOrLtId_parent (x : ValueParentListPair) (j : ℕ) :
-    ToNoneOrLtId (inIndexElim (fun i => parent x i j) none) :=
+    ToNoneOrLtId (inIndexElim (parent x · j) none) :=
   (mountainBuilder x j).toNoneOrLtId_parent
 
 def parentAsIndex {x : ValueParentListPair} {i : Index x.values.val} {j : ℕ}
@@ -493,7 +493,7 @@ theorem parent_succ (x : ValueParentListPair) (i : Index x.values.val) (j : ℕ)
     haveI : DecidablePred fun m => ∃ n ∈ value x i (j + 1), m < n :=
       fun _ => Option.decidableExistsMem ..
     parent x i (j + 1) =
-      findIterateOfToNoneOrLtId (f := inIndexElim (fun p => parent x p j) none)
+      findIterateOfToNoneOrLtId (f := inIndexElim (parent x · j) none)
         (toNoneOrLtId_parent x j)
         (fun p => Finset.decidableMem p <|
           (Finset.univ.filter fun p : Index x.values.val =>
@@ -535,13 +535,13 @@ lemma exists_iterate_parent_list_get_eq_parent_zero {x : ValueParentListPair} (i
 
 lemma exists_iterate_parent_eq_parent_succ {x : ValueParentListPair} (i : Index x.values.val)
     (j : ℕ) :
-    ∃ (k : ℕ), ((flip bind (inIndexElim (fun p => parent x p j) none))^[k] <| some i.val) =
+    ∃ (k : ℕ), ((flip bind (inIndexElim (parent x · j) none))^[k] <| some i.val) =
       parent x i (j + 1) :=
   by exact ⟨_, rfl⟩
 
 theorem exists_iterate_parent_eq_parent_upwards {x : ValueParentListPair} (i : Index x.values.val)
     {j₁ j₂ : ℕ} (hj : j₁ ≤ j₂) :
-    ∃ (k : ℕ), ((flip bind (inIndexElim (fun p => parent x p j₁) none))^[k] <| some i.val) =
+    ∃ (k : ℕ), ((flip bind (inIndexElim (parent x · j₁) none))^[k] <| some i.val) =
       parent x i j₂ :=
   by
   induction j₂, hj using Nat.le_induction generalizing i with
@@ -867,7 +867,7 @@ theorem iterate_mountain_indexParentOfIsSome_map_val_fst_eq_iterate_mountain_par
     ((flip bind (fun q =>
         if h : q.get.isSome then some ((mountain_parents_isCoherent x).indexParentOfIsSome h)
         else none))^[k] <| some q).map (·.val.fst) =
-      ((flip bind (inIndexElim (fun p => parent x p q.val.snd) none))^[k] <| some q.val.fst) :=
+      ((flip bind (inIndexElim (parent x · q.val.snd) none))^[k] <| some q.val.fst) :=
   by
   induction k with
   | zero => rfl

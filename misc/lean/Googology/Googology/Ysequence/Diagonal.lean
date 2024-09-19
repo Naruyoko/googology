@@ -312,12 +312,12 @@ theorem exists_iterate_parent_eq_descendToSurface_from_result_height_of_isSome
     (h : (descendToSurface (mountain_parents_isCoherent x) q).isSome) :
     ∃ (k : ℕ),
       (Option.get _ h).val.fst ∈
-        ((flip bind (inIndexElim (fun p => parent x p (Option.get _ h).val.snd) none))^[k] <|
+        ((flip bind (inIndexElim (parent x · (Option.get _ h).val.snd) none))^[k] <|
           some q.val.fst) :=
   by
   unfold descendToSurface findIterateOfIterateEventuallyNone at *
   generalize findIndexIterateOfIterateEventuallyNone .. = k at *
-  suffices ∀ j ≤ _, ∃ k, (flip bind (inIndexElim (fun p => parent x p j) none))^[k] _ = _
+  suffices ∀ j ≤ _, ∃ k, (flip bind (inIndexElim (parent x · j) none))^[k] _ = _
     from this _ (Nat.le_refl _)
   induction k with
   | zero => intros; exact ⟨0, rfl⟩
