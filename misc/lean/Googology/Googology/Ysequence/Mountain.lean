@@ -880,7 +880,7 @@ theorem iterate_mountain_indexParentOfIsSome_map_val_fst_eq_iterate_mountain_par
       rw [Option.get_map] at this
       change (q'.get h).val.snd = _ at this
       rw [← Option.some_get h]
-      simp [flip, -Option.some_get]
+      simp only [flip, Option.bind_eq_bind, Option.some_bind, Option.map_some']
       erw [inIndexElim_of_lt _ _ <| Nat.lt_of_lt_of_eq (q'.get h).val_fst_lt <|
           (buildMountain x).pairable.symm.fst.trans (mountain_length_eq x),
         ← this, ← mountain_parent_at_index_eq_parent x (q'.get h)]

@@ -209,4 +209,3 @@ theorem map_init (g₁ : Turing.PointedMap Λ Λ') (l : List Γ) :
 end Map
 
 end BB
-
