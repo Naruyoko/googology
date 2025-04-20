@@ -367,6 +367,57 @@ def shell {x : Mountain} (h : x.IsLimit) (n : ℕ) : ParentMountain :=
       obtain ⟨k, ⟨_, ⟨_, _, rfl⟩⟩⟩ := hl
       exact copySeam_ne_nil _ _ _⟩
 
+theorem shell_isCoherent {x : Mountain} (h : x.IsLimit) (n : ℕ) : (shell h n).IsCoherent :=
+  by
+  intro q i j
+  cases Nat.lt_or_ge i (x.values.val.length - 1) with
+  | inl hi =>
+    have get_of_lt₁ (i : Index (shell h n).val) (hi : i.val < x.values.val.length - 1) :
+        ∃ hi', i.get = Index.get (s := x.parents.val) ⟨i, hi'⟩ :=
+      by
+      constructor
+      simp_rw [Index.get, shell]
+      nth_rw 1 [← Fin.mk_val i]
+      rw [List.get_append]
+      case h.h =>
+        exact Nat.lt_of_lt_of_eq hi <| .symm <| List.length_take_of_le <|
+          x.pairable.fst ▸ Nat.sub_le ..
+      rw [List.get_take']
+    have get_of_lt₂ (q : Index₂ (shell h n).val) :
+        let i := q.val.fst
+        let j := q.val.snd
+        i < x.values.val.length - 1 →
+        ∃ hi' hj, q.get = Index₂.get (m := x.parents.val) ⟨⟨i, hi'⟩, ⟨j, hj⟩⟩ :=
+      by
+      intro i j hi
+      obtain ⟨hi', q_fst_get_eq⟩ := get_of_lt₁ q.fst hi
+      constructor
+      constructor
+      · simp only [Index₂.get]
+        congr 1
+        exact (Fin.heq_ext_iff (congrArg List.length q_fst_get_eq)).mpr rfl
+      · exact lt_of_lt_of_eq q.val_snd_lt (congrArg List.length q_fst_get_eq)
+    obtain ⟨_hi', q_fst_get_eq⟩ := get_of_lt₁ q.fst hi
+    obtain ⟨hi', hj, q_get_eq⟩ := get_of_lt₂ q hi
+    rw [q_get_eq, q_fst_get_eq]
+    have := h.to_isCoherent.to_isCrossCoherent.to_parent_isCoherent ⟨⟨i, hi'⟩, ⟨j, hj⟩⟩
+    dsimp at this
+    refine ⟨this.left, this.right.left, fun p hp => ?_⟩
+    have hpi : p < i := WithBot.coe_lt_coe.mp (lt_of_eq_of_lt hp.symm this.right.left)
+    refine ⟨⟨⟨p, ?_⟩, ⟨j, ?_⟩⟩, rfl⟩
+    · rw [Option.mem_iff] at hp
+      exact hpi.trans q.val_fst_lt
+    · obtain ⟨q', hq'⟩ := this.right.right p hp
+      calc
+        j = q'.val.snd := (Prod.ext_iff.mp hq'.symm).right
+        _ < q'.fst.get.length := q'.val_snd_lt
+        _ = _ := congrArg List.length ?_
+      rw [(get_of_lt₁ ..).snd]
+      · exact congrArg Index.get <| Fin.eq_of_val_eq <| congrArg Prod.fst hq'
+      · exact hpi.trans hi
+  | inr hi =>
+    sorry
+
 end Copy
 
 end Ysequence

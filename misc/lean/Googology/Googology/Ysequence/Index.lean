@@ -32,8 +32,14 @@ theorem Index.forall_iff {s : List α} {p : Index s → Prop} :
     (∀ i : Index s, p i) ↔ ∀ (i : ℕ) (h : i < s.length), p ⟨i, h⟩ :=
   Fin.forall_iff
 
+theorem Index.get_of_mem {s : List α} {x : α} : x ∈ s → ∃ (i : Index s), i.get = x :=
+  List.get_of_mem
+
 theorem Index.get_mem {s : List α} (i : Index s) : i.get ∈ s :=
   List.get_mem ..
+
+theorem Index.mem_iff_get {s : List α} {x : α} : x ∈ s ↔ ∃ (i : Index s), i.get = x :=
+  List.mem_iff_get
 
 theorem Index.val_ne_pred_length_iff {s : List α} {i : Index s} :
     i.val ≠ s.length - 1 ↔ i.val < s.length - 1 :=
