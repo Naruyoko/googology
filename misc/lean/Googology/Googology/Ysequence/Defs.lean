@@ -345,6 +345,28 @@ theorem copySeam_ne_nil {x : Mountain} (h : x.IsLimit) (i : Index x.values.val) 
   · exact Nat.add_pos_left (List.length_pos_of_ne_nil (x.values.index_get_ne_nil _)) _
   · exact List.length_pos_of_ne_nil (x.values.index_get_ne_nil _)
 
+def shell {x : Mountain} (h : x.IsLimit) (n : ℕ) : ParentMountain :=
+  ⟨x.parents.val.take (x.values.val.length - 1) ++
+      ((List.Ico 1 (n + 1)).pmap Subtype.mk (fun _ h => (List.Ico.mem.mp h).left) |>.map
+        fun k =>
+          finIco
+              ⟨((badroot ..).get h.badroot_isSome).val.fst,
+                Nat.lt_add_right 1 (Index₂.val_fst_lt _)⟩
+              ⟨x.values.val.length, Nat.lt_add_of_pos_right Nat.zero_lt_one⟩ |>.map
+            fun i => copySeam h i k).join,
+    by
+    intro l hl
+    rw [List.mem_append] at hl
+    cases hl with
+    | inl hl =>
+      obtain ⟨i, rfl⟩ := Index.get_of_mem (List.mem_of_mem_take hl)
+      exact x.parents.index_get_ne_nil _
+    | inr hl =>
+      simp only [List.mem_join, List.mem_map, List.mem_pmap, List.Ico.mem,
+        exists_exists_and_eq_and] at hl
+      obtain ⟨k, ⟨_, ⟨_, _, rfl⟩⟩⟩ := hl
+      exact copySeam_ne_nil _ _ _⟩
+
 end Copy
 
 end Ysequence
