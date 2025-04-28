@@ -31,7 +31,8 @@ def isTerminal (p : AccumulatorExpression₀ α) : Bool :=
 def wrap : AccumulatorExpression α → AccumulatorExpression₀ α := fun ⟨T, n⟩ => ⟨some T, n⟩
 
 @[simp]
-theorem nonterminal_wrap {p : AccumulatorExpression α} : ¬(wrap p).isTerminal := by
+theorem nonterminal_wrap {p : AccumulatorExpression α} : ¬(wrap p).isTerminal :=
+  by
   rw [← Bool.not_iff_not]
   rfl
 
@@ -91,8 +92,8 @@ theorem dom_eval₀_terminal {p : AccumulatorExpression₀ α} : p.isTerminal �
   fun h => Part.dom_iff_mem.mpr ⟨_, eval₀_terminal S h⟩
 
 theorem dom_eval₀_step {p : AccumulatorExpression₀ α} (h : ¬p.isTerminal) :
-    (eval₀ S p).Dom = (eval₀ S (S.step (AccumulatorExpression₀.unwrapNonterminal h))).Dom := by
-  rw [eval₀_step_eq]
+    (eval₀ S p).Dom = (eval₀ S (S.step (AccumulatorExpression₀.unwrapNonterminal h))).Dom :=
+  by rw [eval₀_step_eq]
 
 def eval₀IsTotalAt (T : Option α) : Prop :=
   ∀ n, (eval₀ S ⟨T, n⟩).Dom
@@ -101,7 +102,8 @@ def evalIsTotalAt (T : α) : Prop :=
   ∀ n, (eval S ⟨T, n⟩).Dom
 
 theorem dom_of_all_dom_eval₀_step {T : α} :
-    (∀ n, S.eval₀IsTotalAt (S.step ⟨T, n⟩).expression) → S.evalIsTotalAt T := by
+    (∀ n, S.eval₀IsTotalAt (S.step ⟨T, n⟩).expression) → S.evalIsTotalAt T :=
+  by
   intro h n
   rw [eval_eq_eval₀]
   rw [eval₀_step_eq S AccumulatorExpression₀.nonterminal_wrap]
@@ -128,9 +130,10 @@ theorem reachable_iff_exists_list_args {a b : Option α} :
       ∃ l : List β,
         (List.scanl (fun (c : Option α) d => c >>= fun c' => f c' d) a l).dropLast.all
             Option.isSome ∧
-          List.foldl (fun (c : Option α) d => c >>= fun c' => f c' d) a l = b := by
+          List.foldl (fun (c : Option α) d => c >>= fun c' => f c' d) a l = b :=
+  by
   have scanl_ne_nil : ∀ a l, List.scanl (fun (c : Option α) d => c >>= fun c' => f c' d) a l ≠ [] :=
-    by introv ; cases l <;> tauto
+    by introv; cases l <;> tauto
   simp only [Option.bind_eq_bind] at scanl_ne_nil ⊢
   constructor
   · intro hab
@@ -156,7 +159,8 @@ theorem reachable_iff_exists_list_args {a b : Option α} :
       trivial
     · simp only [List.scanl] at hsome
       rw [List.dropLast_cons_of_ne_nil (scanl_ne_nil _ _)] at hsome
-      have ha_some : a.isSome := by
+      have ha_some : a.isSome :=
+        by
         rw [← Option.ne_none_iff_isSome]
         intro H
         subst H
@@ -345,7 +349,8 @@ theorem isSome_limitPointExtend_some_eq (T : α) (n : ℕ) :
 theorem isNone_limitPointExtend_some_eq (T : α) (n : ℕ) :
     Option.isNone (limitPointExtend expand limit_seq (some T) n) = Option.isNone (expand T n) :=
   by
-  have : ∀ {α} {x : Option α}, Option.isNone x = !Option.isSome x := by
+  have : ∀ {α} {x : Option α}, Option.isNone x = !Option.isSome x :=
+    by
     intro _ x
     cases x <;> tauto
   iterate 2 rw [this]

@@ -20,7 +20,8 @@ theorem Index.eq_iff_val_eq {s : List α} (i : Index s) (i' : Index s) :
   Fin.ext_iff
 
 theorem Index.eq_get_of_base_eq_of_heq {s t : List α} (h : s = t) {i : Index s} {i' : Index t} :
-    HEq i i' → i.get = i'.get := by
+    HEq i i' → i.get = i'.get :=
+  by
   subst h
   rw [Fin.heq_ext_iff rfl, ← Index.eq_iff_val_eq]
   exact congr_arg _
@@ -73,11 +74,12 @@ theorem inIndexElim_of_ge {s : List α} (f : Index s → β) (g : β) {i : ℕ} 
 
 @[simp]
 theorem inIndexElim_val {s : List α} (f : Index s → β) (g : β) (i : Index s) :
-    inIndexElim f g i.val = f i := by
-  simp [inIndexElim, i.isLt]
+    inIndexElim f g i.val = f i :=
+  by simp [inIndexElim, i.isLt]
 
 theorem toNoneOrLtId_inIndexElim_val_none_of_forall_index {s : List α} (f : Index s → Option ℕ)
-    (h : ∀ i : Index s, WithBot.lt.lt (f i) ↑i.val) : ToNoneOrLtId (inIndexElim f none) := by
+    (h : ∀ i : Index s, WithBot.lt.lt (f i) ↑i.val) : ToNoneOrLtId (inIndexElim f none) :=
+  by
   intro i
   rw [inIndexElim]
   split_ifs with h'
@@ -85,7 +87,8 @@ theorem toNoneOrLtId_inIndexElim_val_none_of_forall_index {s : List α} (f : Ind
   · exact WithBot.bot_lt_coe i
 
 theorem toNoneOrLtId_inIndexElim_val_none_forall_index_of {s : List α} (f : Index s → Option ℕ)
-    (h : ToNoneOrLtId (inIndexElim f none)) : ∀ i : Index s, WithBot.lt.lt (f i) ↑i.val := by
+    (h : ToNoneOrLtId (inIndexElim f none)) : ∀ i : Index s, WithBot.lt.lt (f i) ↑i.val :=
+  by
   intro i
   specialize h i.val
   rw [inIndexElim_val] at h
@@ -130,7 +133,7 @@ theorem Pairable.val_transfer {s : List α} {t : List β} (h : Pairable s t) (i 
 
 theorem List.eq_nil_iff_of_length_eq {s : List α} {t : List β} (h : s.length = t.length) :
     s = [] ↔ t = [] :=
-  List.length_eq_zero.symm.trans <| Eq.congr h rfl |>.trans List.length_eq_zero
+  List.length_eq_zero_iff.symm.trans <| Eq.congr h rfl |>.trans List.length_eq_zero_iff
 
 theorem List.ne_nil_iff_of_length_eq {s : List α} {t : List β} (h : s.length = t.length) :
     s ≠ [] ↔ t ≠ [] :=
@@ -145,7 +148,8 @@ instance (s : List α) (t : List β) : Decidable <| Pairable s t :=
   instDecidableEqNat _ _
 
 theorem Pairable.list_ext {s t : List α} (h : Pairable s t)
-    (h' : ∀ i : Index s, i.get = (h.transfer i).get) : s = t := by
+    (h' : ∀ i : Index s, i.get = (h.transfer i).get) : s = t :=
+  by
   apply List.ext_get h
   intro n h₁ h₂
   rw [Index.forall_iff] at h'
@@ -192,7 +196,7 @@ theorem exists_iterate_bind_join_dependent_of_iterateEventuallyNone {f : α → 
     by_cases h : y.isSome
     · obtain ⟨p, hp⟩ :=
         Option.isSome_iff_exists.mp <| iterate_bind_isSome_le (Nat.le_add_left 1 k) h
-      unfold_let y
+      unfold y
       obtain ⟨k'', hk''⟩ := IH (some p)
       rw [Function.iterate_add_apply, hp, ← hk'']
       cases x with
@@ -242,7 +246,7 @@ theorem exists_iterate_bind_inIndexElim_join_dependent_of_iterateEventuallyNone 
     by_cases h : y.isSome
     · obtain ⟨p, hp⟩ :=
         Option.isSome_iff_exists.mp <| iterate_bind_isSome_le (Nat.le_add_left 1 k) h
-      unfold_let y
+      unfold y
       obtain ⟨k'', hk''⟩ := IH (some p)
       rw [Function.iterate_add_apply, hp, ← hk'']
       cases n with
@@ -372,11 +376,12 @@ theorem Index₂.ne_iff_val_ne {m : List (List α)} (q : Index₂ m) (q' : Index
   Iff.not Index₂.ext_iff
 
 theorem Index₂.eq_iff_val_fst_eq_and_val_snd_eq {m : List (List α)} (q : Index₂ m)
-    (q' : Index₂ m) : q = q' ↔ q.val.fst = q'.val.fst ∧ q.val.snd = q'.val.snd := by
-  rw [Index₂.eq_iff_val_eq, Prod.eq_iff_fst_eq_snd_eq]
+    (q' : Index₂ m) : q = q' ↔ q.val.fst = q'.val.fst ∧ q.val.snd = q'.val.snd :=
+  by rw [Index₂.eq_iff_val_eq, Prod.eq_iff_fst_eq_snd_eq]
 
 theorem Index₂.ne_iff_val_fst_ne_or_val_snd_ne {m : List (List α)} (q : Index₂ m)
-    (q' : Index₂ m) : q ≠ q' ↔ q.val.fst ≠ q'.val.fst ∨ q.val.snd ≠ q'.val.snd := by
+    (q' : Index₂ m) : q ≠ q' ↔ q.val.fst ≠ q'.val.fst ∨ q.val.snd ≠ q'.val.snd :=
+  by
   rw [Ne, Index₂.eq_iff_val_fst_eq_and_val_snd_eq]
   apply Decidable.not_and_iff_or_not
 
@@ -388,15 +393,17 @@ theorem Index₂.mk_eq_mk {m : List (List α)} {i : Index m} {j : Index i.get} {
 theorem Index₂.mk_mk_eq_mk_mk {m : List (List α)} {i : ℕ} {hi : i < m.length} {j : ℕ}
     {hj : j < (Index.get ⟨i, hi⟩).length} {i' : ℕ} {hi' : i' < m.length} {j' : ℕ}
     {hj' : j' < (Index.get ⟨i', hi'⟩).length} :
-    (⟨⟨i, hi⟩, ⟨j, hj⟩⟩ : Index₂ m) = ⟨⟨i', hi'⟩, ⟨j', hj'⟩⟩ ↔ (i, j) = (i', j') := by
+    (⟨⟨i, hi⟩, ⟨j, hj⟩⟩ : Index₂ m) = ⟨⟨i', hi'⟩, ⟨j', hj'⟩⟩ ↔ (i, j) = (i', j') :=
+  by
   simp
   intro i_eq
-  refine' Fin.heq_ext_iff _
+  apply Fin.heq_ext_iff
   congr
 
 theorem Index₂.eq_mk_mk_iff_val_eq {m : List (List α)} {q : Index₂ m} {i' : ℕ}
     {hi' : i' < m.length} {j' : ℕ} {hj' : j' < (Index.get ⟨i', hi'⟩).length} :
-    q = ⟨⟨i', hi'⟩, ⟨j', hj'⟩⟩ ↔ q.val = (i', j') := by
+    q = ⟨⟨i', hi'⟩, ⟨j', hj'⟩⟩ ↔ q.val = (i', j') :=
+  by
   rw [Index₂.ext_iff]
   rfl
 

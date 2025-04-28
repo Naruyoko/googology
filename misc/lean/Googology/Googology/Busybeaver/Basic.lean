@@ -164,8 +164,8 @@ theorem reaches_iff_exists_multistep' (c₀ c₁) :
       exact Relation.ReflTransGen.tail (IH _ rfl) hn
 
 theorem reaches_iff_correctMultistep (c₀ c₁ : Cfg Γ Λ) :
-    Reaches M c₀ c₁ ↔ ∃ n, c₀[M]▸^[n]c₁ := by
-  simp [reaches_iff_exists_multistep', correct_multistep] <;> tauto
+    Reaches M c₀ c₁ ↔ ∃ n, c₀[M]▸^[n]c₁ :=
+  by simp [reaches_iff_exists_multistep', correct_multistep] <;> tauto
 
 end
 

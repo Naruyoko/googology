@@ -148,7 +148,8 @@ theorem findIterate_eq_none_iff {f : α → Option α} (hf : IterateEventuallyNo
 
 theorem findIndexIterate_pos_of_not_mem {f : α → Option α} (hf : IterateEventuallyNone f)
     {p : Set α} (decidable_p : DecidablePred p) {x : α} (hn : x ∉ p) :
-    0 < findIndexIterateOfIterateEventuallyNone hf decidable_p x := by
+    0 < findIndexIterateOfIterateEventuallyNone hf decidable_p x :=
+  by
   rw [pos_iff_ne_zero]
   intro H
   have := findIndexIterate_spec hf decidable_p x
@@ -175,18 +176,22 @@ def findIterateOfToNoneOrLtId {f : ℕ → Option ℕ} (hf : ToNoneOrLtId f) {p 
 
 theorem iterate_iterate_dependent_apply (f : α → α) (g : α → ℕ) (n : ℕ) (x : α) :
     (fun x => f^[g x] x)^[n] x =
-      f^[Nat.sum <| List.iterate (fun x => f^[g x] x) x n |>.map g] x :=
-  n.recOn (fun _ => rfl) (fun n IH x => by
-    rw [Function.iterate_succ_apply, IH, List.iterate, List.map_cons, Nat.sum_cons, Nat.add_comm,
-      Function.iterate_add_apply]) x
+      f^[List.sum <| List.iterate (fun x => f^[g x] x) x n |>.map g] x :=
+  n.recOn
+    (fun _ => rfl)
+    (fun n IH x =>
+      by rw [Function.iterate_succ_apply, IH, List.iterate, List.map_cons, List.sum_cons,
+        Nat.add_comm, Function.iterate_add_apply])
+    x
 
 theorem iterate_iterate_dependent (f : α → α) (g : α → ℕ) (n : ℕ) :
     (fun x => f^[g x] x)^[n] =
-      fun x => f^[Nat.sum <| List.iterate (fun x => f^[g x] x) x n |>.map g] x :=
+      fun x => f^[List.sum <| List.iterate (fun x => f^[g x] x) x n |>.map g] x :=
   funext fun _ => iterate_iterate_dependent_apply ..
 
 theorem toNoneOrLtId_iterate_succ {f : ℕ → Option ℕ} (hf : ToNoneOrLtId f) (n k : ℕ) :
-    WithBot.lt.lt ((flip bind f)^[k + 1] <| some n) ↑n := by
+    WithBot.lt.lt ((flip bind f)^[k + 1] <| some n) ↑n :=
+  by
   induction' k with k IH
   · exact hf n
   · rw [Function.iterate_succ_apply']
@@ -195,7 +200,8 @@ theorem toNoneOrLtId_iterate_succ {f : ℕ → Option ℕ} (hf : ToNoneOrLtId f)
     · exact lt_trans (hf _) (lt_of_eq_of_lt hl.symm IH)
 
 theorem toNoneOrLtId_iterate_pos {f : ℕ → Option ℕ} (hf : ToNoneOrLtId f) (n : ℕ) {k : ℕ}
-    (hk : 0 < k) : WithBot.lt.lt ((flip bind f)^[k] <| some n) ↑n := by
+    (hk : 0 < k) : WithBot.lt.lt ((flip bind f)^[k] <| some n) ↑n :=
+  by
   cases' k with k
   · exact absurd hk (by decide)
   · exact toNoneOrLtId_iterate_succ hf n k

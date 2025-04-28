@@ -236,7 +236,8 @@ theorem Mountain.IsCrossCoherent.eq_of_parents_eq_of_value_eq_where_parent_eq_no
                         Pairable₂ x₁.parents.val x₂.parents.val).trans
                     x₂.pairable.symm).transfer
                 q).get) :
-    x₁ = x₂ := by
+    x₁ = x₂ :=
+  by
   cases' x₁ with V₁ P₁ hVP₁
   cases' x₂ with V₂ P₂ hVP₂
   dsimp at parents_eq value_eq_where_parent_eq_none
@@ -284,7 +285,8 @@ theorem Mountain.IsCrossCoherent.eq_of_parents_eq_of_value_eq_where_parent_eq_no
 
 theorem Mountain.IsCrossCoherent.value_ne_one_where_parent_isSome {x : Mountain}
     (h : x.IsCrossCoherent) {q : Index₂ x.parents.val} (hq : q.get.isSome) :
-    (x.pairable.symm.transfer q).get ≠ 1 := by
+    (x.pairable.symm.transfer q).get ≠ 1 :=
+  by
   intro H
   have := h.value_above_lt_value_of_parent_isSome hq
   rw [H] at this
@@ -349,7 +351,8 @@ def buildRowBuilder (x : ValueParentListPair) (value : Index x.values.val → Op
     ∀ {i : Index x.values.val} (h : (parent i).isSome),
       { p : Index x.values.val // p.val = (parent i).get h } :=
     fun {i} h =>
-    ⟨⟨(parent i).get h, by
+    ⟨⟨(parent i).get h,
+        by
         cases' i with i hi
         have parent_i := toNoneOrLtId_parent i
         obtain ⟨p, hp⟩ := Option.isSome_iff_exists.mp h
@@ -453,7 +456,8 @@ theorem value_parent_lt_value {x : ValueParentListPair} {i : Index x.values.val}
   simp_all
 
 theorem parent_of_value_eq_none {x : ValueParentListPair} {i : Index x.values.val} {j : ℕ} :
-    value x i j = none → parent x i j = none := by
+    value x i j = none → parent x i j = none :=
+  by
   iterate 2 rw [← Option.not_isSome_iff_eq_none]
   exact mt value_isSome_of_parent_isSome
 
@@ -649,7 +653,7 @@ def buildMountain (x : ValueParentListPair) : Mountain :=
       pairable := by simp [Pairable₂, Pairable, Index.get, Pairable.transfer] }
   all_goals
     simp only [List.mem_map, List.mem_finRange, true_and, ne_eq, forall_exists_index,
-      forall_apply_eq_imp_iff, List.map_eq_nil, List.finRange_eq_nil]
+      forall_apply_eq_imp_iff, List.map_eq_nil_iff, List.finRange_eq_nil]
     intro
     exact ne_of_gt (height_pos ..)
 
@@ -657,12 +661,12 @@ theorem mountain_length_eq (x : ValueParentListPair) :
     (buildMountain x).values.val.length = x.values.val.length := by simp [buildMountain]
 
 theorem mountain_height_eq (x : ValueParentListPair) (i : Index (buildMountain x).values.val) :
-    i.get.length = height x (Pairable.transfer (mountain_length_eq x) i) := by
-  simp [Pairable.transfer, Index.get, buildMountain]
+    i.get.length = height x (Pairable.transfer (mountain_length_eq x) i) :=
+  by simp [Pairable.transfer, Index.get, buildMountain]
 
 theorem mountain_height_eq' (x : ValueParentListPair) (i : Index x.values.val) :
-    (Pairable.transfer (mountain_length_eq x).symm i).get.length = height x i := by
-  simp [mountain_height_eq, Pairable.transfer, buildMountain]
+    (Pairable.transfer (mountain_length_eq x).symm i).get.length = height x i :=
+  by simp [mountain_height_eq, Pairable.transfer, buildMountain]
 
 theorem mountain_value_at_index_eq_value (x : ValueParentListPair)
     (q : Index₂ (buildMountain x).values.val) :
@@ -730,7 +734,8 @@ theorem mountain_parents_isCoherent (x : ValueParentListPair) :
         exact Prod.ext hp rfl
 
 theorem mountain_orphanless_isOrphanless {x : ValueParentListPair} (h : x.IsOrphanless) :
-    (buildMountain x).IsOrphanless := by
+    (buildMountain x).IsOrphanless :=
+  by
   rintro ⟨i, hi⟩
   simp [mountain_value_at_index_eq_value, mountain_parent_at_index_eq_parent, Pairable.transfer,
     findIterateOfToNoneOrLtId]

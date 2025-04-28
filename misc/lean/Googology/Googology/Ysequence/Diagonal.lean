@@ -61,8 +61,10 @@ theorem descend_eq_none_iff {P : ParentMountain} (hP : P.IsCoherent) (q : Index�
   · rcases q with ⟨_, ⟨_ | _, _⟩⟩ <;> simp [h]
 
 theorem descend_eq_none_iff' {P : ParentMountain} (hP : P.IsCoherent) (q : Index₂ P.val) :
-    descend hP q = none ↔ q.get = none ∧ q.val.snd = 0 := by
-  rw [← Option.not_isSome_iff_eq_none (o := q.get)]; exact descend_eq_none_iff hP q
+    descend hP q = none ↔ q.get = none ∧ q.val.snd = 0 :=
+  by
+  rw [← Option.not_isSome_iff_eq_none (o := q.get)]
+  exact descend_eq_none_iff hP q
 
 theorem descend_isSome_iff {P : ParentMountain} (hP : P.IsCoherent) (q : Index₂ P.val) :
     (descend hP q).isSome ↔ q.get.isSome ∨ q.val.snd ≠ 0 :=
@@ -90,7 +92,7 @@ theorem descend_lt_and_eq_or_eq_and_lt_of_it_isSome {P : ParentMountain} {hP : P
     have := (hP.indexParentOfIsSome hq).property
     simp only [← q'_eq, Prod.ext_iff, Index₂.fst_val, Index₂.snd_val] at this
     refine ⟨?_, this.right⟩
-    unfold_let
+    unfold i i'
     rw [this.left, ← WithBot.coe_lt_coe, ← WithBot.some_eq_coe, Option.some_get]
     exact hP.get_lt q
   · rcases q_eq : q with ⟨⟨i₁, hi⟩, ⟨j₁, hj⟩⟩
@@ -485,8 +487,8 @@ theorem diagonal_length_eq {x : Mountain} (h_coherent : x.parents.IsCoherent)
 @[simp]
 theorem diagonal_value_at {x : Mountain} (h_coherent : x.parents.IsCoherent)
     (h_orphanless : x.IsOrphanless) (i : Index (diagonal h_coherent h_orphanless).values.val) :
-    i.get = surfaceAt (Pairable.transfer (diagonal_length_eq _ _) i) := by
-  simp [Pairable.transfer, Index.get, diagonal]
+    i.get = surfaceAt (Pairable.transfer (diagonal_length_eq _ _) i) :=
+  by simp [Pairable.transfer, Index.get, diagonal]
 
 @[simp]
 theorem diagonal_parent_at {x : Mountain} (h_coherent : x.parents.IsCoherent)
