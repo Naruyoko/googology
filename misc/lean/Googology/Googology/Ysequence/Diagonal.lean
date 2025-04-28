@@ -181,6 +181,7 @@ theorem iterate_descend_succ_ne_of_it_isSome {P : ParentMountain} {hP : P.IsCohe
   | inl hstep => convert Or.inl <| ne_of_gt <| lt_of_lt_of_le hstep.left hupto.left
   | inr hstep => convert Or.inr <| ne_of_gt <| lt_of_lt_of_le hstep.right hupto.right
 
+open scoped Function in
 theorem descend_finite {P : ParentMountain} (hP : P.IsCoherent) :
     IterateEventuallyNone <| descend hP :=
   by
@@ -193,7 +194,8 @@ theorem descend_finite {P : ParentMountain} (hP : P.IsCoherent) :
   · cases' h : descend hP q with q'
     · exact ⟨1, h⟩
     · specialize IH (descend hP q) _
-      · simp [r, h]
+      · simp only [h, gt_iff_lt, Option.map_some', r]
+        simp only [WithBot.some_eq_coe, WithBot.coe_lt_coe]
         have h' := descend_lt_and_eq_or_eq_and_lt_of_it_isSome (Option.isSome_iff_exists.mpr ⟨_, h⟩)
         simp_rw [← Index₂.snd_val] at h'
         simp [h] at h'
@@ -248,14 +250,13 @@ theorem descendToSurface_isSome_iff {P : ParentMountain} (hP : P.IsCoherent) (q 
     (descendToSurface hP q).isSome ↔ 0 < q.val.snd ∨ q.get.isSome :=
   by
   rw [descendToSurface, findIterate_isSome_iff]
-  simp only [Finset.mem_filter, Finset.mem_univ, true_and, Set.mem_setOf_eq]
+  simp only [Finset.mem_filter, Finset.mem_univ, true_and, Set.mem_def]
   constructor
   · rintro ⟨k, hk₁, hk₂⟩
     have k_ne_zero : k ≠ 0 :=
       by
       intro H
-      subst H
-      simp [Set.mem_def] at hk₂
+      simp [H] at hk₂
     obtain ⟨k, rfl⟩ := Nat.exists_eq_succ_of_ne_zero k_ne_zero
     clear hk₂
     revert hk₁
@@ -263,8 +264,9 @@ theorem descendToSurface_isSome_iff {P : ParentMountain} (hP : P.IsCoherent) (q 
     apply mt
     intro H
     apply iterate_bind_eq_none_ge <| Nat.succ_le_succ <| Nat.zero_le k
-    simp only [Option.bind_eq_bind, Function.iterate_one, flip, descend, Option.some_bind, H,
-      Option.isSome_none, ↓reduceDite]
+    simp only [Option.bind_eq_bind, Nat.succ_eq_add_one, Function.iterate_succ,
+      Function.iterate_zero, Function.comp_apply, flip, descend, Option.some_bind, H,
+      Option.isSome_none, Bool.false_eq_true, ↓reduceDIte, id_eq]
     rw [← Index₂.snd_val] at H
     split <;> simp_all
   · have descend_finite_on_q := descend_finite hP (some q)
@@ -280,7 +282,6 @@ theorem descendToSurface_isSome_iff {P : ParentMountain} (hP : P.IsCoherent) (q 
     intro h
     have last_isSome := Option.ne_none_iff_isSome.mp (hk_lt k (Nat.lt_succ_self k))
     refine ⟨k, last_isSome, ?_⟩
-    rw [Set.mem_def]
     have last_pairwise_le := iterate_descend_pairwise_le_of_it_isSome last_isSome
     extract_lets i j r i' j' at last_pairwise_le
     have hr : _ = some r := Option.eq_some_iff_get_eq.mpr ⟨_, rfl⟩
@@ -369,13 +370,13 @@ theorem exists_iterate_mountain_indexParentOfIsSome_eq_descendToSurface_from_res
   use k'
   rw [Option.mem_def, Option.eq_some_iff_get_eq]
   refine have h' := ?_; ⟨h', ?_⟩
-  · rw [← Option.isSome_map (·.val.fst),
+  · rw [← Option.isSome_map' (f := (·.val.fst)),
       iterate_mountain_indexParentOfIsSome_map_val_fst_eq_iterate_mountain_parent,
       Option.isSome_iff_exists]
     exact ⟨_, hk'⟩
   · rw [Index₂.eq_iff_val_fst_eq_and_val_snd_eq,
-      ← Option.get_map (·.val.fst) ((Option.isSome_map ..).trans h'),
-      ← Option.get_map (·.val.snd) ((Option.isSome_map ..).trans h'),
+      ← Option.get_map (f := (·.val.fst)) (h := (Option.isSome_map' ..).trans h'),
+      ← Option.get_map (f := (·.val.snd)) (h := (Option.isSome_map' ..).trans h'),
       iterate_mountain_indexParentOfIsSome_map_val_snd_eq_of_isSome]
     simp only [iterate_mountain_indexParentOfIsSome_map_val_fst_eq_iterate_mountain_parent]
     exact ⟨Option.get_of_mem _ hk', rfl⟩
@@ -458,14 +459,14 @@ def diagonal {x : Mountain} (h_coherent : x.parents.IsCoherent) (h_orphanless : 
     ⟨surfaceAt <$> List.finRange x.values.val.length,
       by
       split_ifs with h
-      simp only [Index.get, surfaceAt, List.map_eq_map, List.get_map]
+      simp_rw [Index.get, List.map_eq_map, List.get_eq_getElem, List.getElem_map, surfaceAt]
       rw [List.map_eq_map, List.length_map, List.length_finRange] at h
       convert Mountain.head_value_eq_one_of_parents_isCoherent_of_isOrphanless_of_length_pos
         h_coherent h_orphanless h
-      · rw [List.get_finRange]
-      · simp only [Index.last, List.map_eq_map, List.get_finRange]
-        have h' := x.pairable.symm.snd _ ▸ (h_coherent.head_length <| x.pairable.fst.def ▸ h)
-        erw [h']⟩
+      · rw [List.getElem_finRange]
+        rfl
+      · rw [Index.last_val, List.getElem_finRange, Fin.cast_mk, (x.pairable.snd _).def]
+        exact Nat.sub_eq_of_eq_add <| h_coherent.head_length <| x.pairable.fst.def ▸ h⟩
   parents :=
     ⟨(Option.map (·.val.fst) ∘ diagonalPreparentOf h_coherent) <$>
         List.finRange x.parents.val.length,
@@ -574,6 +575,7 @@ lemma buildMountain_diagonal_ne_nil_of_ne_nil {x : Mountain} (ne_nil : x.values.
   apply (List.ne_nil_iff_of_length_eq _).mp ne_nil
   rw [mountain_length_eq, diagonal_length_eq]
 
+open scoped Function in
 def diagonalRec : C x :=
   @WellFounded.fix { x : Mountain // x.values.val ≠ [] } (fun ⟨x, _⟩ => x.IsCoherent → C x)
     (LT.lt on fun ⟨x, ne_nil⟩ =>
@@ -750,7 +752,7 @@ theorem Mountain.IsLimit.iff_last_length_ne_one (x : Mountain) :
     case rec =>
       intro IH ne_nil _h_last_length
       refine ⟨ne_nil, h_coherent, ?_⟩
-      rw [badroot_of_last_surface_ne_one ne_nil h_coherent h_surface, Option.isSome_map]
+      rw [badroot_of_last_surface_ne_one ne_nil h_coherent h_surface, Option.isSome_map']
       generalize_proofs _ _ diagonal_ne_nil diagonal_isCoherent
       apply badroot_isSome
       apply IH diagonal_ne_nil
@@ -840,7 +842,7 @@ theorem exists_iterate_descend_last_last_eq_badroot
       |>.mpr ⟨ne_nil, h_coherent, mt (surfaceAt_eq_one_of_height_eq_one h_coherent) h_surface⟩
       |>.badroot_isSome
     rw [badroot_of_last_surface_ne_one (h_surface := h_surface)] at badroot_isSome ⊢
-    rw [Option.isSome_map] at badroot_isSome
+    rw [Option.isSome_map'] at badroot_isSome
     generalize_proofs _ ne_nil' h_coherent' _ _ _ _ _ at badroot_isSome ⊢
     specialize IH ne_nil' h_coherent'
     extract_lets hP' at IH
@@ -937,7 +939,7 @@ theorem exists_iterate_descend_last_last_eq_badroot
     obtain ⟨hK', hk'⟩ := Option.eq_some_iff_get_eq.mp hk
     rw [Option.get_map] at hk'
     rw [← Option.some_get badroot_isSome, Option.map_some', Option.eq_some_iff_get_eq]
-    use Option.isSome_map .. |>.symm ▸ by generalize_proofs at hk'; assumption
+    use Option.isSome_map' .. |>.symm ▸ by generalize_proofs at hk'; assumption
     rw [Option.get_map]
     ext
     · simp [← hk']
@@ -954,7 +956,7 @@ theorem exists_iterate_descend_last_last_eq_badroot
         conv at q_eq in _^[_] _ =>
           rw [Function.iterate_succ_apply',
             ← Option.some_get <| iterate_bind_isSome_le (Nat.le_succ _) <|
-              Option.isSome_map .. |>.symm ▸ hK ▸ hK']
+              Option.isSome_map' .. |>.symm ▸ hK ▸ hK']
           simp [flip, ↓Option.bind_eq_bind, ↓Option.some_bind]
         rw [descendToSurface_eq_fst_last] at q_eq
         simp_rw [q_eq]
@@ -980,7 +982,7 @@ theorem badroot_fst_ne_last_of_isLimit {x : Mountain} (h : x.IsLimit) :
     intro IH h
     simp_rw [badroot_of_last_surface_ne_one (h_surface := h_surface)]
     generalize_proofs
-    specialize IH ⟨_, _, Option.isSome_map .. ▸ show Option.isSome _ by assumption⟩
+    specialize IH ⟨_, _, Option.isSome_map' .. ▸ show Option.isSome _ by assumption⟩
     rw [Fin.ne_iff_vne] at IH ⊢
     rw [Index₂.fst_val, Option.get_map, Index₂.mk_val_fst, Pairable.val_transfer, Index.last_val]
     conv_rhs at IH => rw [Index.last_val, mountain_length_eq, diagonal_length_eq]
@@ -1002,7 +1004,7 @@ theorem badroot_val_snd_le_cutChild_val_of_isLimit {x : Mountain} (h : x.IsLimit
   obtain ⟨k, rfl⟩ := Nat.exists_eq_succ_of_ne_zero k_ne_zero
   rw [Function.iterate_succ_apply] at hk
   have h' := h.badroot_isSome
-  rw [← hk, Option.isSome_map] at h'
+  rw [← hk, Option.isSome_map'] at h'
   replace h' := isSome_of_iterate_bind_isSome h'
   rw [← Option.some_get h'] at hk
   simp only [cutChild_val, ← hk, Option.get_map, Pairable₂.val_transfer]

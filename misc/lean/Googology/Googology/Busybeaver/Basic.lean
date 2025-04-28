@@ -1,44 +1,45 @@
 import Googology.Busybeaver.Defs
 
-#align_import busybeaver.basic
-
 namespace BB
 
 section
 
-variable {Γ Λ : Type _} [Inhabited Γ] [Inhabited Λ]
+variable {Γ Λ : Type _} [Inhabited Γ] [Inhabited Λ] {M : Machine Γ Λ}
+set_option linter.unusedSectionVars false
 
 @[simp]
-theorem multistep'_zero {M : Machine Γ Λ} {c} : multistep' M 0 c = c :=
+theorem multistep'_zero {c} : multistep' M 0 c = c :=
   rfl
 
-theorem multistep'_succ {M : Machine Γ Λ} {n c} :
+theorem multistep'_succ {n c} :
     multistep' M (n + 1) c = multistep' M n (step' M c) :=
   rfl
 
-theorem multistep'_succ' {M : Machine Γ Λ} {n c} :
+theorem multistep'_succ' {n c} :
     multistep' M (n + 1) c = step' M (multistep' M n c) :=
   Function.iterate_succ_apply' (step' M) n c
 
 @[simp]
-theorem multistep_zero {M : Machine Γ Λ} {c} : multistep M 0 c = c :=
+theorem multistep_zero {c} : multistep M 0 c = c :=
   rfl
 
-theorem multistep_succ {M : Machine Γ Λ} {n c} :
+theorem multistep_succ {n c} :
     multistep M (n + 1) c = multistep' M n (step M c) :=
   rfl
 
-theorem multistep_succ' {M : Machine Γ Λ} {n c} :
+theorem multistep_succ' {n c} :
     multistep M (n + 1) c = step' M (multistep M n c) :=
   Function.iterate_succ_apply' (step' M) n c
 
-theorem isSome_of_isSome_step' {M : Machine Γ Λ} {c} : (step' M c).isSome → c.isSome :=
+#exit
+
+theorem isSome_of_isSome_step' {c} : (step' M c).isSome → c.isSome :=
   by
   repeat' rw [Option.isSome_iff_exists]
   simp [step']
   tauto
 
-theorem isSome_of_isSome_multistep' {M : Machine Γ Λ} {n c} :
+theorem isSome_of_isSome_multistep' {n c} :
     (multistep' M n c).isSome → c.isSome :=
   by
   induction' n with n IH generalizing c
@@ -47,7 +48,7 @@ theorem isSome_of_isSome_multistep' {M : Machine Γ Λ} {n c} :
     exact is_some_of_is_some_step' (IH h)
 
 @[simp, refl]
-theorem correctMultistep_zero_iff_refl {M : Machine Γ Λ} (c₀ c₁) : c₀[M]▸^[0]c₁ ↔ c₀ = c₁ :=
+theorem correctMultistep_zero_iff_refl (c₀ c₁) : c₀[M]▸^[0]c₁ ↔ c₀ = c₁ :=
   by
   constructor
   · intro h
@@ -56,13 +57,13 @@ theorem correctMultistep_zero_iff_refl {M : Machine Γ Λ} (c₀ c₁) : c₀[M]
   · exact congr_arg _
 
 @[simp]
-theorem correctMultistep_one_iff_correctStep {M : Machine Γ Λ} (c₀ c₁) : c₀[M]▸^[1]c₁ ↔ c₀[M]▸c₁ :=
+theorem correctMultistep_one_iff_correctStep (c₀ c₁) : c₀[M]▸^[1]c₁ ↔ c₀[M]▸c₁ :=
   ⟨rfl.mp, congr_arg _⟩
 
-theorem exists_correctStep_iff_not_halted {M : Machine Γ Λ} (c₀) : (∃ c₁, c₀[M]▸c₁) ↔ ¬Halted c₀ :=
+theorem exists_correctStep_iff_not_halted (c₀) : (∃ c₁, c₀[M]▸c₁) ↔ ¬Halted c₀ :=
   by constructor <;> rcases c₀ with ⟨_ | q, _⟩ <;> tauto
 
-theorem correctMultistep_succ_iff {M : Machine Γ Λ} (n c₀ c₁) :
+theorem correctMultistep_succ_iff (n c₀ c₁) :
     c₀[M]▸^[n + 1]c₁ ↔ ∃ c₂, c₀[M]▸c₂ ∧ c₂[M]▸^[n]c₁ :=
   by
   simp [correct_multistep, multistep_succ]
@@ -82,7 +83,7 @@ theorem correctMultistep_succ_iff {M : Machine Γ Λ} (n c₀ c₁) :
     rw [h₁]
     exact h₂
 
-theorem correctMultistep_add_iff {M : Machine Γ Λ} (m n c₀ c₁) :
+theorem correctMultistep_add_iff (m n c₀ c₁) :
     c₀[M]▸^[m + n]c₁ ↔ ∃ c₂, c₀[M]▸^[m]c₂ ∧ c₂[M]▸^[n]c₁ :=
   by
   induction' m with m IH generalizing c₀
@@ -100,30 +101,30 @@ theorem correctMultistep_add_iff {M : Machine Γ Λ} (m n c₀ c₁) :
       rw [correct_multistep_succ_iff]
       exact ⟨c₃, ⟨hc₃.left, (IH _).mpr ⟨c₂, ⟨hc₃.right, hc₂.right⟩⟩⟩⟩
 
-theorem correctMultistep_succ_iff' {M : Machine Γ Λ} (n c₀ c₁) :
+theorem correctMultistep_succ_iff' (n c₀ c₁) :
     c₀[M]▸^[n + 1]c₁ ↔ ∃ c₂, c₀[M]▸^[n]c₂ ∧ c₂[M]▸c₁ := by simp [correct_multistep_add_iff]
 
 @[trans]
-theorem correctStep_correst_step_trans_correctMultistep {M : Machine Γ Λ} (c₀ c₁ c₂) :
+theorem correctStep_correst_step_trans_correctMultistep (c₀ c₁ c₂) :
     c₀[M]▸c₁ → c₁[M]▸c₂ → c₀[M]▸^[2]c₂ := fun h₁ h₂ =>
   (correctMultistep_succ_iff _ _ _).mpr ⟨c₁, ⟨h₁, h₂⟩⟩
 
 @[trans]
-theorem correctMultistep_correst_step_trans {M : Machine Γ Λ} (n c₀ c₁ c₂) :
+theorem correctMultistep_correst_step_trans (n c₀ c₁ c₂) :
     c₀[M]▸^[n]c₁ → c₁[M]▸c₂ → c₀[M]▸^[n + 1]c₂ := fun h₁ h₂ =>
   (correctMultistep_succ_iff' _ _ _).mpr ⟨c₁, ⟨h₁, h₂⟩⟩
 
 @[trans]
-theorem correctStep_correst_multistep_trans {M : Machine Γ Λ} (n c₀ c₁ c₂) :
+theorem correctStep_correst_multistep_trans (n c₀ c₁ c₂) :
     c₀[M]▸c₁ → c₁[M]▸^[n]c₂ → c₀[M]▸^[n + 1]c₂ := fun h₁ h₂ =>
   (correctMultistep_succ_iff _ _ _).mpr ⟨c₁, ⟨h₁, h₂⟩⟩
 
 @[trans]
-theorem correst_multistep_trans {M : Machine Γ Λ} (m n c₀ c₁ c₂) :
+theorem correst_multistep_trans (m n c₀ c₁ c₂) :
     c₀[M]▸^[m]c₁ → c₁[M]▸^[n]c₂ → c₀[M]▸^[m + n]c₂ := fun h₁ h₂ =>
   (correctMultistep_add_iff _ _ _ _).mpr ⟨c₁, ⟨h₁, h₂⟩⟩
 
-theorem exists_correctMultistep_le_of_correctMultistep {M : Machine Γ Λ} (n c₀ c₁) :
+theorem exists_correctMultistep_le_of_correctMultistep (n c₀ c₁) :
     c₀[M]▸^[n]c₁ → ∀ m ≤ n, ∃ c₂, c₀[M]▸^[m]c₂ :=
   by
   induction' n with n IH generalizing c₁
@@ -134,7 +135,7 @@ theorem exists_correctMultistep_le_of_correctMultistep {M : Machine Γ Λ} (n c�
     · obtain ⟨c₂, hc₂⟩ := (correct_multistep_succ_iff' _ _ _).mp h
       refine' IH _ hc₂.left m hm
 
-theorem no_early_halt_of_correctMultistep {M : Machine Γ Λ} {n c₀ c₁} :
+theorem no_early_halt_of_correctMultistep {n c₀ c₁} :
     c₀[M]▸^[n]c₁ → ∀ m < n, ∃ c₂, c₀[M]▸^[m]c₂ ∧ ¬Halted c₂ :=
   by
   intro h m hm
@@ -144,7 +145,7 @@ theorem no_early_halt_of_correctMultistep {M : Machine Γ Λ} {n c₀ c₁} :
   obtain ⟨c₃, hc₃⟩ := (correct_multistep_succ_iff' _ _ _).mp hc₂.left
   exact ⟨_, ⟨hc₃.left, (exists_correct_step_iff_not_halted _).mp ⟨_, hc₃.right⟩⟩⟩
 
-theorem reaches_iff_exists_multistep' {M : Machine Γ Λ} (c₀ c₁) :
+theorem reaches_iff_exists_multistep' (c₀ c₁) :
     Reaches M c₀ c₁ ↔ ∃ n, c₁ = multistep' M n c₀ :=
   by
   constructor
@@ -162,7 +163,7 @@ theorem reaches_iff_exists_multistep' {M : Machine Γ Λ} (c₀ c₁) :
     · rw [multistep'_succ'] at hn
       exact Relation.ReflTransGen.tail (IH _ rfl) hn
 
-theorem reaches_iff_correctMultistep {M : Machine Γ Λ} (c₀ c₁ : Cfg Γ Λ) :
+theorem reaches_iff_correctMultistep (c₀ c₁ : Cfg Γ Λ) :
     Reaches M c₀ c₁ ↔ ∃ n, c₀[M]▸^[n]c₁ := by
   simp [reaches_iff_exists_multistep', correct_multistep] <;> tauto
 

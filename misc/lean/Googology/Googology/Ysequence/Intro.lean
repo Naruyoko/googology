@@ -1,5 +1,5 @@
 import Mathlib.Data.Fintype.Sigma
-import Mathlib.Data.Pnat.Basic
+import Mathlib.Data.PNat.Basic
 
 namespace Ysequence
 
@@ -135,11 +135,16 @@ theorem findIterate_eq_none_iff {f : α → Option α} (hf : IterateEventuallyNo
       Option.get _
           (iterate_bind_isSome_iff_lt_of_iterateEventuallyNone_empty hf x k.val |>.mpr k.isLt)
         ∉ p
-  swap; · simp_all only [Fin.forall_iff, iterate_bind_isSome_iff_lt_of_iterateEventuallyNone_empty]
-  have : DecidablePred (· ∈ p) := decidable_p
-  rw [← Option.not_isSome_iff_eq_none, ← Decidable.not_exists_not, Decidable.not_iff_not,
-    exists_congr <| fun _ => Decidable.not_not_iff, Fin.exists_iff]
-  simp_all only [findIterate_isSome_iff, iterate_bind_isSome_iff_lt_of_iterateEventuallyNone_empty]
+  · have : DecidablePred (· ∈ p) := decidable_p
+    rw [← Option.not_isSome_iff_eq_none, ← Decidable.not_exists_not,
+      exists_congr fun _ => Decidable.not_not, Fin.exists_iff, Decidable.not_iff_not]
+    rw [findIterate_isSome_iff]
+    refine
+      exists_congr fun _ =>
+        Equiv.exists_congr
+          (Equiv.ofIff (iterate_bind_isSome_iff_lt_of_iterateEventuallyNone_empty ..))
+          fun _ => Iff.rfl
+  · simp_all only [Fin.forall_iff, iterate_bind_isSome_iff_lt_of_iterateEventuallyNone_empty]
 
 theorem findIndexIterate_pos_of_not_mem {f : α → Option α} (hf : IterateEventuallyNone f)
     {p : Set α} (decidable_p : DecidablePred p) {x : α} (hn : x ∉ p) :

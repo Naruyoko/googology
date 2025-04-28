@@ -1,9 +1,7 @@
 import Mathlib.Data.List.Basic
 import Mathlib.Data.Part
-import Mathlib.Data.Pfun
+import Mathlib.Data.PFun
 import Mathlib.Logic.Relation
-
-#align_import accumulator_notation
 
 -- Lots of plagiarism from computability.turing_machine
 /-- Structure holding the empression part and the accumulator part. -/

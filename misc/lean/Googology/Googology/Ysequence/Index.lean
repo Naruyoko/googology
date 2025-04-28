@@ -1,4 +1,5 @@
 import Googology.YSequence.Intro
+import Mathlib.Data.Fintype.Basic
 import Mathlib.Data.Nat.WithBot
 
 namespace Ysequence
@@ -358,10 +359,6 @@ theorem Index₂.eta₂' {m : List (List α)} (q : Index₂ m) (h₁ : q.val.fst
     (h₂ : q.val.snd < q.fst.get.length) :
     (⟨⟨q.val.fst, h₁⟩, ⟨q.val.snd, (Fin.eta q.fst h₁).symm ▸ h₂⟩⟩ : Index₂ m) = q :=
   Index₂.eta₂ ..
-
-theorem Index₂.ext_iff {m : List (List α)} {q : Index₂ m} {q' : Index₂ m} :
-    q = q' ↔ q.val = q'.val :=
-  ⟨Index₂.val_eq_of_eq, Index₂.eq_of_val_eq⟩
 
 theorem Index₂.val_injective {m : List (List α)} : Function.Injective <| Index₂.val (m := m) :=
   @Index₂.eq_of_val_eq _ _
