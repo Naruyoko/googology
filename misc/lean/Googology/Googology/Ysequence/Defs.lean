@@ -83,8 +83,7 @@ lemma ascends_mountain_last {x : ValueParentListPair} (h : (buildMountain x).IsL
     dsimp only [descend]
     split_ifs
     · simp only [Option.get_some, Option.some_get,
-        (ParentMountain.IsCoherent.indexParentOfIsSome ..).property,
-        mountain_parent_at_index_eq_parent]
+        ParentMountain.IsCoherent.indexParentOfIsSome_val, mountain_parent_at_index_eq_parent]
       convert exists_iterate_parent_eq_parent_upwards _ _
       · rfl
       · refine le_trans (le_of_le_of_eq hj ?_)
@@ -333,7 +332,7 @@ theorem copySeam_length {x : Mountain} (h : x.IsLimit) (i : Index x.values.val) 
           h.last_length_ne_one
           (by assumption))
         (by assumption)
-    simp [← this, (ParentMountain.IsCoherent.indexParentOfIsSome ..).property]
+    simp [← this]
   · simp [h_ascends] at hi
   · simp [finIco, (x.pairable.snd _).def]
 
