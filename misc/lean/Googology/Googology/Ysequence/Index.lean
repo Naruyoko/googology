@@ -137,7 +137,7 @@ theorem List.eq_nil_iff_of_length_eq {s : List α} {t : List β} (h : s.length =
 
 theorem List.ne_nil_iff_of_length_eq {s : List α} {t : List β} (h : s.length = t.length) :
     s ≠ [] ↔ t ≠ [] :=
-  not_congr (List.eq_nil_iff_of_length_eq h)
+  not_congr <| List.eq_nil_iff_of_length_eq h
 
 @[simp]
 theorem Pairable.transfer_last {s : List α} {t : List β} (h : Pairable s t) (ne_nil : s ≠ []) :
@@ -287,7 +287,8 @@ theorem not_map_isSome_and_lt_same {s : List α} (f : Index s → Option ℕ+) (
       ((Finset.univ.filter fun j : Index s => ∃ m ∈ f j, ∃ n ∈ f i, m < n)
         |>.map ⟨Fin.val, Fin.val_injective⟩) :=
   by
-  simp [Fin.val_inj]
+  simp only [Option.mem_def, Finset.mem_map, Finset.mem_filter, Finset.mem_univ, true_and,
+    Function.Embedding.coeFn_mk, Fin.val_inj, exists_eq_right, not_exists, not_and, not_lt]
   intros
   simp_all
 
@@ -395,7 +396,7 @@ theorem Index₂.mk_mk_eq_mk_mk {m : List (List α)} {i : ℕ} {hi : i < m.lengt
     {hj' : j' < (Index.get ⟨i', hi'⟩).length} :
     (⟨⟨i, hi⟩, ⟨j, hj⟩⟩ : Index₂ m) = ⟨⟨i', hi'⟩, ⟨j', hj'⟩⟩ ↔ (i, j) = (i', j') :=
   by
-  simp
+  simp only [Sigma.mk.injEq, Fin.mk.injEq, Prod.mk.injEq, and_congr_right_iff]
   intro i_eq
   apply Fin.heq_ext_iff
   congr
@@ -403,9 +404,7 @@ theorem Index₂.mk_mk_eq_mk_mk {m : List (List α)} {i : ℕ} {hi : i < m.lengt
 theorem Index₂.eq_mk_mk_iff_val_eq {m : List (List α)} {q : Index₂ m} {i' : ℕ}
     {hi' : i' < m.length} {j' : ℕ} {hj' : j' < (Index.get ⟨i', hi'⟩).length} :
     q = ⟨⟨i', hi'⟩, ⟨j', hj'⟩⟩ ↔ q.val = (i', j') :=
-  by
-  rw [Index₂.ext_iff]
-  rfl
+  Index₂.ext_iff
 
 theorem Index₂.val_mk {m : List (List α)} {i : Index m} {j : Index i.get} :
     Index₂.val ⟨i, j⟩ = (i.val, j.val) :=

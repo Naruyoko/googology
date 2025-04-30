@@ -38,7 +38,7 @@ lemma ascends_mountain_last {x : ValueParentListPair} (h : (buildMountain x).IsL
     from this ((badroot ..).get h.badroot_isSome).val.snd (Nat.le_refl _)
   conv in inIndexElim Index.get _ _ =>
     conv in Index.get => change (Index₂.get ⟨p, ·⟩)
-    simp [mountain_parent_at_index_eq_parent]
+    simp only [mountain_parent_at_index_eq_parent, Index₂.mk_val_snd]
     rw [show inIndexElim .. = parent x _ j
         by
         unfold inIndexElim
@@ -93,19 +93,23 @@ lemma ascends_mountain_last {x : ValueParentListPair} (h : (buildMountain x).IsL
           rw [← Option.some_get hp']
           simp only [flip, Option.bind_eq_bind, Option.some_bind, Option.map_some']
     · use 0
-      simp
+      simp only [Option.bind_eq_bind, ne_eq, Function.iterate_zero_apply, Option.some.injEq]
       generalize_proofs _ _ hp
       rw [
-        ← Option.get_map (f := Index₂.val) (h := Option.isSome_map' .. |>.symm ▸ hp'),
-        ← Option.get_map (f := Prod.fst) (h := Option.isSome_map' .. |>.symm ▸ Option.isSome_map' .. |>.symm ▸ hp'),
-        ← Option.get_map (f := Index₂.val) (h := Option.isSome_map' .. |>.symm ▸ hp),
-        ← Option.get_map (f := Prod.fst) (h := Option.isSome_map' .. |>.symm ▸ Option.isSome_map' .. |>.symm ▸ hp)]
+        ← Option.get_map (f := Index₂.val)
+          (h := Option.isSome_map' .. |>.symm ▸ hp'),
+        ← Option.get_map (f := Prod.fst)
+          (h := Option.isSome_map' .. |>.symm ▸ Option.isSome_map' .. |>.symm ▸ hp'),
+        ← Option.get_map (f := Index₂.val)
+          (h := Option.isSome_map' .. |>.symm ▸ hp),
+        ← Option.get_map (f := Prod.fst)
+          (h := Option.isSome_map' .. |>.symm ▸ Option.isSome_map' .. |>.symm ▸ hp)]
       congr 1
       match p'_val : (p'.get hp').snd with
-      | ⟨0, isLt⟩ =>
+      | ⟨0, _⟩ =>
         rw [p'_val] at hp
         contradiction
-      | ⟨j + 1, h⟩ =>
+      | ⟨j + 1, _⟩ =>
         simp only [Option.map_map, Option.map_some', Index₂.mk_val_fst, Index₂.fst_val,
           Option.map_eq_some', Function.comp_apply]
         exact ⟨_, ⟨Option.some_get _ |>.symm, rfl⟩⟩

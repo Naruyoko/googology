@@ -105,7 +105,7 @@ theorem findIterate_isSome_iff {f : α → Option α} (hf : IterateEventuallyNon
     obtain ⟨y, hy⟩ := Option.isSome_iff_exists.mp h
     conv in (_^[_] _) => change findIterateOfIterateEventuallyNone hf decidable_p x
     have := findIterate_spec hf decidable_p x
-    simp [hy] at this ⊢
+    simp only [hy, Option.mem_def, Option.some.injEq, forall_eq', Option.get_some] at this ⊢
     exact this
   · intro h
     rcases h with ⟨k, hk₁, hk₂⟩
@@ -153,7 +153,8 @@ theorem findIndexIterate_pos_of_not_mem {f : α → Option α} (hf : IterateEven
   rw [pos_iff_ne_zero]
   intro H
   have := findIndexIterate_spec hf decidable_p x
-  simp [H] at this
+  simp only [Option.bind_eq_bind, H, Function.iterate_zero_apply, Option.mem_def, Option.some.injEq,
+    forall_eq'] at this
   contradiction
 
 def ToNoneOrLtId [LT α] (f : α → Option α) : Prop :=
