@@ -1,9 +1,6 @@
--- import busybeaver.defs
 import Googology.Busybeaver.Basic
 import Mathlib.Data.List.Basic
 import Mathlib.Data.Zmod.Basic
-
-#align_import busybeaver.bb6_t15
 
 /-!
 Formalization of ["BB(6,2) > 10↑↑15"](https://www.sligocki.com/2022/06/21/bb-6-2-t15.html) through "Pavel’s t15". For human-readable information, visit the website.
@@ -64,7 +61,7 @@ def collatzState (n : ℕ) : Cfg Γ Λ :=
 
 def haltState (n : ℕ) : Cfg Γ Λ :=
   ⟨Z, ⟨O, ListBlank.mk ([O, O, O, O, O, I, I] ++ List.replicate n O ++ [I]), ListBlank.mk []⟩⟩
-
+#exit
 /-
 ...   S 1 0^n C>0 ...
 ... A>S 1 1^n   1 ...

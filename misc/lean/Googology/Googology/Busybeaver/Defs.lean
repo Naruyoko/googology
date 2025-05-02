@@ -1,7 +1,5 @@
 import Mathlib.Computability.TuringMachine
 
-#align_import busybeaver.defs
-
 /-!
 Modified from turing.TM0 to perform write, move, and state transition in a step, which is standard for BB.
 -/
@@ -13,17 +11,17 @@ section
 
 open Turing
 
-parameter (Γ Λ : Type _) [Inhabited Γ] [Inhabited Λ]
+variable (Γ Λ : Type _) [Inhabited Γ] [Inhabited Λ]
 
-def Stmt : Type _ :=
+abbrev Stmt : Type _ :=
   Γ × Dir × Option Λ
 
-instance Stmt.inhabited : Inhabited stmt := by unfold stmt <;> infer_instance
+instance : Inhabited (Stmt Γ Λ) := by infer_instance
 
-def Machine :=
-  Λ → Γ → stmt
+abbrev Machine :=
+  Λ → Γ → Stmt Γ Λ
 
-instance Machine.inhabited : Inhabited machine := by unfold machine <;> infer_instance
+instance : Inhabited (Machine Γ Λ) := by infer_instance
 
 /--
 The state `none` represents the "halted" state, with output held. This is required because a write, move, and state change are all done in one step.
@@ -31,55 +29,53 @@ The state `none` represents the "halted" state, with output held. This is requir
 structure Cfg where
   q : Option Λ
   Tape : Tape Γ
+  deriving Inhabited
 
-instance Cfg.inhabited : Inhabited cfg :=
-  ⟨⟨default, default⟩⟩
+variable {Γ Λ} (M : Machine Γ Λ) (c : Cfg Γ Λ)
 
-parameter {Γ Λ}
-
-def Halted (c : cfg) : Prop :=
+def Halted : Prop :=
   c.q.isNone
 
-def step (M : machine) : cfg → Option cfg := fun ⟨q, T⟩ =>
+def step : Cfg Γ Λ → Option (Cfg Γ Λ) := fun ⟨q, T⟩ =>
   q.map fun q =>
-    match M q T.headI with
+    match M q T.head with
     | ⟨a, d, q'⟩ => ⟨q', (T.write a).move d⟩
 
-def step' (M : machine) (c : Option cfg) : Option cfg :=
-  c >>= step M
+def step' (c' : Option (Cfg Γ Λ)) : Option (Cfg Γ Λ) :=
+  c' >>= step M
 
-def multistep' (M : machine) (n : ℕ) (c : Option cfg) : Option cfg :=
-  (step' M^[n]) c
+def multistep' (n : ℕ) (c' : Option (Cfg Γ Λ)) : Option (Cfg Γ Λ) :=
+  (step' M)^[n] c'
 
-def multistep (M : machine) (n : ℕ) (c : cfg) : Option cfg :=
+def multistep (n : ℕ) (c : Cfg Γ Λ) : Option (Cfg Γ Λ) :=
   multistep' M n (some c)
 
-def CorrectStep (M : machine) (c₀ c₁ : cfg) :=
+def CorrectStep (c₀ c₁ : Cfg Γ Λ) :=
   c₁ ∈ step M c₀
 
 /--
 Because we want to be able to talk about precise number of steps until halting we define a relation that takes a set number of steps. -/
-def CorrectMultistep (M : machine) (n : ℕ) (c₀ c₁ : cfg) :=
+def CorrectMultistep (n : ℕ) (c₀ c₁ : Cfg Γ Λ) :=
   c₁ ∈ multistep M n c₀
 
-/-- The statement `reaches M s₁ s₂` means that `s₂` is obtained
-  starting from `s₁` after a finite number of steps from `s₂`. -/
-def Reaches (M : machine) : Option cfg → Option cfg → Prop := fun c₀ c₁ =>
+/-- The statement `reaches M c₀ c₁` means that `c₁` is obtained
+  starting from `c₀` after a finite number of steps. -/
+def Reaches (c₀ c₁ : Option (Cfg Γ Λ)) : Prop :=
   Relation.ReflTransGen (fun a b => b = step' M a) c₀ c₁
 
 /-- The initial configuration. -/
-def init (l : List Γ) : cfg :=
+def init (l : List Γ) : Cfg Γ Λ :=
   ⟨some default, Tape.mk₁ l⟩
-
+#exit
 /-- Evaluate a Turing machine on initial input to a final state,
   if it terminates. -/
-def eval (M : machine) (l : List Γ) : Part (ListBlank Γ) :=
-  (eval (step M) (init l)).map fun c => c.Tape.right₀
+def eval (M : Machine Γ Λ) (l : List Γ) : Part (ListBlank Γ) :=
+  (eval M (init l)).map fun c => c.Tape.right₀
 
-def Supports (M : machine) (S : Set Λ) :=
+def Supports (S : Set Λ) :=
   default ∈ S ∧ ∀ {q a a' s q'₀ q'}, (a', s, q'₀) = M q a → q ∈ S → q' ∈ q'₀ → q' ∈ S
 
-theorem step_supports (M : machine) {S} (ss : supports M S) :
+theorem step_supports (M : Machine Γ Λ) {S} (ss : supports M S) :
     ∀ {c c' : cfg} {q q'}, c' ∈ step M c → q ∈ c.q → q ∈ S → q' ∈ c'.q → q' ∈ S :=
   by
   intro c c' q q' h₁ hq h₂ hq'
@@ -96,7 +92,7 @@ theorem step_supports (M : machine) {S} (ss : supports M S) :
   simp [hM, step] at h
   exact h.left
 
-theorem univ_supports (M : machine) : supports M Set.univ :=
+theorem univ_supports (M : Machine Γ Λ) : supports M Set.univ :=
   ⟨trivial, fun q a a' s q'₀ q' h₁ hq h₂ => trivial⟩
 
 end
@@ -106,4 +102,3 @@ notation x "[" M "]▸" y:50 => CorrectStep M x y
 notation x "[" M "]▸^[" n "]" y:50 => CorrectMultistep M n x y
 
 end BB
-

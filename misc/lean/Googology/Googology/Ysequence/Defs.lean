@@ -38,7 +38,7 @@ lemma ascends_mountain_last {x : ValueParentListPair} (h : (buildMountain x).IsL
     from this ((badroot ..).get h.badroot_isSome).val.snd (Nat.le_refl _)
   conv in inIndexElim Index.get _ _ =>
     conv in Index.get => change (Index₂.get ⟨p, ·⟩)
-    simp [mountain_parent_at_index_eq_parent]
+    simp only [mountain_parent_at_index_eq_parent, Index₂.mk_val_snd]
     rw [show inIndexElim .. = parent x _ j
         by
         unfold inIndexElim
@@ -64,13 +64,13 @@ lemma ascends_mountain_last {x : ValueParentListPair} (h : (buildMountain x).IsL
   induction k with
   | zero => exact ⟨0, by dsimp; congr 2; symm; apply mountain_length_eq⟩
   | succ k IH =>
-    have hp' := iterate_bind_isSome_le (Nat.le_succ k) (Option.isSome_map .. ▸ hp)
+    have hp' := iterate_bind_isSome_le (Nat.le_succ k) (Option.isSome_map' .. ▸ hp)
     set p := _^[k + 1] _ with p_eq
     change ∃ k, _ = some (p.get _).val.fst
     rw [Function.iterate_succ_apply', ← Option.some_get hp'] at p_eq
     simp only [flip, Option.bind_eq_bind] at p_eq
     rw [Option.some_bind] at p_eq
-    specialize IH (Option.isSome_map .. |>.symm ▸ hp') (hj.trans ?_)
+    specialize IH (Option.isSome_map' .. |>.symm ▸ hp') (hj.trans ?_)
     · conv in _^[k + 1] _ => change p; rw [p_eq]
       exact (descend_pairwise_le_of_it_isSome ..).right
     rcases IH with ⟨k₁, hk₁⟩
@@ -83,30 +83,33 @@ lemma ascends_mountain_last {x : ValueParentListPair} (h : (buildMountain x).IsL
     dsimp only [descend]
     split_ifs
     · simp only [Option.get_some, Option.some_get,
-        (ParentMountain.IsCoherent.indexParentOfIsSome ..).property,
-        mountain_parent_at_index_eq_parent]
+        ParentMountain.IsCoherent.indexParentOfIsSome_val, mountain_parent_at_index_eq_parent]
       convert exists_iterate_parent_eq_parent_upwards _ _
       · rfl
       · refine le_trans (le_of_le_of_eq hj ?_)
-          (descend_pairwise_le_of_it_isSome (Option.isSome_map .. ▸ p_eq ▸ hp)).right
+          (descend_pairwise_le_of_it_isSome (Option.isSome_map' .. ▸ p_eq ▸ hp)).right
         simp_rw [Function.iterate_succ_apply', ← p'_eq]
         conv in flip .. =>
           rw [← Option.some_get hp']
           simp only [flip, Option.bind_eq_bind, Option.some_bind, Option.map_some']
     · use 0
-      simp
+      simp only [Option.bind_eq_bind, ne_eq, Function.iterate_zero_apply, Option.some.injEq]
       generalize_proofs _ _ hp
       rw [
-        ← Option.get_map Index₂.val (Option.isSome_map .. |>.symm ▸ hp'),
-        ← Option.get_map Prod.fst (Option.isSome_map .. |>.symm ▸ Option.isSome_map .. |>.symm ▸ hp'),
-        ← Option.get_map Index₂.val (Option.isSome_map .. |>.symm ▸ hp),
-        ← Option.get_map Prod.fst (Option.isSome_map .. |>.symm ▸ Option.isSome_map .. |>.symm ▸ hp)]
+        ← Option.get_map (f := Index₂.val)
+          (h := Option.isSome_map' .. |>.symm ▸ hp'),
+        ← Option.get_map (f := Prod.fst)
+          (h := Option.isSome_map' .. |>.symm ▸ Option.isSome_map' .. |>.symm ▸ hp'),
+        ← Option.get_map (f := Index₂.val)
+          (h := Option.isSome_map' .. |>.symm ▸ hp),
+        ← Option.get_map (f := Prod.fst)
+          (h := Option.isSome_map' .. |>.symm ▸ Option.isSome_map' .. |>.symm ▸ hp)]
       congr 1
       match p'_val : (p'.get hp').snd with
-      | ⟨0, isLt⟩ =>
+      | ⟨0, _⟩ =>
         rw [p'_val] at hp
         contradiction
-      | ⟨j + 1, h⟩ =>
+      | ⟨j + 1, _⟩ =>
         simp only [Option.map_map, Option.map_some', Index₂.mk_val_fst, Index₂.fst_val,
           Option.map_eq_some', Function.comp_apply]
         exact ⟨_, ⟨Option.some_get _ |>.symm, rfl⟩⟩
@@ -172,7 +175,7 @@ def copyParent {x : Mountain} (h : x.IsLimit) (i : Index₂ x.parents.val) (k : 
 @[simp]
 lemma copyParent_isSome {x : Mountain} (h : x.IsLimit) (i : Index₂ x.parents.val) (k : ℕ) :
     (copyParent h i k).isSome = i.get.isSome :=
-  Option.isSome_map ..
+  Option.isSome_map' ..
 
 theorem copyParent_get_le_new_position_of_isSome {x : Mountain} (h : x.IsLimit)
     (i : Index₂ x.parents.val) (k : ℕ) (hp : (copyParent h i k).isSome) :
@@ -333,7 +336,7 @@ theorem copySeam_length {x : Mountain} (h : x.IsLimit) (i : Index x.values.val) 
           h.last_length_ne_one
           (by assumption))
         (by assumption)
-    simp [← this, (ParentMountain.IsCoherent.indexParentOfIsSome ..).property]
+    simp [← this]
   · simp [h_ascends] at hi
   · simp [finIco, (x.pairable.snd _).def]
 
@@ -353,7 +356,7 @@ def shell {x : Mountain} (h : x.IsLimit) (n : ℕ) : ParentMountain :=
               ⟨((badroot ..).get h.badroot_isSome).val.fst,
                 Nat.lt_add_right 1 (Index₂.val_fst_lt _)⟩
               ⟨x.values.val.length, Nat.lt_add_of_pos_right Nat.zero_lt_one⟩ |>.map
-            fun i => copySeam h i k).join,
+            fun i => copySeam h i k).flatten,
     by
     intro l hl
     rw [List.mem_append] at hl
@@ -362,7 +365,7 @@ def shell {x : Mountain} (h : x.IsLimit) (n : ℕ) : ParentMountain :=
       obtain ⟨i, rfl⟩ := Index.get_of_mem (List.mem_of_mem_take hl)
       exact x.parents.index_get_ne_nil _
     | inr hl =>
-      simp only [List.mem_join, List.mem_map, List.mem_pmap, List.Ico.mem,
+      simp only [List.mem_flatten, List.mem_map, List.mem_pmap, List.Ico.mem,
         exists_exists_and_eq_and] at hl
       obtain ⟨k, ⟨_, ⟨_, _, rfl⟩⟩⟩ := hl
       exact copySeam_ne_nil _ _ _⟩

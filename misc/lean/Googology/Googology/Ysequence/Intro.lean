@@ -1,5 +1,5 @@
 import Mathlib.Data.Fintype.Sigma
-import Mathlib.Data.Pnat.Basic
+import Mathlib.Data.PNat.Basic
 
 namespace Ysequence
 
@@ -105,7 +105,7 @@ theorem findIterate_isSome_iff {f : α → Option α} (hf : IterateEventuallyNon
     obtain ⟨y, hy⟩ := Option.isSome_iff_exists.mp h
     conv in (_^[_] _) => change findIterateOfIterateEventuallyNone hf decidable_p x
     have := findIterate_spec hf decidable_p x
-    simp [hy] at this ⊢
+    simp only [hy, Option.mem_def, Option.some.injEq, forall_eq', Option.get_some] at this ⊢
     exact this
   · intro h
     rcases h with ⟨k, hk₁, hk₂⟩
@@ -135,19 +135,26 @@ theorem findIterate_eq_none_iff {f : α → Option α} (hf : IterateEventuallyNo
       Option.get _
           (iterate_bind_isSome_iff_lt_of_iterateEventuallyNone_empty hf x k.val |>.mpr k.isLt)
         ∉ p
-  swap; · simp_all only [Fin.forall_iff, iterate_bind_isSome_iff_lt_of_iterateEventuallyNone_empty]
-  have : DecidablePred (· ∈ p) := decidable_p
-  rw [← Option.not_isSome_iff_eq_none, ← Decidable.not_exists_not, Decidable.not_iff_not,
-    exists_congr <| fun _ => Decidable.not_not_iff, Fin.exists_iff]
-  simp_all only [findIterate_isSome_iff, iterate_bind_isSome_iff_lt_of_iterateEventuallyNone_empty]
+  · have : DecidablePred (· ∈ p) := decidable_p
+    rw [← Option.not_isSome_iff_eq_none, ← Decidable.not_exists_not,
+      exists_congr fun _ => Decidable.not_not, Fin.exists_iff, Decidable.not_iff_not]
+    rw [findIterate_isSome_iff]
+    refine
+      exists_congr fun _ =>
+        Equiv.exists_congr
+          (Equiv.ofIff (iterate_bind_isSome_iff_lt_of_iterateEventuallyNone_empty ..))
+          fun _ => Iff.rfl
+  · simp_all only [Fin.forall_iff, iterate_bind_isSome_iff_lt_of_iterateEventuallyNone_empty]
 
 theorem findIndexIterate_pos_of_not_mem {f : α → Option α} (hf : IterateEventuallyNone f)
     {p : Set α} (decidable_p : DecidablePred p) {x : α} (hn : x ∉ p) :
-    0 < findIndexIterateOfIterateEventuallyNone hf decidable_p x := by
+    0 < findIndexIterateOfIterateEventuallyNone hf decidable_p x :=
+  by
   rw [pos_iff_ne_zero]
   intro H
   have := findIndexIterate_spec hf decidable_p x
-  simp [H] at this
+  simp only [Option.bind_eq_bind, H, Function.iterate_zero_apply, Option.mem_def, Option.some.injEq,
+    forall_eq'] at this
   contradiction
 
 def ToNoneOrLtId [LT α] (f : α → Option α) : Prop :=
@@ -170,18 +177,22 @@ def findIterateOfToNoneOrLtId {f : ℕ → Option ℕ} (hf : ToNoneOrLtId f) {p 
 
 theorem iterate_iterate_dependent_apply (f : α → α) (g : α → ℕ) (n : ℕ) (x : α) :
     (fun x => f^[g x] x)^[n] x =
-      f^[Nat.sum <| List.iterate (fun x => f^[g x] x) x n |>.map g] x :=
-  n.recOn (fun _ => rfl) (fun n IH x => by
-    rw [Function.iterate_succ_apply, IH, List.iterate, List.map_cons, Nat.sum_cons, Nat.add_comm,
-      Function.iterate_add_apply]) x
+      f^[List.sum <| List.iterate (fun x => f^[g x] x) x n |>.map g] x :=
+  n.recOn
+    (fun _ => rfl)
+    (fun n IH x =>
+      by rw [Function.iterate_succ_apply, IH, List.iterate, List.map_cons, List.sum_cons,
+        Nat.add_comm, Function.iterate_add_apply])
+    x
 
 theorem iterate_iterate_dependent (f : α → α) (g : α → ℕ) (n : ℕ) :
     (fun x => f^[g x] x)^[n] =
-      fun x => f^[Nat.sum <| List.iterate (fun x => f^[g x] x) x n |>.map g] x :=
+      fun x => f^[List.sum <| List.iterate (fun x => f^[g x] x) x n |>.map g] x :=
   funext fun _ => iterate_iterate_dependent_apply ..
 
 theorem toNoneOrLtId_iterate_succ {f : ℕ → Option ℕ} (hf : ToNoneOrLtId f) (n k : ℕ) :
-    WithBot.lt.lt ((flip bind f)^[k + 1] <| some n) ↑n := by
+    WithBot.lt.lt ((flip bind f)^[k + 1] <| some n) ↑n :=
+  by
   induction' k with k IH
   · exact hf n
   · rw [Function.iterate_succ_apply']
@@ -190,7 +201,8 @@ theorem toNoneOrLtId_iterate_succ {f : ℕ → Option ℕ} (hf : ToNoneOrLtId f)
     · exact lt_trans (hf _) (lt_of_eq_of_lt hl.symm IH)
 
 theorem toNoneOrLtId_iterate_pos {f : ℕ → Option ℕ} (hf : ToNoneOrLtId f) (n : ℕ) {k : ℕ}
-    (hk : 0 < k) : WithBot.lt.lt ((flip bind f)^[k] <| some n) ↑n := by
+    (hk : 0 < k) : WithBot.lt.lt ((flip bind f)^[k] <| some n) ↑n :=
+  by
   cases' k with k
   · exact absurd hk (by decide)
   · exact toNoneOrLtId_iterate_succ hf n k
