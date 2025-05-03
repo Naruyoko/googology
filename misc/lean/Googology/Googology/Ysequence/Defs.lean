@@ -381,11 +381,11 @@ theorem shell_isCoherent {x : Mountain} (h : x.IsLimit) (n : ℕ) : (shell h n).
       constructor
       simp_rw [Index.get, shell]
       nth_rw 1 [← Fin.mk_val i]
-      rw [List.get_append]
+      rw [List.get_eq_getElem, List.getElem_append_left]
       case h.h =>
         exact Nat.lt_of_lt_of_eq hi <| .symm <| List.length_take_of_le <|
           x.pairable.fst ▸ Nat.sub_le ..
-      rw [List.get_take']
+      apply List.getElem_take
     have get_of_lt₂ (q : Index₂ (shell h n).val) :
         let i := q.val.fst
         let j := q.val.snd
