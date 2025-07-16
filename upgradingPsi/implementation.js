@@ -734,7 +734,7 @@ function deg(bp,br){
     if (a!=Infinity&&br<bp) return Infinity; //3.1
     else return deg(b,br); //3.2
   }
-  if (bp instanceof PsiTerm) return deg(bp.inner,br)
+  if (bp instanceof PsiTerm) return deg(bp.inner,br); //4
   throw Error("No rule to compute deg("+bp+","+br+")");
 }
 /**
