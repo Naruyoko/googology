@@ -1210,7 +1210,7 @@ function compute(){
         }else if (cmd=="lessThan"||cmd=="<"){
           result=lessThan(args[0],args[1]);
         }else if (cmd=="cp"){
-          result=cp(args[0],args[1],args[2]);
+          result=cp(args[0]);
         }else if (cmd=="bp"){
           result=bp(args[0],args[1],args[2]);
         }else if (cmd=="dom"){
