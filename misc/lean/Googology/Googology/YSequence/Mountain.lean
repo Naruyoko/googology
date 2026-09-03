@@ -640,7 +640,7 @@ theorem value_isSome_of_lt_height {x : ValueParentListPair} {i : Index x.values.
 theorem value_isSome_iff_lt_height {x : ValueParentListPair} {i : Index x.values.val} {j : ℕ} :
     (value x i j).isSome ↔ j < height x i :=
   ⟨by
-    rw [← Decidable.not_imp_not, not_lt, Bool.not_eq_true, Option.not_isSome,
+    rw [← Decidable.not_imp_not, not_lt, Bool.not_eq_true, Option.isSome_eq_false_iff,
       Option.isNone_iff_eq_none]
     exact value_eq_none_of_height_le, value_isSome_of_lt_height⟩
 

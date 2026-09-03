@@ -94,7 +94,7 @@ lemma ascends_mountain_last {x : ValueParentListPair} (h : (buildMountain x).IsL
           simp only [flip, Option.bind_eq_bind, Option.bind_some, Option.map_some]
     · use 0
       simp only [Option.bind_eq_bind, ne_eq, Function.iterate_zero_apply, Option.some.injEq]
-      generalize_proofs _ _ hp
+      generalize_proofs _ _ _ hp
       rw [
         ← Option.get_map (f := Index₂.val)
           (h := Option.isSome_map .. |>.symm ▸ hp'),
