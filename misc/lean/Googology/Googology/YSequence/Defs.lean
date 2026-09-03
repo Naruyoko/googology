@@ -64,13 +64,13 @@ lemma ascends_mountain_last {x : ValueParentListPair} (h : (buildMountain x).IsL
   induction k with
   | zero => exact ⟨0, by dsimp; congr 2; symm; apply mountain_length_eq⟩
   | succ k IH =>
-    have hp' := iterate_bind_isSome_le (Nat.le_succ k) (Option.isSome_map' .. ▸ hp)
+    have hp' := iterate_bind_isSome_le (Nat.le_succ k) (Option.isSome_map .. ▸ hp)
     set p := _^[k + 1] _ with p_eq
     change ∃ k, _ = some (p.get _).val.fst
     rw [Function.iterate_succ_apply', ← Option.some_get hp'] at p_eq
     simp only [flip, Option.bind_eq_bind] at p_eq
-    rw [Option.some_bind] at p_eq
-    specialize IH (Option.isSome_map' .. |>.symm ▸ hp') (hj.trans ?_)
+    rw [Option.bind_some] at p_eq
+    specialize IH (Option.isSome_map .. |>.symm ▸ hp') (hj.trans ?_)
     · conv in _^[k + 1] _ => change p; rw [p_eq]
       exact (descend_pairwise_le_of_it_isSome ..).right
     rcases IH with ⟨k₁, hk₁⟩
@@ -87,31 +87,31 @@ lemma ascends_mountain_last {x : ValueParentListPair} (h : (buildMountain x).IsL
       convert exists_iterate_parent_eq_parent_upwards _ _
       · rfl
       · refine le_trans (le_of_le_of_eq hj ?_)
-          (descend_pairwise_le_of_it_isSome (Option.isSome_map' .. ▸ p_eq ▸ hp)).right
+          (descend_pairwise_le_of_it_isSome (Option.isSome_map .. ▸ p_eq ▸ hp)).right
         simp_rw [Function.iterate_succ_apply', ← p'_eq]
         conv in flip .. =>
           rw [← Option.some_get hp']
-          simp only [flip, Option.bind_eq_bind, Option.some_bind, Option.map_some']
+          simp only [flip, Option.bind_eq_bind, Option.bind_some, Option.map_some]
     · use 0
       simp only [Option.bind_eq_bind, ne_eq, Function.iterate_zero_apply, Option.some.injEq]
       generalize_proofs _ _ hp
       rw [
         ← Option.get_map (f := Index₂.val)
-          (h := Option.isSome_map' .. |>.symm ▸ hp'),
+          (h := Option.isSome_map .. |>.symm ▸ hp'),
         ← Option.get_map (f := Prod.fst)
-          (h := Option.isSome_map' .. |>.symm ▸ Option.isSome_map' .. |>.symm ▸ hp'),
+          (h := Option.isSome_map .. |>.symm ▸ Option.isSome_map .. |>.symm ▸ hp'),
         ← Option.get_map (f := Index₂.val)
-          (h := Option.isSome_map' .. |>.symm ▸ hp),
+          (h := Option.isSome_map .. |>.symm ▸ hp),
         ← Option.get_map (f := Prod.fst)
-          (h := Option.isSome_map' .. |>.symm ▸ Option.isSome_map' .. |>.symm ▸ hp)]
+          (h := Option.isSome_map .. |>.symm ▸ Option.isSome_map .. |>.symm ▸ hp)]
       congr 1
       match p'_val : (p'.get hp').snd with
       | ⟨0, _⟩ =>
         rw [p'_val] at hp
         contradiction
       | ⟨j + 1, _⟩ =>
-        simp only [Option.map_map, Option.map_some', Index₂.mk_val_fst, Index₂.fst_val,
-          Option.map_eq_some', Function.comp_apply]
+        simp only [Option.map_map, Option.map_some, Index₂.mk_val_fst, Index₂.fst_val,
+          Option.map_eq_some_iff, Function.comp_apply]
         exact ⟨_, ⟨Option.some_get _ |>.symm, rfl⟩⟩
 
 theorem not_ascends_of_lt_badroot {x : Mountain} (h : x.IsLimit) {i : Index x.values.val}
@@ -148,7 +148,7 @@ theorem height_gt_badroot_val_snd_add_one_of_ascends_of_fst_ne_badroot_fst {x : 
     apply Fin.ext at hk₂
     symm at hk₂
     contradiction
-  rw [Function.iterate_one, flip, Option.bind_eq_bind, Option.some_bind,
+  rw [Function.iterate_one, flip, Option.bind_eq_bind, Option.bind_some,
     inIndexElim_of_lt (hi := Nat.lt_of_lt_of_eq i.isLt x.pairable.fst), inIndexElim] at hk₁
   split_ifs at hk₁ with hr
   case neg => contradiction
@@ -175,7 +175,7 @@ def copyParent {x : Mountain} (h : x.IsLimit) (i : Index₂ x.parents.val) (k : 
 @[simp]
 lemma copyParent_isSome {x : Mountain} (h : x.IsLimit) (i : Index₂ x.parents.val) (k : ℕ) :
     (copyParent h i k).isSome = i.get.isSome :=
-  Option.isSome_map' ..
+  Option.isSome_map ..
 
 theorem copyParent_get_le_new_position_of_isSome {x : Mountain} (h : x.IsLimit)
     (i : Index₂ x.parents.val) (k : ℕ) (hp : (copyParent h i k).isSome) :

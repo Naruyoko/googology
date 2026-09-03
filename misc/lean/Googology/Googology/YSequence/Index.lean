@@ -161,7 +161,7 @@ theorem flip_bind_inIndexElim_val_eq_iff_of_pairable {s : List α} {t : List β}
     (flip bind (inIndexElim f g) <| some i.val) = (flip bind (inIndexElim f' g) <| some i.val) ↔
       f i = f' (h.transfer i) :=
   by
-  simp only [flip, Option.bind_eq_bind, Option.some_bind, inIndexElim_val,
+  simp only [flip, Option.bind_eq_bind, Option.bind_some, inIndexElim_val,
     inIndexElim_of_lt f' _ <| lt_of_lt_of_eq i.isLt h]
   rfl
 
@@ -174,7 +174,7 @@ theorem flip_bind_inIndexElim_forall_eq_iff_of_pairable {s : List α} {t : List 
 
 theorem flip_bind_inIndexElim_val_none_val_apply {s : List α} (f : Index s → Option ℕ) (i : Index s) :
     (flip bind (inIndexElim f none) <| some i.val) = f i :=
-  by simp only [flip, Option.bind_eq_bind, Option.some_bind, inIndexElim_val]
+  by simp only [flip, Option.bind_eq_bind, Option.bind_some, inIndexElim_val]
 
 theorem flip_bind_inIndexElim_val_none_val {s : List α} (f : Index s → Option ℕ) :
     (fun i => flip bind (inIndexElim f none) <| some i.val) = f :=
@@ -203,7 +203,7 @@ theorem exists_iterate_bind_join_dependent_of_iterateEventuallyNone {f : α → 
       | none => contradiction
       | some x =>
         simp only [Option.bind_eq_bind, Function.iterate_one, flip, inIndexElim,
-          Option.some_bind] at hp
+          Option.bind_some] at hp
         exact hp ▸ ⟨k'' + g _, Function.iterate_add_apply ..⟩
     · rw [Option.not_isSome_iff_eq_none] at h
       rw [h]
@@ -253,7 +253,7 @@ theorem exists_iterate_bind_inIndexElim_join_dependent_of_iterateEventuallyNone 
       | none => contradiction
       | some n =>
         simp only [Option.bind_eq_bind, Function.iterate_one, flip, inIndexElim,
-          Option.some_bind] at hp
+          Option.bind_some] at hp
         split_ifs at hp
         exact hp ▸ ⟨k'' + g _, Function.iterate_add_apply ..⟩
     · rw [Option.not_isSome_iff_eq_none] at h

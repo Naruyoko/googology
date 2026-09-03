@@ -205,7 +205,7 @@ theorem Machine.map_step {S : Set Λ} (f₂₁ : Function.RightInverse f₁ f₂
 
 theorem map_init (g₁ : Turing.PointedMap Λ Λ') (l : List Γ) :
     (init l).map f₁ g₁ = init (l.map f₁) :=
-  congr (congr_arg _ (Eq.trans Option.map_some' (congr_arg _ g₁.map_pt))) (Turing.Tape.map_mk₁ _ _)
+  congr (congr_arg _ (Eq.trans Option.map_some (congr_arg _ g₁.map_pt))) (Turing.Tape.map_mk₁ _ _)
 
 end Map
 

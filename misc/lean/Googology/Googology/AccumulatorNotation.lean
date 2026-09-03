@@ -148,7 +148,7 @@ theorem reachable_iff_exists_list_args {a b : Option α} :
       rcases hac with ⟨d, rfl⟩
       cases' IH with l hl
       use d :: l
-      simp only [List.scanl, Option.some_bind]
+      simp only [List.scanl, Option.bind_some]
       rw [List.dropLast_cons_of_ne_nil (scanl_ne_nil _ _)]
       tauto
   · intro hab
@@ -171,8 +171,8 @@ theorem reachable_iff_exists_list_args {a b : Option α} :
       use f a d
       constructor
       · use d
-      · rw [List.foldl_cons, Option.some_bind] at hl
-        rw [List.all_cons, Bool.and_eq_true, Option.some_bind] at hsome
+      · rw [List.foldl_cons, Option.bind_some] at hl
+        rw [List.all_cons, Bool.and_eq_true, Option.bind_some] at hsome
         exact IH hsome.right hl
 
 end
@@ -406,7 +406,7 @@ theorem isSome_get_of_isSome_limitPointExtend {T : Option α} {n : ℕ}
 -/
 def mkLimitSeq : AccumulatorNotation (Option α) :=
   mkPrepostapplyStep (limitPointExtend expand limit_seq) expand_transform accumulator_step fun _ =>
-    Option.decidable_eq_none
+    Option.decidableEqNone
 
 end
 

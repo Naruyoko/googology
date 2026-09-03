@@ -714,7 +714,7 @@ theorem mountain_parents_isCoherent (x : ValueParentListPair) :
     dsimp only [Pairable.transfer, Fin.eta] at iheight
     rw [← iheight, eq_comm, add_left_inj, or_iff_right_iff_imp]
     intro h
-    exact absurd j.isLt (not_lt_of_le h)
+    exact absurd j.isLt (not_lt_of_ge h)
   · refine' lt_of_eq_of_lt _ (toNoneOrLtId_parent x j.val i.val)
     symm
     rw [inIndexElim, dite_eq_iff', and_iff_left]
@@ -831,14 +831,14 @@ theorem iterate_mountain_indexParentOfIsSome_map_val_snd_eq_of_isSome {x : Value
   induction k with
   | zero => rfl
   | succ k IH =>
-    rw [Option.isSome_map'] at h
+    rw [Option.isSome_map] at h
     have h' := iterate_bind_isSome_le (Nat.le_succ k) h
-    specialize IH <| (Option.isSome_map' ..).symm ▸ h'
+    specialize IH <| (Option.isSome_map ..).symm ▸ h'
     rw [Function.iterate_succ_apply'] at h ⊢
     set q' := _^[k] _
     rw [← Option.some_get h'] at h IH ⊢
-    simp only [flip, Option.bind_eq_bind, Option.some_bind, Option.isSome_dite] at h
-    simpa only [flip, Option.bind_eq_bind, Option.some_bind, Option.map_dif,
+    simp only [flip, Option.bind_eq_bind, Option.bind_some, Option.isSome_dite] at h
+    simpa only [flip, Option.bind_eq_bind, Option.bind_some, Option.map_dif,
       (mountain_parents_isCoherent x).indexParentOfIsSome_val, dite_eq_ite,
       Option.ite_none_right_eq_some, h, true_and]
 
@@ -856,16 +856,16 @@ theorem iterate_mountain_indexParentOfIsSome_map_val_fst_eq_iterate_mountain_par
     set q' := _^[k] _
     by_cases h : q'.isSome
     · have := iterate_mountain_indexParentOfIsSome_map_val_snd_eq_of_isSome q k <|
-        (Option.isSome_map' ..).symm ▸ h
+        (Option.isSome_map ..).symm ▸ h
       rw [Option.get_map] at this
       change (q'.get h).val.snd = _ at this
       rw [← Option.some_get h]
-      simp only [flip, Option.bind_eq_bind, Option.some_bind, Option.map_some']
+      simp only [flip, Option.bind_eq_bind, Option.bind_some, Option.map_some]
       erw [inIndexElim_of_lt _ _ <| Nat.lt_of_lt_of_eq (q'.get h).val_fst_lt <|
           (buildMountain x).pairable.symm.fst.trans (mountain_length_eq x),
         ← this, ← mountain_parent_at_index_eq_parent x (q'.get h)]
       split_ifs with h'
-      · rw [Option.map_some', (mountain_parents_isCoherent x).indexParentOfIsSome_val]
+      · rw [Option.map_some, (mountain_parents_isCoherent x).indexParentOfIsSome_val]
         exact Option.some_get _
       · symm
         exact Option.not_isSome_iff_eq_none.mp h'
