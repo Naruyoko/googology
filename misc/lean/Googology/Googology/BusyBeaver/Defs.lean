@@ -1,4 +1,4 @@
-import Mathlib.Computability.TuringMachine
+import Mathlib.Computability.TuringMachine.StackTuringMachine
 
 /-!
 Modified from turing.TM0 to perform write, move, and state transition in a step, which is standard for BB.
