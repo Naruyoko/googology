@@ -1,6 +1,6 @@
 import Googology.BusyBeaver.Basic
 import Mathlib.Data.List.Basic
-import Mathlib.Data.Zmod.Basic
+import Mathlib.Data.ZMod.Basic
 
 /-!
 Formalization of ["BB(6,2) > 10↑↑15"](https://www.sligocki.com/2022/06/21/bb-6-2-t15.html) through "Pavel’s t15". For human-readable information, visit the website.
