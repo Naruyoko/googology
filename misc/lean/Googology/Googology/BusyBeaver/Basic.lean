@@ -1,4 +1,4 @@
-import Googology.Busybeaver.Defs
+import Googology.BusyBeaver.Defs
 
 namespace BB
 

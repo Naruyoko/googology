@@ -1,4 +1,4 @@
-import Googology.Busybeaver.Basic
+import Googology.BusyBeaver.Basic
 import Mathlib.Data.List.Basic
 import Mathlib.Data.Zmod.Basic
 
