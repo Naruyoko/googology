@@ -78,7 +78,7 @@ theorem inIndexElim_val {s : List α} (f : Index s → β) (g : β) (i : Index s
   by simp [inIndexElim, i.isLt]
 
 theorem toNoneOrLtId_inIndexElim_val_none_of_forall_index {s : List α} (f : Index s → Option ℕ)
-    (h : ∀ i : Index s, WithBot.lt.lt (f i) ↑i.val) : ToNoneOrLtId (inIndexElim f none) :=
+    (h : ∀ i : Index s, WithBot.instLT.lt (f i) ↑i.val) : ToNoneOrLtId (inIndexElim f none) :=
   by
   intro i
   rw [inIndexElim]
@@ -87,7 +87,7 @@ theorem toNoneOrLtId_inIndexElim_val_none_of_forall_index {s : List α} (f : Ind
   · exact WithBot.bot_lt_coe i
 
 theorem toNoneOrLtId_inIndexElim_val_none_forall_index_of {s : List α} (f : Index s → Option ℕ)
-    (h : ToNoneOrLtId (inIndexElim f none)) : ∀ i : Index s, WithBot.lt.lt (f i) ↑i.val :=
+    (h : ToNoneOrLtId (inIndexElim f none)) : ∀ i : Index s, WithBot.instLT.lt (f i) ↑i.val :=
   by
   intro i
   specialize h i.val
@@ -172,7 +172,8 @@ theorem flip_bind_inIndexElim_forall_eq_iff_of_pairable {s : List α} {t : List 
   ⟨fun h' _ => flip_bind_inIndexElim_val_eq_iff_of_pairable .. |>.mp (h' _),
     fun h' => Option.rec rfl fun _ => dite_congr (congrArg _ h) (fun _ => h' _) (fun _ => rfl)⟩
 
-theorem flip_bind_inIndexElim_val_none_val_apply {s : List α} (f : Index s → Option ℕ) (i : Index s) :
+theorem flip_bind_inIndexElim_val_none_val_apply {s : List α} (f : Index s → Option ℕ)
+    (i : Index s) :
     (flip bind (inIndexElim f none) <| some i.val) = f i :=
   by simp only [flip, Option.bind_eq_bind, Option.bind_some, inIndexElim_val]
 
@@ -202,8 +203,7 @@ theorem exists_iterate_bind_join_dependent_of_iterateEventuallyNone {f : α → 
       cases x with
       | none => contradiction
       | some x =>
-        simp only [Option.bind_eq_bind, Function.iterate_one, flip, inIndexElim,
-          Option.bind_some] at hp
+        simp only [Option.bind_eq_bind, Function.iterate_one, flip, Option.bind_some] at hp
         exact hp ▸ ⟨k'' + g _, Function.iterate_add_apply ..⟩
     · rw [Option.not_isSome_iff_eq_none] at h
       rw [h]
@@ -260,9 +260,9 @@ theorem exists_iterate_bind_inIndexElim_join_dependent_of_iterateEventuallyNone 
       rw [h]
       exact hf _
 
-theorem exists_iterate_bind_inIndexElim_trans_of_iterateEventuallyNone {s : List α} {t : List β} {u : List γ}
-    {f : Index s → Option ℕ} {g : Index t → Option ℕ} (hst : Pairable s t)
-    (hf : IterateEventuallyNone (inIndexElim f none))
+theorem exists_iterate_bind_inIndexElim_trans_of_iterateEventuallyNone
+    {s : List α} {t : List β} {u : List γ} {f : Index s → Option ℕ} {g : Index t → Option ℕ}
+    (hst : Pairable s t) (hf : IterateEventuallyNone (inIndexElim f none))
     (hg : ∀ (i : Index t), ∃ (k : ℕ), ((flip bind (inIndexElim f none))^[k] <| some i.val) = g i)
     {i : Index u} {y : Option ℕ}
     (hy : ∃ (k : ℕ), ((flip bind (inIndexElim g none))^[k] <| some i.val) = y) :
@@ -275,7 +275,7 @@ theorem exists_iterate_bind_inIndexElim_trans_of_iterateEventuallyNone {s : List
     hf (g ∘ hst.transfer) (some i.val) k
   use k'
   rw [hk']
-  congr
+  congr 1
   symm
   apply funext
   rw [flip_bind_inIndexElim_forall_eq_iff_of_pairable hst.symm]
@@ -459,7 +459,8 @@ theorem Pairable₂.transfer_self {m : List (List α)} (h : Pairable₂ m m) : h
   rfl
 
 @[simp]
-theorem Pairable₂.transfer_transfer_apply {m₁ : List (List α)} {m₂ : List (List β)} {m₃ : List (List γ)}
+theorem Pairable₂.transfer_transfer_apply
+    {m₁ : List (List α)} {m₂ : List (List β)} {m₃ : List (List γ)}
     (h₁ : Pairable₂ m₁ m₂) (h₂ : Pairable₂ m₂ m₃) (q : Index₂ m₁) :
     h₂.transfer (h₁.transfer q) = (h₁.trans h₂).transfer q :=
   rfl
