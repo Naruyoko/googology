@@ -1,0 +1,39 @@
+{
+  "permissions": {
+    "deny": [
+      "Bash(cd *)",
+      "Bash(ls *)"
+    ]
+  },
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Write|Edit|MultiEdit",
+        "hooks": [
+          {
+            "if": "tool_input.content length > 200",
+            "type": "command",
+            "command": "echo 'The edit is too big. Consider breaking it down into small steps, using temporary `sorry` as needed.' 1>&2; exit 2",
+            "statusMessage": "Checking edit size"
+          }
+        ]
+      }
+    ],
+    "PostToolUse": [
+      {
+        "matcher": "Write|Edit|MultiEdit",
+        "hooks": [
+          {
+            "type": "mcp_tool",
+            "server": "lean-lsp",
+            "tool": "lean_diagnostic_messages",
+            "input": {
+              "file_path": "${tool_input.file_path}"
+            },
+            "statusMessage": "Running post-edit check"
+          }
+        ]
+      }
+    ]
+  }
+}

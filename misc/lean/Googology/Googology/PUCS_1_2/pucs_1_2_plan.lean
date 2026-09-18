@@ -1,0 +1,163 @@
+-- Plan: General Interval Verification Using Externally Computed Rational Bounds
+-- =========================================================================
+
+-- OVERVIEW
+-- --------
+-- We need to prove f(b) < g(a) for ~150 subintervals [a_i, b_i] covering [2, 16].
+-- The functions are:
+--   f(x) = (log x / log 2) * (x^x + 1)
+--   g(x) = 2^(x^(2^(2/3)))
+--
+-- Directly proving transcendental inequalities in Lean for 150 intervals is impractical.
+-- Instead, we use a two-phase approach:
+--   1. EXTERNAL: Compute high-precision rational bounds for all transcendental values
+--   2. LEAN: Verify the rational arithmetic chain f(b) < g(a) using norm_num
+
+-- =========================================================================
+-- PHASE 1: EXTERNAL COMPUTATION (Python/MPFR/Arb)
+-- =========================================================================
+
+-- For each subinterval [a, b] (with a, b ∈ ℚ):
+--
+-- Compute the following values to 50+ decimal digits:
+--
+-- 1. log 2                      (constant, same for all intervals)
+-- 2. log a
+-- 3. log b
+-- 4. a^c      where c = 2^(2/3)
+-- 5. g(a) = 2^(a^c)
+-- 6. b^b
+--
+-- For each value v, produce rational bounds:
+--   lower_v < v < upper_v
+-- where lower_v, upper_v ∈ ℚ have denominator 10^k (or similar).
+--
+-- The bounds must be STRICT (not ≤) because we need strict inequality f(b) < g(a).
+--
+-- Output format (e.g., JSON):
+-- {
+--   "intervals": [
+--     {
+--       "a": "2",
+--       "b": "35/16",
+--       "log2": {"lower": "6931471803/10000000000", "upper": "6931471808/10000000000"},
+--       "log_a": {"lower": "...", "upper": "..."},
+--       "log_b": {"lower": "...", "upper": "..."},
+--       "a_pow_c": {"lower": "...", "upper": "..."},
+--       "g_a": {"lower": "...", "upper": "..."},
+--       "b_pow_b": {"lower": "...", "upper": "..."}
+--     },
+--     ...
+--   ]
+-- }
+
+-- =========================================================================
+-- PHASE 2: LEAN VERIFICATION
+-- =========================================================================
+
+-- Lean receives the pre-computed bounds and verifies:
+--
+-- 1. BOUND VALIDITY: Each transcendental value actually lies within its bounds.
+--    - log 2 bounds: Use Mathlib's Real.log_two_gt_d9 / Real.log_two_lt_d9
+--    - log a, log b: Use Taylor series lemmas (log_one_add_taylor_bounds)
+--    - a^c: Use exp_taylor bounds on exp(c * log a)
+--    - g(a): Use exp_taylor bounds on exp(a^c * log 2)
+--    - b^b: Use exp_taylor bounds on exp(b * log b)
+--    These are proved ONCE as general lemmas, then instantiated per interval.
+--
+-- 2. ARITHMETIC CHAIN: Prove f(b) < g(a) using only the rational bounds.
+--    f(b) = (log b / log 2) * (b^b + 1)
+--    Upper bound on f(b):
+--      f(b) < (log_b_upper / log2_lower) * (b_pow_b_upper + 1)
+--    Lower bound on g(a):
+--      g(a) > g_a_lower
+--    Final check (pure rational arithmetic):
+--      (log_b_upper / log2_lower) * (b_pow_b_upper + 1) < g_a_lower
+--    This is verified by norm_num.
+--
+-- 3. COMBINE INTERVALS: Use interval_union lemma to cover [2, 16].
+
+-- =========================================================================
+-- LEAN STRUCTURE
+-- =========================================================================
+
+-- 1. GENERAL TAYLOR LEMMAS (proved once in template file):
+--    - exp_taylor_lower : ∀ x > 0, n, exp x ≥ ∑_{k=0}^n x^k/k!
+--    - exp_taylor_upper : ∀ x > 0, n, M ≥ exp x, exp x ≤ ∑_{k=0}^n x^k/k! + x^{n+1}/(n+1)! * M
+--    - log_one_add_taylor_bounds : ∀ 0 < x ≤ 1, n, bounds on log(1+x) via Mathlib series
+--
+-- 2. BOUND COMPUTATION LEMMAS (instantiated per interval):
+--    - log_bounds(x, n) : returns RationalBounds for log x
+--    - rpow_bounds(x, y, n, M) : returns RationalBounds for x^y = exp(y * log x)
+--
+-- 3. MAIN VERIFICATION LEMMA:
+--    verify_interval(a, b, all_bounds) : f(b) < g(a)
+--    Takes ALL bounds as parameters, does only rational arithmetic.
+--
+-- 4. INTERVAL COMBINATION:
+--    interval_union : combines verified subintervals
+
+-- =========================================================================
+-- WORKFLOW
+-- =========================================================================
+
+-- 1. Write Python script to:
+--    a. Generate the 150 subintervals [a_i, b_i] (rational endpoints)
+--    b. For each interval, compute all 6 transcendental values to high precision
+--    c. Output rational bounds as Lean theorem statements
+--
+-- 2. In Lean:
+--    a. Prove the general Taylor bound lemmas (already done in template)
+--    b. Prove bound computation lemmas that use Taylor lemmas
+--    c. For each interval, invoke verify_interval with the pre-computed bounds
+--    d. Combine all intervals with interval_union
+--
+-- 3. The verify_interval lemma:
+--    - Has ~30 parameters (all the bounds as rationals + proof they're valid)
+--    - The final hypothesis h_final is a rational inequality
+--    - norm_num verifies h_final automatically
+--    - The bound validity proofs use the Taylor lemmas
+
+-- =========================================================================
+-- KEY INSIGHTS
+-- =========================================================================
+
+-- 1. Separation of concerns:
+--    - Transcendental reasoning → External + Taylor lemmas (proved once)
+--    - Arithmetic verification → Lean norm_num (fast, automatic)
+--
+-- 2. Strict bounds:
+--    - Mathlib's log_two_gt_d9/lt_d9 give strict bounds
+--    - Taylor lemmas give strict bounds (partial sums < limit for positive series)
+--    - This ensures f(b) < g(a) strictly, not ≤
+--
+-- 3. Scalability:
+--    - Adding a new interval = 1 Lean theorem call with pre-computed bounds
+--    - No new transcendental reasoning per interval
+--    - norm_num handles all arithmetic
+--
+-- 4. Trust but verify:
+--    - External computation can use any method (MPFR, Arb, etc.)
+--    - Lean re-verifies bounds using Taylor series
+--    - Lean re-verifies final inequality with exact rational arithmetic
+
+-- =========================================================================
+-- FILES
+-- =========================================================================
+
+-- pucs_1_2_template.lean : General Taylor lemmas + worked examples
+-- pucs_1_2_demo.lean     : General verify_interval lemma structure
+-- pucs_1_2.lean          : Main proof with interval_union + 150 interval calls
+-- generate_bounds.py     : External script (to be written)
+
+-- =========================================================================
+-- NEXT STEPS
+-- =========================================================================
+
+-- 1. Complete the Taylor bound lemmas in template (DONE)
+-- 2. Create the general verify_interval structure in demo (THIS FILE)
+-- 3. Write Python script to compute bounds for all 150 intervals
+-- 4. Generate Lean theorem statements for each interval
+-- 5. Prove bound validity for each interval using Taylor lemmas
+-- 6. Call verify_interval for each interval
+-- 7. Combine with interval_union

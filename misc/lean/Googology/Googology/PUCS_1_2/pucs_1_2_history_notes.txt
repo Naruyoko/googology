@@ -1,0 +1,7 @@
+pucs_1_2_20260919_160658.lean - Restart
+pucs_1_2_20260919_230955.lean - Complete `pucs_1_2_conjecture`
+pucs_1_2_20260920_173839.lean - Complete `nine_lt_eight_exp_one_log_two`
+pucs_1_2_20260920_174425.lean - Complete `tetration_zero`, `tetration_one`, and `tetration_two`
+pucs_1_2_20260921_070403.lean - Complete `case_x_le_one`
+pucs_1_2_20260926_115515.lean - Complete `tetration_[strict_]mono_{base|height}` and `case_x_gt_two_n_ge_two` other than the `n = 2`, `x < 16` case, add helper lemmas, clean up linter warnings.
+pucs_1_2_20260927_014909.lean - Refactor, all except `case_x_gt_two_base_x_lt_16` complete.
